@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: TaskNest
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tasknest
+    username: tasknest
+    password: tasknest
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: tasknest
+    password: tasknest
+
+  mail:
+    host: localhost
+    port: 1025
+
+logging:
+  level:
+    org.hibernate.SQL: debug
