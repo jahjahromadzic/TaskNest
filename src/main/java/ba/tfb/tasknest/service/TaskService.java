@@ -8,7 +8,8 @@ import ba.tfb.tasknest.entity.Municipality;
 import ba.tfb.tasknest.entity.Task;
 import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
-import ba.tfb.tasknest.exception.AccessDeniedException;
+import ba.tfb.tasknest.exception.BusinessRuleException;
+import ba.tfb.tasknest.exception.NotResourceOwnerException;
 import ba.tfb.tasknest.exception.ResourceNotFoundException;
 import ba.tfb.tasknest.repository.CategoryRepository;
 import ba.tfb.tasknest.repository.MunicipalityRepository;
@@ -31,6 +32,7 @@ public class TaskService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final MunicipalityRepository municipalityRepository;
+    private final OfferService offerService;
 
     @Transactional
     public TaskResponse createTask(UUID clientId, CreateTaskRequest request) {
@@ -41,7 +43,7 @@ public class TaskService {
                 .orElseThrow(() -> new ResourceNotFoundException("Category", request.categoryId()));
 
         if (!category.isActive()) {
-            throw new IllegalStateException("Category is not active: " + category.getName());
+            throw new BusinessRuleException("Category is not active: " + category.getName());
         }
 
         Municipality municipality = municipalityRepository.findById(request.municipalityId())
@@ -80,6 +82,12 @@ public class TaskService {
         TaskStateMachine.validateTransition(task.getStatus(), TaskStatus.CANCELLED);
         task.setStatus(TaskStatus.CANCELLED);
 
+        // Otkazivanje je dozvoljeno i iz ASSIGNED i IN_PROGRESS, gdje vec postoji
+        // prihvacena ponuda i otvoren razgovor. Bez ovoga bi otkazani task ostavio
+        // ponudu u ACCEPTED, acceptedOffer koji na nju pokazuje i razgovor u OPEN.
+        offerService.rejectActiveOffers(task);
+        task.setAcceptedOffer(null);
+
         return TaskResponse.from(task);
     }
 
@@ -95,7 +103,7 @@ public class TaskService {
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
 
         if (!task.getClient().getId().equals(clientId)) {
-            throw new AccessDeniedException("Task does not belong to this user");
+            throw new NotResourceOwnerException("Task does not belong to this user");
         }
 
         return task;

@@ -14,7 +14,8 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
 
     Optional<RefreshToken> findByToken(String token);
 
-
+    /** Bez @Modifying Spring Data izvrsava upit kao SELECT i DML puca u runtime-u. */
+    @Modifying
     @Query("""
             update RefreshToken rt
             set rt.revokedAt = :revokedAt

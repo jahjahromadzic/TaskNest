@@ -9,39 +9,57 @@ import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.ConversationStatus;
 import ba.tfb.tasknest.entity.enums.OfferStatus;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
-import ba.tfb.tasknest.exception.AccessDeniedException;
 import ba.tfb.tasknest.exception.BusinessRuleException;
+import ba.tfb.tasknest.exception.NotResourceOwnerException;
 import ba.tfb.tasknest.exception.ResourceNotFoundException;
 import ba.tfb.tasknest.repository.ConversationRepository;
 import ba.tfb.tasknest.repository.OfferRepository;
 import ba.tfb.tasknest.repository.TaskRepository;
 import ba.tfb.tasknest.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class OfferService {
 
+    /** Ponude koje jos "zive" - one koje otkazivanje taska mora povuci sa sobom. */
+    private static final Set<OfferStatus> ACTIVE_STATUSES =
+            EnumSet.of(OfferStatus.PENDING, OfferStatus.ACCEPTED);
+
     private final OfferRepository offerRepository;
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ConversationRepository conversationRepository;
 
-    /**
-     * A tasker submits an offer on a published task.
-     */
+
     @Transactional
     public OfferResponse submitOffer(UUID taskId, UUID taskerId, CreateOfferRequest request) {
-        Task task = taskRepository.findById(taskId)
+        // OPTIMISTIC lock, a ne obican findById: odluka se donosi na osnovu stanja
+        // taska, ali se upisuje u offers, pa task ostaje neizmijenjen i njegova
+        // verzija se inace ne bi provjeravala. Bez ovoga paralelni acceptOffer moze
+        // prebaciti task u ASSIGNED izmedju ove provjere i naseg commita, i ponuda
+        // bi ostala viseci u PENDING na dodijeljenom tasku. Ovako druga transakcija
+        // dobije OptimisticLockException.
+        Task task = taskRepository.findWithOptimisticLockById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
 
         if (task.getStatus() != TaskStatus.PUBLISHED) {
             throw new BusinessRuleException("Offers can only be submitted on published tasks");
+        }
+
+        // Task ostaje PUBLISHED dok ga scheduler ne prebaci u EXPIRED, pa se istek
+        // mora provjeriti i ovdje - taj prozor postoji bez obzira na scheduler.
+        if (task.getExpiresAt() != null && task.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new BusinessRuleException("This task has expired and no longer accepts offers");
         }
 
         // A user may hold both CLIENT and TASKER roles, so this case is real
@@ -63,13 +81,16 @@ public class OfferService {
         offer.setMessage(request.message());
         offer.setStatus(OfferStatus.PENDING);
 
-        return OfferResponse.from(offerRepository.save(offer));
+        try {
+            // saveAndFlush, ne save: bez flusha bi uq_offers_task_tasker pukao tek na
+            // commitu, izvan ovog catch-a. Provjera iznad je check-then-act i ne stiti
+            // od paralelnih zahtjeva - constraint je stvarna zastita, ovo je prevod.
+            return OfferResponse.from(offerRepository.saveAndFlush(offer));
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessRuleException("You have already submitted an offer on this task");
+        }
     }
 
-    /**
-     * The client accepts one offer. The task becomes ASSIGNED, every other
-     * pending offer is rejected and their conversations are archived.
-     */
     @Transactional
     public OfferResponse acceptOffer(UUID offerId, UUID clientId) {
         Offer offer = offerRepository.findById(offerId)
@@ -78,7 +99,7 @@ public class OfferService {
         Task task = offer.getTask();
 
         if (!task.getClient().getId().equals(clientId)) {
-            throw new AccessDeniedException("Task does not belong to this user");
+            throw new NotResourceOwnerException("Task does not belong to this user");
         }
 
         if (offer.getStatus() != OfferStatus.PENDING) {
@@ -105,7 +126,7 @@ public class OfferService {
                 .orElseThrow(() -> new ResourceNotFoundException("Offer", offerId));
 
         if (!offer.getTasker().getId().equals(taskerId)) {
-            throw new AccessDeniedException("Offer does not belong to this user");
+            throw new NotResourceOwnerException("Offer does not belong to this user");
         }
 
         if (offer.getStatus() != OfferStatus.PENDING) {
@@ -127,7 +148,7 @@ public class OfferService {
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
 
         if (!task.getClient().getId().equals(clientId)) {
-            throw new AccessDeniedException("Task does not belong to this user");
+            throw new NotResourceOwnerException("Task does not belong to this user");
         }
 
         return offerRepository.findByTask(task).stream()
@@ -146,6 +167,23 @@ public class OfferService {
         return offerRepository.findByTasker(tasker).stream()
                 .map(OfferResponse::from)
                 .toList();
+    }
+
+    /**
+     * Odbija sve jos zive ponude taska (PENDING i ACCEPTED) i arhivira im razgovore.
+     * Zove se pri otkazivanju taska. Stoji ovdje, a ne u TaskService-u, jer je
+     * zivotni ciklus ponude i razgovora vlasnistvo ovog servisa - inace bi se
+     * arhiviranje duplo pisalo na dva mjesta.
+     */
+    @Transactional
+    public void rejectActiveOffers(Task task) {
+        for (Offer offer : offerRepository.findByTask(task)) {
+            if (!ACTIVE_STATUSES.contains(offer.getStatus())) {
+                continue;
+            }
+            offer.setStatus(OfferStatus.REJECTED);
+            archiveConversation(offer);
+        }
     }
 
     private void rejectRemainingOffers(Task task, UUID acceptedOfferId) {
