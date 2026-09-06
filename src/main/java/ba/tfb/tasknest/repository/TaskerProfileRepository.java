@@ -14,10 +14,7 @@ public interface TaskerProfileRepository extends JpaRepository<TaskerProfile, UU
 
     Optional<TaskerProfile> findByUser(User user);
 
-    /**
-     * Taskeri koji pokrivaju datu opstinu I datu kategoriju - osnova matching
-     * logike kod objave taska (kome ide notifikacija).
-     */
+
     @Query("""
             select distinct tp from TaskerProfile tp
             join tp.categories c

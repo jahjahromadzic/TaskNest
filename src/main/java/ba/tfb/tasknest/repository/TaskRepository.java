@@ -32,6 +32,6 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
                                                      TaskStatus status,
                                                      Pageable pageable);
 
-    /** Kandidati za prelazak u EXPIRED - poziva se sa statusom PUBLISHED iz schedulera. */
+
     List<Task> findByStatusAndExpiresAtBefore(TaskStatus status, LocalDateTime moment);
 }

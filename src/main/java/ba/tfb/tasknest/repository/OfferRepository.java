@@ -18,6 +18,6 @@ public interface OfferRepository extends JpaRepository<Offer, UUID> {
 
     Optional<Offer> findByTaskAndTasker(Task task, User tasker);
 
-    /** Ostale ponude na tasku - potrebno kod prihvatanja, kad idu u REJECTED. */
+
     List<Offer> findByTaskAndStatus(Task task, OfferStatus status);
 }

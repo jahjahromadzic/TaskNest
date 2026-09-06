@@ -17,7 +17,7 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
 
     Page<Message> findByConversationOrderByCreatedAtAsc(Conversation conversation, Pageable pageable);
 
-    /** Neprocitane poruke koje su korisniku stigle (tudji sender) u njegovim razgovorima. */
+
     @Query("""
             select count(m) from Message m
             where m.readAt is null
