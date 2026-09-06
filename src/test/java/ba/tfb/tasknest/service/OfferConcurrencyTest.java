@@ -7,17 +7,25 @@ import ba.tfb.tasknest.entity.enums.AccountStatus;
 import ba.tfb.tasknest.entity.enums.OfferStatus;
 import ba.tfb.tasknest.entity.enums.RoleName;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
+import ba.tfb.tasknest.exception.BusinessRuleException;
 import ba.tfb.tasknest.repository.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
+import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -93,15 +101,25 @@ class OfferConcurrencyTest extends AbstractIntegrationTest {
         AtomicInteger successes = new AtomicInteger();
         AtomicInteger failures = new AtomicInteger();
 
-        runInParallel(
+        Queue<Throwable> caught = runInParallel(
                 () -> offerService.acceptOffer(offerOne.getId(), client.getId()),
                 () -> offerService.acceptOffer(offerTwo.getId(), client.getId()),
                 successes,
                 failures
         );
 
+        assertNoDeadlock(caught);
+
         assertEquals(1, successes.get(), "Exactly one accept must succeed");
         assertEquals(1, failures.get(), "The losing accept must fail");
+
+        Throwable loser = caught.peek();
+        assertNotNull(loser, "The losing accept must have recorded an exception");
+        assertInstanceOf(
+                ObjectOptimisticLockingFailureException.class,
+                loser,
+                describe("The losing accept must fail on the task version check", loser)
+        );
 
         Task reloaded = taskRepository.findById(task.getId()).orElseThrow();
         assertEquals(TaskStatus.ASSIGNED, reloaded.getStatus());
@@ -122,7 +140,7 @@ class OfferConcurrencyTest extends AbstractIntegrationTest {
         AtomicInteger successes = new AtomicInteger();
         AtomicInteger failures = new AtomicInteger();
 
-        runInParallel(
+        Queue<Throwable> caught = runInParallel(
                 () -> offerService.acceptOffer(existing.getId(), client.getId()),
                 () -> offerService.submitOffer(
                         task.getId(),
@@ -131,6 +149,21 @@ class OfferConcurrencyTest extends AbstractIntegrationTest {
                 successes,
                 failures
         );
+
+        assertNoDeadlock(caught);
+
+        // Ovdje su oba ishoda ispravna, pa se ne tvrdi da MORA biti pada. Ako ga je
+        // bilo, dozvoljena su tacno dva razloga: submit je pao na provjeri verzije
+        // taska, ili je stigao nakon accepta i regularno vidio da task vise nije
+        // PUBLISHED. Sve ostalo je greska.
+        for (Throwable failure : caught) {
+            assertTrue(
+                    failure instanceof ObjectOptimisticLockingFailureException
+                            || failure instanceof BusinessRuleException,
+                    describe("Only a version conflict or a 'task no longer published' "
+                            + "rejection may fail here", failure)
+            );
+        }
 
         Task reloaded = taskRepository.findById(task.getId()).orElseThrow();
         assertEquals(TaskStatus.ASSIGNED, reloaded.getStatus());
@@ -142,13 +175,20 @@ class OfferConcurrencyTest extends AbstractIntegrationTest {
 
     // ---------- helpers ----------
 
-    private void runInParallel(Runnable first,
-                               Runnable second,
-                               AtomicInteger successes,
-                               AtomicInteger failures) throws Exception {
+    /** Postgres SQLSTATE za "deadlock detected". */
+    private static final String DEADLOCK_SQL_STATE = "40P01";
+
+    /** Koliko duboko se ide niz lanac uzroka pri pretrazi. */
+    private static final int MAX_CAUSE_DEPTH = 20;
+
+    private Queue<Throwable> runInParallel(Runnable first,
+                                           Runnable second,
+                                           AtomicInteger successes,
+                                           AtomicInteger failures) throws Exception {
 
         CountDownLatch startSignal = new CountDownLatch(1);
         CountDownLatch finished = new CountDownLatch(2);
+        Queue<Throwable> caught = new ConcurrentLinkedQueue<>();
         AtomicReference<Throwable> unexpected = new AtomicReference<>();
 
         ExecutorService pool = Executors.newFixedThreadPool(2);
@@ -160,6 +200,7 @@ class OfferConcurrencyTest extends AbstractIntegrationTest {
                     action.run();
                     successes.incrementAndGet();
                 } catch (Exception e) {
+                    caught.add(e);
                     failures.incrementAndGet();
                 } catch (Throwable t) {
                     unexpected.set(t);
@@ -176,6 +217,81 @@ class OfferConcurrencyTest extends AbstractIntegrationTest {
         if (unexpected.get() != null) {
             fail("Unexpected error: " + unexpected.get());
         }
+
+        return caught;
+    }
+
+    /**
+     * Deadlock znaci da su transakcije opet zakljucale redove ukrstenim redoslijedom.
+     * Provjerava se i Springov tip i SQLSTATE i tekst poruke, jer prevod izuzetka
+     * ovisi o verziji drajvera i Springovom translatoru.
+     */
+    private void assertNoDeadlock(Collection<Throwable> caught) {
+        for (Throwable failure : caught) {
+            assertFalse(
+                    isDeadlock(failure),
+                    describe("DEADLOCK JE PONOVO ISKRSNUO - transakcije zakljucavaju "
+                            + "redove ukrstenim redoslijedom. Provjeri da se task upisuje "
+                            + "i flushuje PRIJE ijedne ponude, u acceptOffer i cancelTask",
+                            failure)
+            );
+        }
+    }
+
+    private static boolean isDeadlock(Throwable throwable) {
+        Throwable current = throwable;
+
+        for (int depth = 0; current != null && depth < MAX_CAUSE_DEPTH; depth++) {
+            if (current instanceof CannotAcquireLockException) {
+                return true;
+            }
+            if (current instanceof SQLException sqlException
+                    && DEADLOCK_SQL_STATE.equals(sqlException.getSQLState())) {
+                return true;
+            }
+            String message = current.getMessage();
+            if (message != null && message.toLowerCase(Locale.ROOT).contains("deadlock detected")) {
+                return true;
+            }
+
+            Throwable cause = current.getCause();
+            if (cause == current) {
+                break;
+            }
+            current = cause;
+        }
+
+        return false;
+    }
+
+    /** Poruka koja pokazuje stvarni tip i uzrok, umjesto golog "expected true but was false". */
+    private static String describe(String expectation, Throwable throwable) {
+        Throwable root = rootCause(throwable);
+
+        String detail = expectation
+                + System.lineSeparator() + "  dobijeno: " + throwable.getClass().getName()
+                + ": " + throwable.getMessage();
+
+        if (root != throwable) {
+            detail += System.lineSeparator() + "  uzrok:    " + root.getClass().getName()
+                    + ": " + root.getMessage();
+        }
+
+        return detail;
+    }
+
+    private static Throwable rootCause(Throwable throwable) {
+        Throwable current = throwable;
+
+        for (int depth = 0; depth < MAX_CAUSE_DEPTH; depth++) {
+            Throwable cause = current.getCause();
+            if (cause == null || cause == current) {
+                break;
+            }
+            current = cause;
+        }
+
+        return current;
     }
 
     private User createUser(String email, RoleName roleName) {
