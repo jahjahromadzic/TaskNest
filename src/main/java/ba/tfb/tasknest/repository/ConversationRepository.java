@@ -14,7 +14,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, UUID
 
     Optional<Conversation> findByOffer(Offer offer);
 
-    /** Razgovori u kojima korisnik ucestvuje - kao klijent taska ili kao tasker ponude. */
+
     @Query("""
             select c from Conversation c
             where c.offer.tasker.id = :userId

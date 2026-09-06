@@ -14,8 +14,7 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
 
     Optional<RefreshToken> findByToken(String token);
 
-    /** Opoziv svih aktivnih tokena korisnika - npr. na logout ili promjenu lozinke. */
-    @Modifying
+
     @Query("""
             update RefreshToken rt
             set rt.revokedAt = :revokedAt
