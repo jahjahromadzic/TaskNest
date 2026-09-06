@@ -108,10 +108,21 @@ public class OfferService {
 
         TaskStateMachine.validateTransition(task.getStatus(), TaskStatus.ASSIGNED);
 
-        offer.setStatus(OfferStatus.ACCEPTED);
+        // Task se upisuje prvi i flushuje odmah, prije nego se takne ijedna ponuda.
+        // Ranije su se svi UPDATE-ovi skupljali do prvog flusha, pa je Hibernate
+        // birao redoslijed: dvije paralelne transakcije zakljucavale su redove u
+        // offers ukrsteno (Tx1 offerOne pa offerTwo, Tx2 obrnuto) i Postgres je
+        // prijavljivao deadlock umjesto konflikta verzija.
+        //
+        // Ovako obje transakcije prvo udare u isti red u tasks: druga ceka na
+        // redu, a kad se prva commita, njen UPDATE ... WHERE version = ? pogodi
+        // nula redova i dobije OptimisticLockException. Nema ukrstenih lokova
+        // jer transakcija koja ceka jos ne drzi nijedan lock nad offers.
         task.setStatus(TaskStatus.ASSIGNED);
         task.setAcceptedOffer(offer);
+        taskRepository.flush();
 
+        offer.setStatus(OfferStatus.ACCEPTED);
         rejectRemainingOffers(task, offer.getId());
 
         return OfferResponse.from(offer);

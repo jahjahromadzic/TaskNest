@@ -80,13 +80,19 @@ public class TaskService {
         Task task = loadOwnedTask(taskId, clientId);
 
         TaskStateMachine.validateTransition(task.getStatus(), TaskStatus.CANCELLED);
+
+        // Isti redoslijed kao u acceptOffer: task se upise i flushuje prije ponuda,
+        // da sve operacije koje diraju i task i ponude zakljucavaju redove istim
+        // redom. Ovdje je tasks i ranije isao prvi, ali samo slucajno - kroz
+        // auto-flush koji okine upit u rejectActiveOffers. Ovako je namjerno.
         task.setStatus(TaskStatus.CANCELLED);
+        task.setAcceptedOffer(null);
+        taskRepository.flush();
 
         // Otkazivanje je dozvoljeno i iz ASSIGNED i IN_PROGRESS, gdje vec postoji
         // prihvacena ponuda i otvoren razgovor. Bez ovoga bi otkazani task ostavio
         // ponudu u ACCEPTED, acceptedOffer koji na nju pokazuje i razgovor u OPEN.
         offerService.rejectActiveOffers(task);
-        task.setAcceptedOffer(null);
 
         return TaskResponse.from(task);
     }
