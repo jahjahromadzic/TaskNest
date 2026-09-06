@@ -6,5 +6,12 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <include file="db/changelog/changes/001-users-and-roles.xml"/>
+    <include file="db/changelog/changes/002-tasker-profiles.xml"/>
+    <include file="db/changelog/changes/003-reference-data.xml"/>
+    <include file="db/changelog/changes/004-tasks-and-offers.xml"/>
+    <include file="db/changelog/changes/005-conversations.xml"/>
+    <include file="db/changelog/changes/006-reviews-notifications.xml"/>
+    <include file="db/changelog/changes/007-auth-tokens.xml"/>
+    <include file="db/changelog/changes/008-seed-data.xml"/>
 
 </databaseChangeLog>
