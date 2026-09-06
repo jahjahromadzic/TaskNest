@@ -8,6 +8,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -41,6 +43,8 @@ public class Review {
     @JoinColumn(name = "reviewee_id", nullable = false)
     private User reviewee;
 
+    @Min(1)
+    @Max(5)
     @Column(name = "rating", nullable = false)
     private Integer rating;
 
