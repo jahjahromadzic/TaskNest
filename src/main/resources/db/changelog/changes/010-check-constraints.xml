@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        addCheckConstraint je Liquibase Pro, pa se CHECK ogranicenja pisu kroz <sql>
+        uz eksplicitan <rollback>. Ista pravila su duplirana kao Bean Validation
+        anotacije na entitetima - baza je zadnja linija odbrane, ne jedina.
+    -->
+
+    <changeSet id="030-check-reviews-rating" author="jahja">
+        <sql>
+            ALTER TABLE reviews
+                ADD CONSTRAINT ck_reviews_rating CHECK (rating BETWEEN 1 AND 5)
+        </sql>
+        <rollback>
+            ALTER TABLE reviews DROP CONSTRAINT ck_reviews_rating
+        </rollback>
+    </changeSet>
+
+    <changeSet id="031-check-offers-price" author="jahja">
+        <sql>
+            ALTER TABLE offers
+                ADD CONSTRAINT ck_offers_price CHECK (price >= 0)
+        </sql>
+        <rollback>
+            ALTER TABLE offers DROP CONSTRAINT ck_offers_price
+        </rollback>
+    </changeSet>
+
+    <changeSet id="032-check-tasks-budget" author="jahja">
+        <!-- budget je nullable, pa uslov vazi samo kad vrijednost postoji. -->
+        <sql>
+            ALTER TABLE tasks
+                ADD CONSTRAINT ck_tasks_budget CHECK (budget IS NULL OR budget >= 0)
+        </sql>
+        <rollback>
+            ALTER TABLE tasks DROP CONSTRAINT ck_tasks_budget
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
