@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="014-create-reviews" author="jahja">
+        <createTable tableName="reviews">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="task_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reviewer_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reviewee_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rating" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="comment" type="VARCHAR(1000)"/>
+            <column name="created_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="reviews" baseColumnNames="task_id"
+                referencedTableName="tasks" referencedColumnNames="id"
+                constraintName="fk_reviews_task"/>
+        <addForeignKeyConstraint
+                baseTableName="reviews" baseColumnNames="reviewer_id"
+                referencedTableName="users" referencedColumnNames="id"
+                constraintName="fk_reviews_reviewer"/>
+        <addForeignKeyConstraint
+                baseTableName="reviews" baseColumnNames="reviewee_id"
+                referencedTableName="users" referencedColumnNames="id"
+                constraintName="fk_reviews_reviewee"/>
+        <addUniqueConstraint
+                tableName="reviews" columnNames="task_id, reviewer_id"
+                constraintName="uq_reviews_task_reviewer"/>
+    </changeSet>
+
+    <changeSet id="015-create-notifications" author="jahja">
+        <createTable tableName="notifications">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="recipient_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="related_entity_id" type="UUID"/>
+            <column name="content" type="VARCHAR(500)"/>
+            <column name="is_read" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="notifications" baseColumnNames="recipient_id"
+                referencedTableName="users" referencedColumnNames="id"
+                constraintName="fk_notifications_recipient"/>
+    </changeSet>
+
+</databaseChangeLog>

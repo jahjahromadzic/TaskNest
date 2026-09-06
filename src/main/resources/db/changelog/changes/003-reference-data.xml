@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="005-create-categories" author="jahja">
+        <createTable tableName="categories">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="006-create-municipalities" author="jahja">
+        <createTable tableName="municipalities">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="region" type="VARCHAR(100)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="007-create-tasker-categories" author="jahja">
+        <createTable tableName="tasker_categories">
+            <column name="tasker_profile_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="tasker_categories"
+                       columnNames="tasker_profile_id, category_id"/>
+        <addForeignKeyConstraint
+                baseTableName="tasker_categories" baseColumnNames="tasker_profile_id"
+                referencedTableName="tasker_profiles" referencedColumnNames="id"
+                constraintName="fk_tasker_categories_profile"/>
+        <addForeignKeyConstraint
+                baseTableName="tasker_categories" baseColumnNames="category_id"
+                referencedTableName="categories" referencedColumnNames="id"
+                constraintName="fk_tasker_categories_category"/>
+    </changeSet>
+
+    <changeSet id="008-create-tasker-municipalities" author="jahja">
+        <createTable tableName="tasker_municipalities">
+            <column name="tasker_profile_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="municipality_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="tasker_municipalities"
+                       columnNames="tasker_profile_id, municipality_id"/>
+        <addForeignKeyConstraint
+                baseTableName="tasker_municipalities" baseColumnNames="tasker_profile_id"
+                referencedTableName="tasker_profiles" referencedColumnNames="id"
+                constraintName="fk_tasker_municipalities_profile"/>
+        <addForeignKeyConstraint
+                baseTableName="tasker_municipalities" baseColumnNames="municipality_id"
+                referencedTableName="municipalities" referencedColumnNames="id"
+                constraintName="fk_tasker_municipalities_municipality"/>
+    </changeSet>
+
+</databaseChangeLog>

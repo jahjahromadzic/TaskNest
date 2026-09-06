@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="012-create-conversations" author="jahja">
+        <createTable tableName="conversations">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="offer_id" type="UUID">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="OPEN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_message_at" type="TIMESTAMP"/>
+            <column name="created_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="conversations" baseColumnNames="offer_id"
+                referencedTableName="offers" referencedColumnNames="id"
+                constraintName="fk_conversations_offer"/>
+    </changeSet>
+
+    <changeSet id="013-create-messages" author="jahja">
+        <createTable tableName="messages">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="conversation_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sender_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="read_at" type="TIMESTAMP"/>
+            <column name="created_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="messages" baseColumnNames="conversation_id"
+                referencedTableName="conversations" referencedColumnNames="id"
+                constraintName="fk_messages_conversation"/>
+        <addForeignKeyConstraint
+                baseTableName="messages" baseColumnNames="sender_id"
+                referencedTableName="users" referencedColumnNames="id"
+                constraintName="fk_messages_sender"/>
+    </changeSet>
+
+</databaseChangeLog>
