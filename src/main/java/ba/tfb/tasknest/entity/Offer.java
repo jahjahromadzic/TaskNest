@@ -2,6 +2,7 @@ package ba.tfb.tasknest.entity;
 
 import ba.tfb.tasknest.entity.enums.OfferStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,6 +24,7 @@ public class Offer extends BaseEntity {
     @JoinColumn(name = "tasker_id", nullable = false)
     private User tasker;
 
+    @DecimalMin("0.00")
     @Column(name = "price", nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 

@@ -2,32 +2,28 @@ spring:
   application:
     name: TaskNest
 
+  profiles:
+    default: dev
+
   datasource:
-    url: jdbc:postgresql://localhost:5432/tasknest
-    username: tasknest
-    password: tasknest
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/tasknest}
+    username: ${DB_USERNAME:tasknest}
+    password: ${DB_PASSWORD:tasknest}
 
   jpa:
     hibernate:
       ddl-auto: validate
     open-in-view: false
-    properties:
-      hibernate:
-        format_sql: true
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
 
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: tasknest
-    password: tasknest
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:tasknest}
+    password: ${RABBITMQ_PASSWORD:tasknest}
 
   mail:
-    host: localhost
-    port: 1025
-
-logging:
-  level:
-    org.hibernate.SQL: debug
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}

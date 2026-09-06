@@ -13,5 +13,7 @@
     <include file="db/changelog/changes/006-reviews-notifications.xml"/>
     <include file="db/changelog/changes/007-auth-tokens.xml"/>
     <include file="db/changelog/changes/008-seed-data.xml"/>
+    <include file="db/changelog/changes/009-indexes.xml"/>
+    <include file="db/changelog/changes/010-check-constraints.xml"/>
 
 </databaseChangeLog>
