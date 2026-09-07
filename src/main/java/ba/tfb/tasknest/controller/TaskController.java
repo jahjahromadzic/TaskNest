@@ -7,6 +7,7 @@ import ba.tfb.tasknest.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +21,7 @@ public class TaskController {
     private final TaskService taskService;
 
     @PostMapping
+    @PreAuthorize("hasRole('CLIENT')")
     @ResponseStatus(HttpStatus.CREATED)
     public TaskResponse create(@Valid @RequestBody CreateTaskRequest request,
                                @AuthenticationPrincipal UserPrincipal principal) {
@@ -27,12 +29,14 @@ public class TaskController {
     }
 
     @PostMapping("/{id}/publish")
+    @PreAuthorize("hasRole('CLIENT')")
     public TaskResponse publish(@PathVariable UUID id,
                                 @AuthenticationPrincipal UserPrincipal principal) {
         return taskService.publishTask(id, principal.getId());
     }
 
     @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('CLIENT')")
     public TaskResponse cancel(@PathVariable UUID id,
                                @AuthenticationPrincipal UserPrincipal principal) {
         return taskService.cancelTask(id, principal.getId());

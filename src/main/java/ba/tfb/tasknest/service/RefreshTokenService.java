@@ -5,7 +5,7 @@ import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.repository.RefreshTokenRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.BadCredentialsException;
+import ba.tfb.tasknest.exception.InvalidRefreshTokenException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -73,14 +73,14 @@ public class RefreshTokenService {
     @Transactional
     public RefreshToken validateAndRotate(String tokenValue) {
         RefreshToken existing = refreshTokenRepository.findByToken(tokenValue)
-                .orElseThrow(() -> new BadCredentialsException("Invalid refresh token"));
+                .orElseThrow(() -> new InvalidRefreshTokenException("Invalid refresh token"));
 
         if (existing.getRevokedAt() != null) {
             handleReuse(existing);
         }
 
         if (existing.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new BadCredentialsException("Refresh token has expired");
+            throw new InvalidRefreshTokenException("Refresh token has expired");
         }
 
         existing.setRevokedAt(LocalDateTime.now());
@@ -120,7 +120,7 @@ public class RefreshTokenService {
         inNewTransaction.executeWithoutResult(status ->
                 refreshTokenRepository.revokeAllByUser(userId, LocalDateTime.now()));
 
-        throw new BadCredentialsException("Refresh token has already been used");
+        throw new InvalidRefreshTokenException("Refresh token has already been used");
     }
 
     private String generateTokenValue() {

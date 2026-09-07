@@ -7,6 +7,7 @@ import ba.tfb.tasknest.service.OfferService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,7 @@ public class OfferController {
     private final OfferService offerService;
 
     @PostMapping("/tasks/{taskId}/offers")
+    @PreAuthorize("hasRole('TASKER')")
     @ResponseStatus(HttpStatus.CREATED)
     public OfferResponse submit(@PathVariable UUID taskId,
                                 @Valid @RequestBody CreateOfferRequest request,
@@ -35,18 +37,21 @@ public class OfferController {
     }
 
     @PostMapping("/offers/{offerId}/accept")
+    @PreAuthorize("hasRole('CLIENT')")
     public OfferResponse accept(@PathVariable UUID offerId,
                                 @AuthenticationPrincipal UserPrincipal principal) {
         return offerService.acceptOffer(offerId, principal.getId());
     }
 
     @PostMapping("/offers/{offerId}/withdraw")
+    @PreAuthorize("hasRole('TASKER')")
     public OfferResponse withdraw(@PathVariable UUID offerId,
                                   @AuthenticationPrincipal UserPrincipal principal) {
         return offerService.withdrawOffer(offerId, principal.getId());
     }
 
     @GetMapping("/offers/mine")
+    @PreAuthorize("hasRole('TASKER')")
     public List<OfferResponse> mine(@AuthenticationPrincipal UserPrincipal principal) {
         return offerService.getMyOffers(principal.getId());
     }

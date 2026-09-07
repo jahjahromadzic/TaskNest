@@ -1,10 +1,11 @@
 package ba.tfb.tasknest.config;
 
 import ba.tfb.tasknest.security.JwtAuthenticationFilter;
+import ba.tfb.tasknest.security.ProblemDetailAccessDeniedHandler;
+import ba.tfb.tasknest.security.ProblemDetailAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,7 +14,6 @@ import org.springframework.security.core.userdetails.UserDetailsChecker;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -41,7 +41,9 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           JwtAuthenticationFilter jwtAuthenticationFilter)
+                                           JwtAuthenticationFilter jwtAuthenticationFilter,
+                                           ProblemDetailAuthenticationEntryPoint entryPoint,
+                                           ProblemDetailAccessDeniedHandler accessDeniedHandler)
             throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
@@ -59,6 +61,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/municipalities/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
+                        // sendError() radi interni forward na /error, koji ponovo prolazi
+                        // kroz ovaj lanac - ali bez Authorization headera, pa bude anoniman.
+                        // Da /error nije javan, entry point bi pregazio svaki 403 u 401.
+                        .requestMatchers("/error").permitAll()
                         // Springdoc koristi vise putanja: swagger-ui.html preusmjerava
                         // na /swagger-ui/index.html, a stranica onda povlaci definiciju
                         // sa /v3/api-docs. Sve moraju biti javne.
@@ -70,11 +76,13 @@ public class SecurityConfig {
                                 "/v3/api-docs.yaml"
                         ).permitAll()
                         .anyRequest().authenticated())
-                // Bez ovoga Spring koristi Http403ForbiddenEntryPoint, pa neprijavljen
-                // zahtjev dobije 403. Za JWT API je 401 tacan odgovor - klijent po
-                // njemu zna da treba da se prijavi, dok 403 znaci "prijavljen, ali ne smijes".
+                // Dva razlicita ishoda, dva razlicita handlera:
+                //   neautentikovan          -> 401, klijent salje na login
+                //   autentikovan bez prava  -> 403, klijent prikazuje poruku
+                // Oba pisu ProblemDetail kroz isti resolver kao ostale greske.
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                        .authenticationEntryPoint(entryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);
 

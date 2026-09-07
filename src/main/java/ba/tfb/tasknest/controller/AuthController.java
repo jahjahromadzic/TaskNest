@@ -4,6 +4,7 @@ import ba.tfb.tasknest.dto.auth.AuthResponse;
 import ba.tfb.tasknest.dto.auth.LoginRequest;
 import ba.tfb.tasknest.dto.auth.RefreshTokenRequest;
 import ba.tfb.tasknest.dto.auth.RegisterRequest;
+import ba.tfb.tasknest.dto.auth.TaskerActivationResponse;
 import ba.tfb.tasknest.security.UserPrincipal;
 import ba.tfb.tasknest.service.AuthService;
 import jakarta.validation.Valid;
@@ -43,7 +44,7 @@ public class AuthController {
     }
 
     @PostMapping("/activate-tasker")
-    public AuthResponse activateTasker(@AuthenticationPrincipal UserPrincipal principal) {
+    public TaskerActivationResponse activateTasker(@AuthenticationPrincipal UserPrincipal principal) {
         return authService.activateTaskerRole(principal.getId());
     }
 }
