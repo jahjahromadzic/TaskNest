@@ -55,7 +55,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/municipalities/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // Springdoc koristi vise putanja: swagger-ui.html preusmjerava
+                        // na /swagger-ui/index.html, a stranica onda povlaci definiciju
+                        // sa /v3/api-docs. Sve moraju biti javne.
+                        .requestMatchers(
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml"
+                        ).permitAll()
                         .anyRequest().authenticated())
                 // Bez ovoga Spring koristi Http403ForbiddenEntryPoint, pa neprijavljen
                 // zahtjev dobije 403. Za JWT API je 401 tacan odgovor - klijent po
