@@ -4,10 +4,12 @@ import ba.tfb.tasknest.dto.auth.AuthResponse;
 import ba.tfb.tasknest.dto.auth.LoginRequest;
 import ba.tfb.tasknest.dto.auth.RefreshTokenRequest;
 import ba.tfb.tasknest.dto.auth.RegisterRequest;
+import ba.tfb.tasknest.security.UserPrincipal;
 import ba.tfb.tasknest.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -38,5 +40,10 @@ public class AuthController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(@Valid @RequestBody RefreshTokenRequest request) {
         authService.logout(request.refreshToken());
+    }
+
+    @PostMapping("/activate-tasker")
+    public AuthResponse activateTasker(@AuthenticationPrincipal UserPrincipal principal) {
+        return authService.activateTaskerRole(principal.getId());
     }
 }
