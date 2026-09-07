@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.BadCredentialsException;
+import ba.tfb.tasknest.exception.InvalidRefreshTokenException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -83,7 +83,7 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
         AuthResponse initial = register("rotated@test.ba");
         authService.refresh(initial.refreshToken());
 
-        assertThrows(BadCredentialsException.class,
+        assertThrows(InvalidRefreshTokenException.class,
                 () -> authService.refresh(initial.refreshToken()),
                 "the consumed refresh token must be rejected");
     }
@@ -95,11 +95,11 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
         AuthResponse current = authService.refresh(initial.refreshToken());
 
         // Stari token stize ponovo - tretira se kao moguca krada.
-        assertThrows(BadCredentialsException.class,
+        assertThrows(InvalidRefreshTokenException.class,
                 () -> authService.refresh(initial.refreshToken()));
 
         // Posljedica odluke iz handleReuse: i tekuci, do maloprije ispravan token je mrtav.
-        assertThrows(BadCredentialsException.class,
+        assertThrows(InvalidRefreshTokenException.class,
                 () -> authService.refresh(current.refreshToken()),
                 "reuse detection must invalidate the whole family, not just the replayed token");
 
@@ -120,7 +120,7 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
         stored.setExpiresAt(LocalDateTime.now().minusMinutes(1));
         refreshTokenRepository.saveAndFlush(stored);
 
-        assertThrows(BadCredentialsException.class,
+        assertThrows(InvalidRefreshTokenException.class,
                 () -> authService.refresh(initial.refreshToken()));
     }
 
@@ -130,14 +130,14 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
         AuthResponse initial = register("revoked.refresh@test.ba");
         authService.logout(initial.refreshToken());
 
-        assertThrows(BadCredentialsException.class,
+        assertThrows(InvalidRefreshTokenException.class,
                 () -> authService.refresh(initial.refreshToken()));
     }
 
     @Test
     @DisplayName("An unknown refresh token is rejected")
     void unknownRefreshTokenIsRejected() {
-        assertThrows(BadCredentialsException.class,
+        assertThrows(InvalidRefreshTokenException.class,
                 () -> authService.refresh("this-token-was-never-issued"));
     }
 
@@ -168,7 +168,7 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
     void accessTokenIsNotAcceptedAsRefreshToken() {
         AuthResponse initial = register("access.as.refresh@test.ba");
 
-        assertThrows(BadCredentialsException.class,
+        assertThrows(InvalidRefreshTokenException.class,
                 () -> authService.refresh(initial.token()),
                 "an access JWT is not stored in refresh_tokens and must not be exchangeable");
     }

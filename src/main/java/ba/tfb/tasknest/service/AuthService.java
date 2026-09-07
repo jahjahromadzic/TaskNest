@@ -3,6 +3,7 @@ package ba.tfb.tasknest.service;
 import ba.tfb.tasknest.dto.auth.AuthResponse;
 import ba.tfb.tasknest.dto.auth.LoginRequest;
 import ba.tfb.tasknest.dto.auth.RegisterRequest;
+import ba.tfb.tasknest.dto.auth.TaskerActivationResponse;
 import ba.tfb.tasknest.entity.RefreshToken;
 import ba.tfb.tasknest.entity.Role;
 import ba.tfb.tasknest.entity.TaskerProfile;
@@ -145,7 +146,7 @@ public class AuthService {
     }
 
     @Transactional
-    public AuthResponse activateTaskerRole(UUID userId) {
+    public TaskerActivationResponse activateTaskerRole(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
@@ -167,6 +168,13 @@ public class AuthService {
         profile.setVerified(false);
         taskerProfileRepository.save(profile);
 
-        return buildResponse(UserPrincipal.withoutCredentials(user), user);
+        // Namjerno bez novog para tokena: role se citaju iz baze na svaki zahtjev,
+        // pa postojeci access token vec od sljedeceg poziva nosi i TASKER rolu.
+        // Izdavanje novog refresh tokena bi ovdje samo gomilalo redove.
+        return new TaskerActivationResponse(
+                user.getId(),
+                profile.getId(),
+                user.getRoles().stream().map(role -> role.getName().name()).toList()
+        );
     }
 }
