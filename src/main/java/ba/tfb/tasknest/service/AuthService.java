@@ -3,6 +3,7 @@ package ba.tfb.tasknest.service;
 import ba.tfb.tasknest.dto.auth.AuthResponse;
 import ba.tfb.tasknest.dto.auth.LoginRequest;
 import ba.tfb.tasknest.dto.auth.RegisterRequest;
+import ba.tfb.tasknest.entity.RefreshToken;
 import ba.tfb.tasknest.entity.Role;
 import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.AccountStatus;
@@ -31,6 +32,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final UserDetailsChecker accountStatusChecker;
+    private final RefreshTokenService refreshTokenService;
 
     /**
      * Registers a new account. Every account starts as a client;
@@ -70,7 +72,9 @@ public class AuthService {
         }
     }
 
-    @Transactional(readOnly = true)
+    // Vise nije readOnly: login sada upisuje refresh token, a u read-only
+    // transakciji Hibernate radi u FlushMode.MANUAL pa bi insert tiho izostao.
+    @Transactional
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(normalizeEmail(request.email()))
                 .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
@@ -88,14 +92,44 @@ public class AuthService {
         return buildResponse(principal, user);
     }
 
+    /**
+     * Mijenja refresh token za novi par tokena. Stari se pri tome opoziva
+     * (rotacija) - vidi {@link RefreshTokenService#validateAndRotate(String)}.
+     */
+    @Transactional
+    public AuthResponse refresh(String refreshTokenValue) {
+        RefreshToken rotated = refreshTokenService.validateAndRotate(refreshTokenValue);
+        User user = rotated.getUser();
+
+        UserPrincipal principal = UserPrincipal.withCredentials(user);
+
+        // Status se provjerava i ovdje, ne samo pri loginu: refresh token zivi
+        // danima, pa suspenzija u medjuvremenu mora sprijeciti novi access token.
+        accountStatusChecker.check(principal);
+
+        return buildResponse(principal, user, rotated.getToken());
+    }
+
+    /** Opoziv umjesto brisanja - red ostaje kao audit trag. */
+    @Transactional
+    public void logout(String refreshTokenValue) {
+        refreshTokenService.revoke(refreshTokenValue);
+    }
+
     /** Locale.ROOT, ne podrazumijevani - u turskom "I" ne prelazi u "i". */
     private String normalizeEmail(String email) {
         return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
     }
 
     private AuthResponse buildResponse(UserPrincipal principal, User user) {
+        return buildResponse(principal, user, refreshTokenService.issue(user).getToken());
+    }
+
+    private AuthResponse buildResponse(UserPrincipal principal, User user, String refreshToken) {
         return new AuthResponse(
                 jwtService.generateToken(principal),
+                refreshToken,
+                jwtService.getAccessTokenExpirySeconds(),
                 user.getId(),
                 user.getEmail(),
                 user.getFirstName() + " " + user.getLastName(),

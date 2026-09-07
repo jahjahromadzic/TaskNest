@@ -41,6 +41,11 @@ public class JwtService {
         this.expirationMinutes = expirationMinutes;
     }
 
+    /** Koliko sekundi vrijedi access token - klijent po tome zna kad da osvjezi. */
+    public long getAccessTokenExpirySeconds() {
+        return expirationMinutes * 60;
+    }
+
     public String generateToken(UserPrincipal principal) {
         Instant now = Instant.now();
 
