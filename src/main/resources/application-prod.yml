@@ -1,3 +1,10 @@
+app:
+  jwt:
+    # Bez podrazumijevane vrijednosti: ako JWT_SECRET nije postavljen, placeholder
+    # se ne moze razrijesiti i aplikacija pada pri startu. To je namjerno - tise
+    # zlo bi bilo startovati s kljucem koji je javan u repozitoriju.
+    secret: ${JWT_SECRET}
+
 spring:
   jpa:
     properties:

@@ -1,3 +1,8 @@
+app:
+  jwt:
+    secret: test-only-signing-key-with-enough-length-for-hs256
+    expiration-minutes: 60
+
 spring:
   jpa:
     properties:

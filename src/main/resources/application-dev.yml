@@ -1,3 +1,9 @@
+app:
+  jwt:
+    # DEV-ONLY. Ova vrijednost je javna jer je u gitu - nikad je ne koristi izvan
+    # lokalnog razvoja. Prod uzima kljuc iskljucivo iz JWT_SECRET.
+    secret: ${JWT_SECRET:dev-only-insecure-signing-key-do-not-use-in-production}
+
 spring:
   jpa:
     properties:
