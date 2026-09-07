@@ -2,6 +2,8 @@ app:
   jwt:
     secret: test-only-signing-key-with-enough-length-for-hs256
     expiration-minutes: 60
+  refresh-token:
+    expiration-days: 30
 
 spring:
   jpa:

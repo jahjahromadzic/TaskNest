@@ -52,6 +52,10 @@ public class SecurityConfig {
                         // pod istim prefiksom ne postanu javni slucajno.
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        // Refresh i logout su javni jer je sam refresh token kredencijal:
+                        // access token je u trenutku osvjezavanja po pravilu vec istekao.
+                        .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/municipalities/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
