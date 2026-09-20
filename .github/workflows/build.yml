@@ -1,0 +1,42 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Novi push na istu granu otkazuje run koji je jos u toku - bez ovoga bi
+# se za pet push-eva zaredom trosilo pet punih runova.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          # Kesira ~/.m2, pa svaki run osim prvog preskace preuzimanje zavisnosti.
+          cache: maven
+
+      # verify, ne test: pored 132 testa pakuje i izvrsni jar, pa CI potvrdjuje
+      # i da je aplikacija uopste pakovljiva. Testcontainers radi bez dodatnog
+      # podesavanja jer ubuntu-latest runner ima Docker.
+      - name: Build and test
+        run: ./mvnw --batch-mode verify
+
+      # Kad testovi padnu, Mavenov izlaz u logu kaze koji je pao, ali surefire
+      # izvjestaji nose i pun stack trace.
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 7
