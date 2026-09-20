@@ -1,5 +1,6 @@
 package ba.tfb.tasknest.controller;
 
+import ba.tfb.tasknest.dto.common.PagedResponse;
 import ba.tfb.tasknest.dto.task.CreateTaskRequest;
 import ba.tfb.tasknest.dto.task.TaskResponse;
 import ba.tfb.tasknest.dto.task.TaskSummaryResponse;
@@ -7,7 +8,6 @@ import ba.tfb.tasknest.security.UserPrincipal;
 import ba.tfb.tasknest.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -51,12 +51,12 @@ public class TaskController {
      * Public listing. Only published tasks are returned.
      */
     @GetMapping
-    public Page<TaskSummaryResponse> browse(
+    public PagedResponse<TaskSummaryResponse> browse(
             @RequestParam(required = false) UUID categoryId,
             @RequestParam(required = false) UUID municipalityId,
             @PageableDefault(size = 20, sort = "publishedAt",
                     direction = Sort.Direction.DESC) Pageable pageable) {
-        return taskService.browseTasks(categoryId, municipalityId, pageable);
+        return PagedResponse.from(taskService.browseTasks(categoryId, municipalityId, pageable));
     }
 
     /**
@@ -64,11 +64,11 @@ public class TaskController {
      */
     @GetMapping("/matching")
     @PreAuthorize("hasRole('TASKER')")
-    public Page<TaskSummaryResponse> matching(
+    public PagedResponse<TaskSummaryResponse> matching(
             @AuthenticationPrincipal UserPrincipal principal,
             @PageableDefault(size = 20, sort = "publishedAt",
                     direction = Sort.Direction.DESC) Pageable pageable) {
-        return taskService.getMatchingTasks(principal.getId(), pageable);
+        return PagedResponse.from(taskService.getMatchingTasks(principal.getId(), pageable));
     }
 
     /**
@@ -76,11 +76,11 @@ public class TaskController {
      */
     @GetMapping("/mine")
     @PreAuthorize("hasRole('CLIENT')")
-    public Page<TaskSummaryResponse> mine(
+    public PagedResponse<TaskSummaryResponse> mine(
             @AuthenticationPrincipal UserPrincipal principal,
             @PageableDefault(size = 20, sort = "createdAt",
                     direction = Sort.Direction.DESC) Pageable pageable) {
-        return taskService.getMyTasks(principal.getId(), pageable);
+        return PagedResponse.from(taskService.getMyTasks(principal.getId(), pageable));
     }
 
     /**
@@ -88,11 +88,11 @@ public class TaskController {
      */
     @GetMapping("/assigned")
     @PreAuthorize("hasRole('TASKER')")
-    public Page<TaskSummaryResponse> assigned(
+    public PagedResponse<TaskSummaryResponse> assigned(
             @AuthenticationPrincipal UserPrincipal principal,
             @PageableDefault(size = 20, sort = "publishedAt",
                     direction = Sort.Direction.DESC) Pageable pageable) {
-        return taskService.getAssignedTasks(principal.getId(), pageable);
+        return PagedResponse.from(taskService.getAssignedTasks(principal.getId(), pageable));
     }
 
     /**

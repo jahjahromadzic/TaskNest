@@ -134,6 +134,48 @@ class TaskListingEndpointTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.size").value(50));
     }
 
+    // ---------- oblik paginiranog odgovora ----------
+
+    @Test
+    @DisplayName("A paged response exposes only the documented fields")
+    void browse_returnsStablePageShape() throws Exception {
+        mockMvc.perform(get("/api/tasks"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(20))
+                .andExpect(jsonPath("$.totalElements").isNumber())
+                .andExpect(jsonPath("$.totalPages").isNumber())
+                .andExpect(jsonPath("$.first").isBoolean())
+                .andExpect(jsonPath("$.last").isBoolean());
+    }
+
+    @Test
+    @DisplayName("Spring Data internals do not leak into the response")
+    void browse_doesNotLeakSpringDataInternals() throws Exception {
+        // Oblik Page-a nije dio Spring Datinog javnog ugovora; ako ova polja
+        // ponovo izadju, znaci da se negdje vraca Page umjesto PagedResponse.
+        mockMvc.perform(get("/api/tasks"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pageable").doesNotExist())
+                .andExpect(jsonPath("$.sort").doesNotExist())
+                .andExpect(jsonPath("$.numberOfElements").doesNotExist())
+                .andExpect(jsonPath("$.empty").doesNotExist())
+                .andExpect(jsonPath("$.number").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("Every paged endpoint uses the same shape")
+    void allPagedEndpoints_useTheSameShape() throws Exception {
+        AuthResponse client = register("shape.client@test.ba");
+        String token = client.token();
+
+        mockMvc.perform(get("/api/tasks/mine").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page").exists())
+                .andExpect(jsonPath("$.pageable").doesNotExist());
+    }
+
     // ---------- helpers ----------
 
     private AuthResponse register(String email) {
