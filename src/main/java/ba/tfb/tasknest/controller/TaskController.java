@@ -2,10 +2,15 @@ package ba.tfb.tasknest.controller;
 
 import ba.tfb.tasknest.dto.task.CreateTaskRequest;
 import ba.tfb.tasknest.dto.task.TaskResponse;
+import ba.tfb.tasknest.dto.task.TaskSummaryResponse;
 import ba.tfb.tasknest.security.UserPrincipal;
 import ba.tfb.tasknest.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -42,8 +47,63 @@ public class TaskController {
         return taskService.cancelTask(id, principal.getId());
     }
 
+    /**
+     * Public listing. Only published tasks are returned.
+     */
+    @GetMapping
+    public Page<TaskSummaryResponse> browse(
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) UUID municipalityId,
+            @PageableDefault(size = 20, sort = "publishedAt",
+                    direction = Sort.Direction.DESC) Pageable pageable) {
+        return taskService.browseTasks(categoryId, municipalityId, pageable);
+    }
+
+    /**
+     * Tasks in the categories and municipalities this tasker covers.
+     */
+    @GetMapping("/matching")
+    @PreAuthorize("hasRole('TASKER')")
+    public Page<TaskSummaryResponse> matching(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PageableDefault(size = 20, sort = "publishedAt",
+                    direction = Sort.Direction.DESC) Pageable pageable) {
+        return taskService.getMatchingTasks(principal.getId(), pageable);
+    }
+
+    /**
+     * Everything the client posted, drafts included.
+     */
+    @GetMapping("/mine")
+    @PreAuthorize("hasRole('CLIENT')")
+    public Page<TaskSummaryResponse> mine(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PageableDefault(size = 20, sort = "createdAt",
+                    direction = Sort.Direction.DESC) Pageable pageable) {
+        return taskService.getMyTasks(principal.getId(), pageable);
+    }
+
+    /**
+     * Tasks this tasker was assigned through an accepted offer.
+     */
+    @GetMapping("/assigned")
+    @PreAuthorize("hasRole('TASKER')")
+    public Page<TaskSummaryResponse> assigned(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PageableDefault(size = 20, sort = "publishedAt",
+                    direction = Sort.Direction.DESC) Pageable pageable) {
+        return taskService.getAssignedTasks(principal.getId(), pageable);
+    }
+
+    /**
+     * Kept last on purpose: literal paths above must be matched before
+     * this one, otherwise "matching" or "mine" would be parsed as an id.
+     * principal is null for anonymous callers, which is allowed here.
+     */
     @GetMapping("/{id}")
-    public TaskResponse getOne(@PathVariable UUID id) {
-        return taskService.getTask(id);
+    public TaskResponse getOne(@PathVariable UUID id,
+                               @AuthenticationPrincipal UserPrincipal principal) {
+        UUID viewerId = principal != null ? principal.getId() : null;
+        return taskService.getTask(id, viewerId);
     }
 }

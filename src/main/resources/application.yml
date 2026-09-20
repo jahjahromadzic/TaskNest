@@ -18,6 +18,14 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
 
+  data:
+    web:
+      pageable:
+        default-page-size: 20
+        # Springov podrazumijevani maksimum je 2000, sto je previse za jednu
+        # stranu liste oglasa - size=100000 se inace tiho klampovao na 2000.
+        max-page-size: 50
+
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}

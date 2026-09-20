@@ -60,6 +60,19 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/municipalities/**").permitAll()
+                        // MORA prije /api/tasks/* - matcheri se evaluiraju po redu.
+                        // Inace ih wildcard propusti kao javne, pa @PreAuthorize
+                        // anonimnom korisniku vrati 403 ("nemas pravo") umjesto
+                        // 401 ("prijavi se"), po cemu klijent bira sta da uradi.
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/tasks/matching",
+                                "/api/tasks/mine",
+                                "/api/tasks/assigned").authenticated()
+                        // Javna lista oglasa i pojedinacni oglas. Jedna zvjezdica hvata
+                        // samo /api/tasks/{id}, ne i /api/tasks/{id}/offers - ponude
+                        // vidi samo vlasnik taska.
+                        .requestMatchers(HttpMethod.GET, "/api/tasks").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/tasks/*").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         // sendError() radi interni forward na /error, koji ponovo prolazi
                         // kroz ovaj lanac - ali bez Authorization headera, pa bude anoniman.

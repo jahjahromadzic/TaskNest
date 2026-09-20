@@ -3,6 +3,7 @@ package ba.tfb.tasknest.service;
 import ba.tfb.tasknest.domain.TaskStateMachine;
 import ba.tfb.tasknest.dto.task.CreateTaskRequest;
 import ba.tfb.tasknest.dto.task.TaskResponse;
+import ba.tfb.tasknest.dto.task.TaskSummaryResponse;
 import ba.tfb.tasknest.entity.Category;
 import ba.tfb.tasknest.entity.Municipality;
 import ba.tfb.tasknest.entity.Task;
@@ -16,10 +17,13 @@ import ba.tfb.tasknest.repository.MunicipalityRepository;
 import ba.tfb.tasknest.repository.TaskRepository;
 import ba.tfb.tasknest.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -27,6 +31,16 @@ import java.util.UUID;
 public class TaskService {
 
     private static final int PUBLICATION_VALIDITY_DAYS = 30;
+
+    /**
+     * Polja po kojima je dozvoljeno sortirati listu. Bijela lista, a ne bilo koje
+     * ime: Spring Data ubacuje ime u JPQL, pa nepoznato polje daje
+     * PropertyReferenceException i 500. Uz to, ovdje su samo polja koja su ili
+     * indeksirana ili jeftina za sortiranje - sortiranje po description-u nad
+     * velikom tabelom nije nesto sto klijent smije naruciti.
+     */
+    private static final Set<String> SORTABLE_FIELDS =
+            Set.of("publishedAt", "createdAt", "updatedAt", "expiresAt", "budget", "title", "status");
 
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
@@ -98,9 +112,15 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public TaskResponse getTask(UUID taskId) {
+    public TaskResponse getTask(UUID taskId, UUID viewerId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
+
+        if (task.getStatus() == TaskStatus.DRAFT
+                && !task.getClient().getId().equals(viewerId)) {
+            throw new ResourceNotFoundException("Task", taskId);
+        }
+
         return TaskResponse.from(task);
     }
 
@@ -113,5 +133,49 @@ public class TaskService {
         }
 
         return task;
+    }
+
+    /**
+     * Public listing. Only published tasks are visible to everyone.
+     */
+    @Transactional(readOnly = true)
+    public Page<TaskSummaryResponse> browseTasks(UUID categoryId,
+                                                 UUID municipalityId,
+                                                 Pageable pageable) {
+        requireSortableFields(pageable);
+        return taskRepository.findOpenTasks(TaskStatus.PUBLISHED, LocalDateTime.now(),
+                categoryId, municipalityId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TaskSummaryResponse> getMatchingTasks(UUID taskerId, Pageable pageable) {
+        requireSortableFields(pageable);
+        return taskRepository.findMatchingTasks(
+                taskerId, TaskStatus.PUBLISHED, LocalDateTime.now(), pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TaskSummaryResponse> getMyTasks(UUID clientId, Pageable pageable) {
+        requireSortableFields(pageable);
+        return taskRepository.findByClientId(clientId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TaskSummaryResponse> getAssignedTasks(UUID taskerId, Pageable pageable) {
+        requireSortableFields(pageable);
+        return taskRepository.findAssignedToTasker(taskerId, pageable);
+    }
+
+    /**
+     * Odbija nepoznato polje za sortiranje prije nego stigne do Spring Date.
+     * Bez ovoga ?sort=bilokako daje 500 umjesto 400.
+     */
+    private void requireSortableFields(Pageable pageable) {
+        pageable.getSort().forEach(order -> {
+            if (!SORTABLE_FIELDS.contains(order.getProperty())) {
+                throw new BusinessRuleException("Cannot sort by '" + order.getProperty()
+                        + "'. Sortable fields: " + SORTABLE_FIELDS.stream().sorted().toList());
+            }
+        });
     }
 }

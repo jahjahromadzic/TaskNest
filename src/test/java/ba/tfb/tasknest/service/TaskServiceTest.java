@@ -3,6 +3,7 @@ package ba.tfb.tasknest.service;
 import ba.tfb.tasknest.domain.InvalidTaskTransitionException;
 import ba.tfb.tasknest.dto.task.CreateTaskRequest;
 import ba.tfb.tasknest.dto.task.TaskResponse;
+import ba.tfb.tasknest.dto.task.TaskSummaryResponse;
 import ba.tfb.tasknest.entity.Category;
 import ba.tfb.tasknest.entity.Municipality;
 import ba.tfb.tasknest.entity.Task;
@@ -21,6 +22,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -30,6 +34,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -255,25 +261,123 @@ class TaskServiceTest {
             when(taskRepository.findById(TASK_ID)).thenReturn(Optional.empty());
 
             // Act + Assert
-            assertThatThrownBy(() -> taskService.getTask(TASK_ID))
+            assertThatThrownBy(() -> taskService.getTask(TASK_ID, CLIENT_ID))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("Task");
         }
 
         @Test
-        void getTask_returnsTask_whenTaskExists() {
+        void getTask_returnsTask_whenTaskIsPublished() {
             // Arrange
             Task task = aTask(TaskStatus.PUBLISHED, aClient());
             task.setId(TASK_ID);
             when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
 
-            // Act
-            TaskResponse response = taskService.getTask(TASK_ID);
+            // Act - javni oglas vidi i neprijavljen posjetilac
+            TaskResponse response = taskService.getTask(TASK_ID, null);
 
             // Assert
             assertThat(response.id()).isEqualTo(TASK_ID);
             assertThat(response.status()).isEqualTo(TaskStatus.PUBLISHED);
             assertThat(response.clientName()).isEqualTo("Amra Client");
+        }
+
+        @Test
+        void getTask_returnsDraft_whenViewerIsTheOwner() {
+            // Arrange
+            Task task = aTask(TaskStatus.DRAFT, aClient());
+            when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
+
+            // Act
+            TaskResponse response = taskService.getTask(TASK_ID, CLIENT_ID);
+
+            // Assert
+            assertThat(response.status()).isEqualTo(TaskStatus.DRAFT);
+        }
+
+        @Test
+        void getTask_throwsNotFound_whenDraftIsViewedByAnotherUser() {
+            // Arrange
+            Task task = aTask(TaskStatus.DRAFT, aClient());
+            when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
+
+            // Act + Assert - 404, ne 403: postojanje tudjeg nacrta se ne odaje
+            assertThatThrownBy(() -> taskService.getTask(TASK_ID, OTHER_USER_ID))
+                    .isInstanceOf(ResourceNotFoundException.class);
+        }
+
+        @Test
+        void getTask_throwsNotFound_whenDraftIsViewedAnonymously() {
+            // Arrange
+            Task task = aTask(TaskStatus.DRAFT, aClient());
+            when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
+
+            // Act + Assert - viewerId je null za neprijavljenog, ne smije proci
+            assertThatThrownBy(() -> taskService.getTask(TASK_ID, null))
+                    .isInstanceOf(ResourceNotFoundException.class);
+        }
+    }
+
+    @Nested
+    class Listings {
+
+        @Test
+        void browseTasks_throwsBusinessRule_whenSortFieldIsUnknown() {
+            // Arrange - nepoznato polje je ranije dolazilo do Spring Date i davalo 500
+
+            // Act + Assert
+            assertThatThrownBy(() -> taskService.browseTasks(null, null,
+                    PageRequest.of(0, 20, Sort.by("nemaOvogPolja"))))
+                    .isInstanceOf(BusinessRuleException.class)
+                    .hasMessageContaining("Cannot sort by 'nemaOvogPolja'")
+                    .hasMessageContaining("publishedAt");
+        }
+
+        @Test
+        void browseTasks_throwsBusinessRule_whenOneOfSeveralSortFieldsIsUnknown() {
+            // Arrange - prvo polje je ispravno, drugo nije
+
+            // Act + Assert
+            assertThatThrownBy(() -> taskService.browseTasks(null, null,
+                    PageRequest.of(0, 20, Sort.by("publishedAt").and(Sort.by("opis")))))
+                    .isInstanceOf(BusinessRuleException.class)
+                    .hasMessageContaining("opis");
+        }
+
+        @Test
+        void browseTasks_delegatesToRepository_whenSortFieldIsAllowed() {
+            // Arrange
+            PageRequest pageable = PageRequest.of(0, 20, Sort.by("budget"));
+            when(taskRepository.findOpenTasks(eq(TaskStatus.PUBLISHED), any(), isNull(), isNull(), eq(pageable)))
+                    .thenReturn(Page.empty());
+
+            // Act
+            Page<TaskSummaryResponse> page = taskService.browseTasks(null, null, pageable);
+
+            // Assert
+            assertThat(page).isEmpty();
+        }
+
+        @Test
+        void getMatchingTasks_throwsBusinessRule_whenSortFieldIsUnknown() {
+            // Act + Assert - provjera vazi na svim listajucim metodama, ne samo browse
+            assertThatThrownBy(() -> taskService.getMatchingTasks(CLIENT_ID,
+                    PageRequest.of(0, 20, Sort.by("drop table"))))
+                    .isInstanceOf(BusinessRuleException.class);
+        }
+
+        @Test
+        void getMyTasks_throwsBusinessRule_whenSortFieldIsUnknown() {
+            assertThatThrownBy(() -> taskService.getMyTasks(CLIENT_ID,
+                    PageRequest.of(0, 20, Sort.by("nesto"))))
+                    .isInstanceOf(BusinessRuleException.class);
+        }
+
+        @Test
+        void getAssignedTasks_throwsBusinessRule_whenSortFieldIsUnknown() {
+            assertThatThrownBy(() -> taskService.getAssignedTasks(CLIENT_ID,
+                    PageRequest.of(0, 20, Sort.by("nesto"))))
+                    .isInstanceOf(BusinessRuleException.class);
         }
     }
 
