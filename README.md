@@ -2,241 +2,293 @@
 
 ![build](https://github.com/jahjahromadzic/TaskNest/actions/workflows/build.yml/badge.svg)
 
-Marketplace za lokalne usluge. Klijent objavi oglas za posao, taskeri koji pokrivaju
-tu kategoriju i opštinu pošalju ponude, klijent prihvati jednu.
+A marketplace for local services. Clients post tasks, taskers submit offers, and
+clients accept one.
 
-Backend je Spring Boot REST API. Frontend (Angular) je u planu.
+This repository contains the backend REST API. An Angular frontend is planned.
 
----
+## Table of contents
 
-## Tehnologije
+- [Features](#features)
+- [Tech stack](#tech-stack)
+- [Getting started](#getting-started)
+- [Configuration](#configuration)
+- [API reference](#api-reference)
+- [Task lifecycle](#task-lifecycle)
+- [Testing](#testing)
+- [Project structure](#project-structure)
+- [Roadmap](#roadmap)
 
-| | |
+## Features
+
+- **Accounts and roles** — every account starts as a client and can activate the
+  tasker role from within the application.
+- **Authentication** — JWT access tokens with long-lived refresh tokens, token
+  rotation, and reuse detection. Account suspension takes effect immediately.
+- **Task management** — clients create, publish and cancel tasks. A state machine
+  governs the allowed transitions.
+- **Offers** — taskers submit offers on published tasks. When a client accepts
+  one, the task is assigned and the remaining offers are rejected automatically.
+- **Tasker coverage** — taskers select the categories and municipalities they
+  serve, which drives task matching.
+- **Task discovery** — a public listing with filters, a personalised feed of
+  matching tasks for taskers, and separate views for posted and assigned work.
+- **Reference data** — categories and municipalities exposed as public endpoints.
+
+## Tech stack
+
+| Layer | Technology |
 |---|---|
-| Java | 21 |
-| Spring Boot | 4.1.1 |
-| Baza | PostgreSQL 17 |
-| Migracije | Liquibase (32 changeseta, 16 tabela) |
-| ORM | Hibernate 7, `ddl-auto: validate` |
-| Sigurnost | Spring Security, JWT (jjwt 0.12.6) |
-| Dokumentacija | springdoc OpenAPI |
-| Testovi | JUnit 5, Mockito, AssertJ, Testcontainers |
+| Language | Java 21 |
+| Framework | Spring Boot 4.1.1 |
+| Database | PostgreSQL 17 |
+| Migrations | Liquibase (32 changesets, 16 tables) |
+| Persistence | Spring Data JPA, Hibernate 7 (`ddl-auto: validate`) |
+| Security | Spring Security, JWT (jjwt 0.12.6) |
+| Messaging | RabbitMQ |
+| Mail | Spring Mail, Mailpit for local development |
+| Documentation | springdoc OpenAPI |
+| Testing | JUnit 5, Mockito, AssertJ, Testcontainers |
+| Build | Maven |
+| CI | GitHub Actions |
 
----
+## Getting started
 
-## Pokretanje
+### Prerequisites
 
-Potrebni su **Java 21** i **Docker**.
+- Java 21
+- Docker
+
+### Run
+
+Start the infrastructure:
 
 ```bash
 docker compose up -d
 ```
 
-Diže Postgres (5432), RabbitMQ (5672, konzola 15672) i Mailpit (1025, web 8025).
+This starts PostgreSQL, RabbitMQ and Mailpit.
+
+Start the application:
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-Aplikacija sluša na `http://localhost:8080`. Liquibase sam kreira šemu i ubaci
-početne podatke (role, kategorije, opštine) pri prvom pokretanju.
+The API is available at `http://localhost:8080`. Liquibase creates the schema and
+seeds reference data on first run.
 
-| | |
+### Local endpoints
+
+| Service | URL |
 |---|---|
+| API | http://localhost:8080 |
 | Swagger UI | http://localhost:8080/swagger-ui.html |
-| OpenAPI JSON | http://localhost:8080/v3/api-docs |
-| Health | http://localhost:8080/actuator/health |
-| Mailpit (pregled mailova) | http://localhost:8025 |
+| OpenAPI specification | http://localhost:8080/v3/api-docs |
+| Health check | http://localhost:8080/actuator/health |
+| Mailpit web interface | http://localhost:8025 |
+| RabbitMQ management | http://localhost:15672 |
 
----
+### Ports
 
-## Konfiguracija
+| Service | Port |
+|---|---|
+| Application | 8080 |
+| PostgreSQL | 5432 |
+| RabbitMQ | 5672 (management 15672) |
+| Mailpit | 1025 (web 8025) |
 
-Podrazumijevani profil je `dev` i radi bez ijedne varijable okruženja.
+## Configuration
 
-| Varijabla | Default (dev) | Napomena |
+The default profile is `dev` and runs without any environment variables.
+
+| Variable | Default | Description |
 |---|---|---|
-| `DB_URL` | `jdbc:postgresql://localhost:5432/tasknest` | |
-| `DB_USERNAME` / `DB_PASSWORD` | `tasknest` / `tasknest` | |
-| `JWT_SECRET` | dev-only vrijednost | **u `prod` profilu obavezna** |
-| `JWT_EXPIRATION_MINUTES` | 60 | vijek access tokena |
-| `REFRESH_TOKEN_EXPIRATION_DAYS` | 30 | vijek refresh tokena |
+| `DB_URL` | `jdbc:postgresql://localhost:5432/tasknest` | JDBC connection string |
+| `DB_USERNAME` | `tasknest` | Database user |
+| `DB_PASSWORD` | `tasknest` | Database password |
+| `JWT_SECRET` | development value | HMAC signing key. Required in `prod` |
+| `JWT_EXPIRATION_MINUTES` | `60` | Access token lifetime |
+| `REFRESH_TOKEN_EXPIRATION_DAYS` | `30` | Refresh token lifetime |
+| `RABBITMQ_HOST` | `localhost` | |
+| `RABBITMQ_PORT` | `5672` | |
+| `MAIL_HOST` | `localhost` | |
+| `MAIL_PORT` | `1025` | |
 
-Profil `prod` namjerno **nema** podrazumijevanu vrijednost za `JWT_SECRET` — ako
-varijabla nije postavljena, aplikacija pada pri startu. Tiše zlo bilo bi startovati
-s ključem koji je javno u repozitoriju.
+### Profiles
+
+| Profile | Purpose |
+|---|---|
+| `dev` | Default. SQL logging enabled, development signing key |
+| `prod` | Requires `JWT_SECRET`; the application fails to start without it |
+| `test` | Used by the test suite with a Testcontainers database |
+
+Running with the production profile:
 
 ```bash
-JWT_SECRET=... ./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
+JWT_SECRET=<your-secret> ./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
 ```
 
----
+## API reference
 
-## API
+All endpoints are prefixed with `/api`. Authenticated requests use a bearer token:
 
-Autentikacija je Bearer JWT. Access token traje 60 minuta, refresh 30 dana.
+```
+Authorization: Bearer <access-token>
+```
 
-### Auth — `/api/auth`
+The interactive documentation is available at `/swagger-ui.html` while the
+application is running.
 
-| Metoda | Putanja | Pristup |
-|---|---|---|
-| POST | `/register` | javno |
-| POST | `/login` | javno |
-| POST | `/refresh` | javno (refresh token je kredencijal) |
-| POST | `/logout` | javno |
-| POST | `/activate-tasker` | prijavljen |
+### Authentication — `/api/auth`
 
-### Oglasi — `/api/tasks`
+| Method | Path | Access | Description |
+|---|---|---|---|
+| POST | `/register` | Public | Create an account and receive a token pair |
+| POST | `/login` | Public | Authenticate and receive a token pair |
+| POST | `/refresh` | Public | Exchange a refresh token for a new pair |
+| POST | `/logout` | Public | Revoke a refresh token |
+| POST | `/activate-tasker` | Authenticated | Activate the tasker role |
 
-| Metoda | Putanja | Pristup |
-|---|---|---|
-| GET | `/` | javno — lista, filteri `categoryId`, `municipalityId` |
-| GET | `/{id}` | javno (nacrt vidi samo vlasnik) |
-| POST | `/` | CLIENT |
-| POST | `/{id}/publish` | CLIENT |
-| POST | `/{id}/cancel` | CLIENT |
-| GET | `/mine` | CLIENT |
-| GET | `/matching` | TASKER — oglasi u njegovim kategorijama i opštinama |
-| GET | `/assigned` | TASKER — poslovi dobijeni prihvaćenom ponudom |
+### Tasks — `/api/tasks`
 
-### Ponude — `/api`
+| Method | Path | Access | Description |
+|---|---|---|---|
+| GET | `/` | Public | List published tasks. Filters: `categoryId`, `municipalityId` |
+| GET | `/{id}` | Public | Task details. Drafts are visible to the owner only |
+| POST | `/` | Client | Create a task as a draft |
+| POST | `/{id}/publish` | Client | Publish a draft |
+| POST | `/{id}/cancel` | Client | Cancel a task |
+| GET | `/mine` | Client | Tasks posted by the caller, drafts included |
+| GET | `/matching` | Tasker | Published tasks matching the caller's coverage |
+| GET | `/assigned` | Tasker | Tasks assigned to the caller |
 
-| Metoda | Putanja | Pristup |
-|---|---|---|
-| POST | `/tasks/{taskId}/offers` | TASKER |
-| GET | `/tasks/{taskId}/offers` | prijavljen, vlasnik oglasa |
-| POST | `/offers/{offerId}/accept` | CLIENT, vlasnik oglasa |
-| POST | `/offers/{offerId}/withdraw` | TASKER, vlasnik ponude |
-| GET | `/offers/mine` | TASKER |
+Listing endpoints accept `page`, `size` and `sort`. The maximum page size is 50.
+Sortable fields are `publishedAt`, `createdAt`, `updatedAt`, `expiresAt`,
+`budget`, `title` and `status`.
 
-### Profil taskera — `/api/tasker-profiles`
+### Offers — `/api`
 
-| Metoda | Putanja | Pristup |
-|---|---|---|
-| GET | `/me` | TASKER |
-| PUT | `/me` | TASKER |
-| PUT | `/me/categories` | TASKER — zamjenjuje pokrivenost |
-| PUT | `/me/municipalities` | TASKER — zamjenjuje pokrivenost |
-| GET | `/{id}` | prijavljen |
+| Method | Path | Access | Description |
+|---|---|---|---|
+| POST | `/tasks/{taskId}/offers` | Tasker | Submit an offer |
+| GET | `/tasks/{taskId}/offers` | Task owner | List offers received on a task |
+| POST | `/offers/{offerId}/accept` | Task owner | Accept an offer and assign the task |
+| POST | `/offers/{offerId}/withdraw` | Offer owner | Withdraw a pending offer |
+| GET | `/offers/mine` | Tasker | Offers submitted by the caller |
 
-### Šifarnici — `/api`
+### Tasker profiles — `/api/tasker-profiles`
 
-| Metoda | Putanja | Pristup |
-|---|---|---|
-| GET | `/categories` | javno |
-| GET | `/municipalities` | javno |
+| Method | Path | Access | Description |
+|---|---|---|---|
+| GET | `/me` | Tasker | Own profile |
+| PUT | `/me` | Tasker | Update headline and bio |
+| PUT | `/me/categories` | Tasker | Replace the covered categories |
+| PUT | `/me/municipalities` | Tasker | Replace the covered municipalities |
+| GET | `/{id}` | Authenticated | Public view of a tasker profile |
 
-Sve greške vraćaju `application/problem+json` ([RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807)):
+### Reference data — `/api`
+
+| Method | Path | Access | Description |
+|---|---|---|---|
+| GET | `/categories` | Public | Active service categories |
+| GET | `/municipalities` | Public | Municipalities, ordered by name |
+
+### Error responses
+
+Errors are returned as `application/problem+json`
+([RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807)):
 
 ```json
 {
   "title": "Bad Request",
   "status": 400,
   "detail": "Offers can only be submitted on published tasks",
-  "instance": "/api/tasks/ac140a03-.../offers"
+  "instance": "/api/tasks/ac140a03-a07d-1259-81a0-7da2766a0004/offers"
 }
 ```
 
----
+| Status | Meaning |
+|---|---|
+| 400 | Validation error or business rule violation |
+| 401 | Missing, invalid or expired token |
+| 403 | Authenticated but not permitted, or account not active |
+| 404 | Resource does not exist or is not visible to the caller |
+| 409 | Invalid state transition or concurrent modification |
 
-## Arhitektura
+## Task lifecycle
 
-```
-controller/   REST, @PreAuthorize provjera role
-service/      poslovna pravila, provjera vlasništva, transakcije
-domain/       TaskStateMachine — čista logika, bez Springa
-repository/   Spring Data JPA + JPQL projekcije
-entity/       JPA entiteti, mapirani na Liquibase šemu
-dto/          request/response recordi
-exception/    tipizovani izuzeci + GlobalExceptionHandler
-security/     JWT filter, UserPrincipal, ProblemDetail handleri
-```
+| State | Meaning |
+|---|---|
+| `DRAFT` | Created but not yet visible to taskers |
+| `PUBLISHED` | Open for offers |
+| `ASSIGNED` | An offer was accepted |
+| `IN_PROGRESS` | Work has started |
+| `COMPLETED` | Work finished |
+| `CLOSED` | Finalised after completion |
+| `CANCELLED` | Withdrawn by the client |
+| `EXPIRED` | Publication window elapsed without assignment |
+| `REMOVED` | Taken down by an administrator |
 
-### Odluke koje vrijedi znati
+Allowed transitions:
 
-**Šema je izvor istine, ne entiteti.** Liquibase definiše strukturu, `ddl-auto: validate`
-znači da aplikacija ne startuje ako se entitet i tabela raziđu. Indeksi su birani po
-stvarnim pristupnim putevima, ne paušalno, a `CHECK` ograničenja (`rating BETWEEN 1 AND 5`,
-`price >= 0`) čuvaju bazu i kad kod pogriješi.
+| From | To |
+|---|---|
+| `DRAFT` | `PUBLISHED`, `CANCELLED` |
+| `PUBLISHED` | `ASSIGNED`, `EXPIRED`, `CANCELLED`, `REMOVED` |
+| `ASSIGNED` | `IN_PROGRESS`, `CANCELLED`, `REMOVED` |
+| `IN_PROGRESS` | `COMPLETED`, `CANCELLED` |
+| `COMPLETED` | `CLOSED` |
+| `CLOSED`, `CANCELLED`, `EXPIRED`, `REMOVED` | terminal, no further transitions |
 
-**Životni ciklus oglasa je state machine.** `TaskStateMachine` je statička, čista
-klasa — 9 stanja i dozvoljeni prelazi, bez Springa, testirana u izolaciji. Servisi
-nikad ne postavljaju status bez provjere prelaza.
+Any other transition is rejected with `409 Conflict`.
 
-**Prihvatanje ponude je zaštićeno od konkurentnosti.** `@Version` na `Task` i `Offer`
-plus namjeran redoslijed upisa: task se upisuje i flushuje **prije** ijedne ponude.
-Bez toga su dvije paralelne transakcije zaključavale redove u `offers` ukršteno i
-Postgres je javljao deadlock umjesto konflikta verzija. `OfferConcurrencyTest` to
-dokazuje — tvrdi tip izuzetka i eksplicitno odbija deadlock.
-
-**Refresh tokeni se rotiraju.** Svaka upotreba troši token i vraća novi. Ako već
-iskorišten token stigne ponovo, to je moguća krađa i **svi** tokeni tog korisnika se
-opozivaju (preporuka OAuth 2.0 Security BCP-a). Opoziv ide u zasebnoj transakciji,
-jer bi se inače rollbackovao zajedno s izuzetkom koji odbija zahtjev.
-
-**Liste ne učitavaju entitete.** Matching i listanje koriste JPQL projekcije
-(`TaskSummaryResponse`, `TaskNotificationTarget`) — jedan upit umjesto N+1 kroz lazy
-veze. Sortiranje je ograničeno bijelom listom polja, veličina strane na 50.
-
-**Autorizacija je na dva sloja.** Rola se provjerava na kontroleru (`@PreAuthorize`),
-vlasništvo u servisu — jer će servise zvati i RabbitMQ listener i scheduler, bez
-`SecurityContext`-a. Status naloga se provjerava i pri prijavi i na **svakom** zahtjevu
-kroz JWT filter, da suspenzija djeluje odmah, a ne po isteku tokena.
-
----
-
-## Testovi
+## Testing
 
 ```bash
 ./mvnw verify
 ```
 
-**132 testa**, bez ručne pripreme — Testcontainers sam diže Postgres.
+The suite contains **132 tests** and requires no manual setup — Testcontainers
+starts a PostgreSQL instance automatically.
 
-| Vrsta | Broj | Šta pokriva |
+| Type | Count | Scope |
 |---|---|---|
-| Unit (Mockito) | 67 | poslovna pravila servisa, state machine |
-| Integracioni (Testcontainers) | 65 | auth tok, autorizacija, konkurentnost, JPQL upiti |
+| Unit | 67 | Service business rules and the task state machine |
+| Integration | 65 | Authentication, authorisation, concurrency, JPQL queries |
 
-Nekoliko testova postoji zbog konkretnih bugova i namjerno bi pao ako se
-regresija vrati: deadlock pri paralelnom prihvatanju ponuda, ponovna upotreba
-refresh tokena, 401 vs 403 za neprijavljenog korisnika, istekao oglas u javnoj
-listi, deaktivirana kategorija u matchingu.
+GitHub Actions runs the same command on every push and pull request.
 
-CI vrti isti `verify` iz svježeg klona na svaki push.
+## Project structure
 
----
+```
+src/main/java/ba/tfb/tasknest/
+├── config/         Security and OpenAPI configuration
+├── controller/     REST controllers
+├── domain/         Task state machine
+├── dto/            Request and response records
+├── entity/         JPA entities and enums
+├── exception/      Application exceptions and the global handler
+├── repository/     Spring Data repositories and query projections
+├── security/       JWT filter, principal, authentication entry points
+└── service/        Business logic
+
+src/main/resources/
+├── db/changelog/   Liquibase migrations
+└── application*.yml
+```
 
 ## Roadmap
 
-Urađeno: šema i entiteti, kompletan auth (JWT, refresh s rotacijom, role, status
-naloga), oglasi i ponude sa state machine i optimistic lockingom, profil taskera s
-pokrivenošću, listanje i matching, OpenAPI, CI.
-
-Predstoji:
-
-- [ ] RabbitMQ notifikacije (objava oglasa → taskeri koji ga pokrivaju)
-- [ ] Scheduler koji istekle oglase prebacuje u `EXPIRED`
-- [ ] Chat: `Conversation`, `Message`, WebSocket
-- [ ] Ocjene (`Review`) i prosječna ocjena taskera
-- [ ] Admin: uklanjanje neprikladnih oglasa, verifikacija taskera
-- [ ] Verifikacija emaila, reset lozinke, rate limiting
+- [ ] RabbitMQ notification pipeline
+- [ ] Scheduled expiry of published tasks
+- [ ] Messaging between client and tasker over WebSocket
+- [ ] Reviews and tasker ratings
+- [ ] Administration: task moderation and tasker verification
+- [ ] Email verification, password reset, rate limiting
 - [ ] Angular frontend
-- [ ] Dockerfile za aplikaciju
+- [ ] Application Dockerfile
 
-Poznata ograničenja u trenutnom stanju:
+## License
 
-- `TaskResponse` i `OfferResponse` se grade iz entiteta i diraju lazy veze — za
-  pojedinačne endpointe je to prihvatljivo, liste već koriste projekcije
-- `Page` se serijalizuje u Springovom obliku, koji Spring Data označava kao
-  nestabilan; oblik treba fiksirati prije nego se Angular veže na njega
-- `REMOVED` oglas je i dalje dostupan direktnim linkom — čeka admin tok koji
-  uopšte postavlja taj status
-- `averageRating` i `completedJobsCount` na profilu taskera su denormalizovani bez
-  definisanog mjesta ažuriranja — rješava se uz `Review`
-
----
-
-## Licenca
-
-Projekat je rađen u okviru softverske akademije.
+Developed as part of a software academy programme.
