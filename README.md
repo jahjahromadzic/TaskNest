@@ -165,7 +165,21 @@ application is running.
 
 Listing endpoints accept `page`, `size` and `sort`. The maximum page size is 50.
 Sortable fields are `publishedAt`, `createdAt`, `updatedAt`, `expiresAt`,
-`budget`, `title` and `status`.
+`budget`, `title` and `status`. An unsupported sort field returns `400`.
+
+Paged responses use the following shape:
+
+```json
+{
+  "content": [ ... ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 8,
+  "totalPages": 1,
+  "first": true,
+  "last": true
+}
+```
 
 ### Offers — `/api`
 
