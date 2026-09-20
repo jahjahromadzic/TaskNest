@@ -1,11 +1,14 @@
 package ba.tfb.tasknest.messaging;
 
 import ba.tfb.tasknest.config.RabbitConfig;
+import ba.tfb.tasknest.repository.projection.TaskerNotificationTarget;
 import ba.tfb.tasknest.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * Potrosac dogadjaja o objavi oglasa.
@@ -20,11 +23,17 @@ import org.springframework.stereotype.Component;
 public class TaskPublishedListener {
 
     private final NotificationService notificationService;
+    private final NewTaskMailer mailer;
 
     @RabbitListener(queues = RabbitConfig.TASK_PUBLISHED_QUEUE)
     public void onTaskPublished(TaskPublishedEvent event) {
         log.debug("Primljen TaskPublishedEvent za task {}", event.taskId());
 
-        notificationService.notifyTaskersAboutNewTask(event);
+        List<TaskerNotificationTarget> targets =
+                notificationService.notifyTaskersAboutNewTask(event);
+
+        // Mailovi tek nakon sto su notifikacije commitane, i izvan te transakcije:
+        // zapis u bazi je ono sto mora opstati, mail je najbolji pokusaj.
+        mailer.sendNewTaskEmails(targets, event);
     }
 }

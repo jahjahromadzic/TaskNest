@@ -4,6 +4,8 @@ app:
     expiration-minutes: 60
   refresh-token:
     expiration-days: 30
+  mail:
+    from: test@tasknest.ba
 
 spring:
   jpa:
