@@ -29,6 +29,9 @@ class TaskerMatchingIntegrationTest extends AbstractIntegrationTest {
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private MunicipalityRepository municipalityRepository;
 
+    /** Vlasnik oglasa koji nije nas tasker - da ga iskljucenje klijenta ne filtrira. */
+    private static final UUID SOME_OTHER_CLIENT = UUID.randomUUID();
+
     private Category category;
     private Municipality municipality;
     private User tasker;
@@ -74,7 +77,7 @@ class TaskerMatchingIntegrationTest extends AbstractIntegrationTest {
     void findNotificationTargets_returnsTasker_whenCoverageMatches() {
         // Act
         List<TaskerNotificationTarget> targets = taskerProfileRepository
-                .findNotificationTargets(category.getId(), municipality.getId());
+                .findNotificationTargets(category.getId(), municipality.getId(), SOME_OTHER_CLIENT);
 
         // Assert - projekcija nosi tacno ono sto notifikacija treba
         assertThat(targets).hasSize(1);
@@ -94,7 +97,7 @@ class TaskerMatchingIntegrationTest extends AbstractIntegrationTest {
 
         // Act
         List<TaskerNotificationTarget> targets = taskerProfileRepository
-                .findNotificationTargets(otherCategory.getId(), municipality.getId());
+                .findNotificationTargets(otherCategory.getId(), municipality.getId(), SOME_OTHER_CLIENT);
 
         // Assert
         assertThat(targets).isEmpty();
@@ -111,7 +114,7 @@ class TaskerMatchingIntegrationTest extends AbstractIntegrationTest {
 
         // Act
         List<TaskerNotificationTarget> targets = taskerProfileRepository
-                .findNotificationTargets(category.getId(), municipality.getId());
+                .findNotificationTargets(category.getId(), municipality.getId(), SOME_OTHER_CLIENT);
 
         // Assert - bez filtera u upitu notifikacije bi isle za ugasenu kategoriju
         assertThat(targets).isEmpty();
@@ -124,7 +127,7 @@ class TaskerMatchingIntegrationTest extends AbstractIntegrationTest {
         category.setActive(false);
         categoryRepository.saveAndFlush(category);
         assertThat(taskerProfileRepository
-                .findNotificationTargets(category.getId(), municipality.getId())).isEmpty();
+                .findNotificationTargets(category.getId(), municipality.getId(), SOME_OTHER_CLIENT)).isEmpty();
 
         // Act - admin se pokajao
         category.setActive(true);
@@ -133,7 +136,23 @@ class TaskerMatchingIntegrationTest extends AbstractIntegrationTest {
         // Assert - ovo je razlog zasto se filtrira u upitu, a ne cisti spojna
         // tabela: izbor taskera se nije izgubio, pa ga ne mora ponovo praviti.
         assertThat(taskerProfileRepository
-                .findNotificationTargets(category.getId(), municipality.getId()))
+                .findNotificationTargets(category.getId(), municipality.getId(), SOME_OTHER_CLIENT))
                 .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A tasker is not notified about a task they posted themselves")
+    void findNotificationTargets_excludesTheClient_whenTheyAreAlsoTheTasker() {
+        // Arrange - jedan nalog moze imati i CLIENT i TASKER rolu, pa vlasnik
+        // oglasa moze istovremeno biti tasker koji pokriva tu kategoriju i opstinu
+
+        // Act - oglas je objavio bas taj korisnik
+        List<TaskerNotificationTarget> targets = taskerProfileRepository
+                .findNotificationTargets(category.getId(), municipality.getId(), tasker.getId());
+
+        // Assert
+        assertThat(targets)
+                .as("niko ne treba notifikaciju o vlastitom oglasu")
+                .isEmpty();
     }
 }

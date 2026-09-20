@@ -19,13 +19,20 @@ import java.util.UUID;
 public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     /**
-     * Cita task uz OPTIMISTIC lock, tj. provjerava mu verziju na kraju transakcije
-     * i kad ga transakcija nije mijenjala. Koristi se tamo gdje se odluka donosi na
-     * osnovu stanja taska, a upisuje se u drugu tabelu - obican findById tu ne bi
-     * primijetio da je task u medjuvremenu promijenjen.
+     * Cita task uz dijeljeni lock na redu, za odluke koje se donose na osnovu
+     * stanja taska a upisuju u drugu tabelu.
+     * <p>
+     * OPTIMISTIC ovdje nije dovoljan: on samo procita verziju na kraju
+     * transakcije, pa ako paralelni acceptOffer jos nije commitao, procita se
+     * stara commitana verzija, provjera prodje i ponuda se upise na vec
+     * dodijeljen task. PESSIMISTIC_READ (SELECT ... FOR SHARE) blokira tudji
+     * UPDATE nad tim redom dok se ne commita.
+     * <p>
+     * Dijeljeni, ne ekskluzivni: dvije paralelne ponude na isti task se ne
+     * smetaju medjusobno - blokiraju se samo naspram prihvatanja ponude.
      */
-    @Lock(LockModeType.OPTIMISTIC)
-    Optional<Task> findWithOptimisticLockById(UUID id);
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    Optional<Task> findWithSharedLockById(UUID id);
 
     /** Kandidati za prelazak u EXPIRED - jedini pozivalac je scheduler koji tek dolazi. */
     List<Task> findByStatusAndExpiresAtBefore(TaskStatus status, LocalDateTime moment);

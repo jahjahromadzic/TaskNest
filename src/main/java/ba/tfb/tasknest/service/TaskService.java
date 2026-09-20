@@ -16,7 +16,9 @@ import ba.tfb.tasknest.repository.CategoryRepository;
 import ba.tfb.tasknest.repository.MunicipalityRepository;
 import ba.tfb.tasknest.repository.TaskRepository;
 import ba.tfb.tasknest.repository.UserRepository;
+import ba.tfb.tasknest.messaging.TaskPublishedEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -47,6 +49,7 @@ public class TaskService {
     private final CategoryRepository categoryRepository;
     private final MunicipalityRepository municipalityRepository;
     private final OfferService offerService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public TaskResponse createTask(UUID clientId, CreateTaskRequest request) {
@@ -85,6 +88,15 @@ public class TaskService {
         task.setStatus(TaskStatus.PUBLISHED);
         task.setPublishedAt(now);
         task.setExpiresAt(now.plusDays(PUBLICATION_VALIDITY_DAYS));
+
+        // Springov dogadjaj, ne direktno na RabbitMQ: TaskEventPublisher ga hvata
+        // tek nakon commita, pa se poruka ne salje za objavu koja se rollbackuje.
+        eventPublisher.publishEvent(new TaskPublishedEvent(
+                task.getId(),
+                task.getTitle(),
+                task.getCategory().getId(),
+                task.getMunicipality().getId(),
+                task.getClient().getId()));
 
         return TaskResponse.from(task);
     }

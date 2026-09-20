@@ -43,13 +43,13 @@ public class OfferService {
 
     @Transactional
     public OfferResponse submitOffer(UUID taskId, UUID taskerId, CreateOfferRequest request) {
-        // OPTIMISTIC lock, a ne obican findById: odluka se donosi na osnovu stanja
-        // taska, ali se upisuje u offers, pa task ostaje neizmijenjen i njegova
-        // verzija se inace ne bi provjeravala. Bez ovoga paralelni acceptOffer moze
-        // prebaciti task u ASSIGNED izmedju ove provjere i naseg commita, i ponuda
-        // bi ostala viseci u PENDING na dodijeljenom tasku. Ovako druga transakcija
-        // dobije OptimisticLockException.
-        Task task = taskRepository.findWithOptimisticLockById(taskId)
+        // Dijeljeni lock na redu, ne obican findById i ne OPTIMISTIC: odluka se
+        // donosi na osnovu stanja taska, a upisuje se u offers. OPTIMISTIC je
+        // ovdje propustao - samo procita verziju na kraju transakcije, pa dok
+        // paralelni acceptOffer nije commitao, procitala bi se stara verzija,
+        // provjera bi prosla i ponuda bi ostala viseci u PENDING na vec
+        // dodijeljenom tasku. FOR SHARE blokira taj UPDATE dok mi ne zavrsimo.
+        Task task = taskRepository.findWithSharedLockById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
 
         if (task.getStatus() != TaskStatus.PUBLISHED) {

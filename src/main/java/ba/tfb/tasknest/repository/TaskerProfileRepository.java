@@ -25,6 +25,10 @@ public interface TaskerProfileRepository extends JpaRepository<TaskerProfile, UU
      * pri deaktivaciji kategorije: red u tasker_categories ostaje, pa ponovna
      * aktivacija kategorije sama vraca prethodni izbor taskera. Ciscenjem bi se
      * izbor nepovratno izgubio na jedan admin klik.
+     * <p>
+     * Vlasnik oglasa se iskljucuje: jedan nalog moze imati i CLIENT i TASKER
+     * rolu, pa bi inace dobio notifikaciju o vlastitom oglasu. Ogledalo uslova
+     * {@code t.client.id <> :taskerId} u TaskRepository.findMatchingTasks.
      */
     @Query("""
             select distinct new ba.tfb.tasknest.repository.projection.TaskerNotificationTarget(
@@ -38,7 +42,9 @@ public interface TaskerProfileRepository extends JpaRepository<TaskerProfile, UU
             where c.id = :categoryId
               and c.active = true
               and m.id = :municipalityId
+              and u.id <> :clientId
             """)
     List<TaskerNotificationTarget> findNotificationTargets(@Param("categoryId") UUID categoryId,
-                                                           @Param("municipalityId") UUID municipalityId);
+                                                           @Param("municipalityId") UUID municipalityId,
+                                                           @Param("clientId") UUID clientId);
 }

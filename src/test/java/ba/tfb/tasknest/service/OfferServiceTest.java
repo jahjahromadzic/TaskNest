@@ -66,7 +66,7 @@ class OfferServiceTest {
         void submitOffer_throwsBusinessRule_whenTaskIsNotPublished() {
             // Arrange
             Task task = aTask(TaskStatus.DRAFT);
-            when(taskRepository.findWithOptimisticLockById(TASK_ID)).thenReturn(Optional.of(task));
+            when(taskRepository.findWithSharedLockById(TASK_ID)).thenReturn(Optional.of(task));
 
             // Act + Assert
             assertThatThrownBy(() -> offerService.submitOffer(TASK_ID, TASKER_ID, aRequest()))
@@ -79,7 +79,7 @@ class OfferServiceTest {
             // Arrange - status je jos PUBLISHED jer scheduler nije stigao
             Task task = aTask(TaskStatus.PUBLISHED);
             task.setExpiresAt(LocalDateTime.now().minusMinutes(1));
-            when(taskRepository.findWithOptimisticLockById(TASK_ID)).thenReturn(Optional.of(task));
+            when(taskRepository.findWithSharedLockById(TASK_ID)).thenReturn(Optional.of(task));
 
             // Act + Assert
             assertThatThrownBy(() -> offerService.submitOffer(TASK_ID, TASKER_ID, aRequest()))
@@ -91,7 +91,7 @@ class OfferServiceTest {
         void submitOffer_throwsBusinessRule_whenUserOffersOnOwnTask() {
             // Arrange - isti korisnik moze imati i CLIENT i TASKER rolu
             Task task = aTask(TaskStatus.PUBLISHED);
-            when(taskRepository.findWithOptimisticLockById(TASK_ID)).thenReturn(Optional.of(task));
+            when(taskRepository.findWithSharedLockById(TASK_ID)).thenReturn(Optional.of(task));
 
             // Act + Assert
             assertThatThrownBy(() -> offerService.submitOffer(TASK_ID, CLIENT_ID, aRequest()))
@@ -103,7 +103,7 @@ class OfferServiceTest {
         void submitOffer_throwsNotFound_whenTaskerDoesNotExist() {
             // Arrange
             Task task = aTask(TaskStatus.PUBLISHED);
-            when(taskRepository.findWithOptimisticLockById(TASK_ID)).thenReturn(Optional.of(task));
+            when(taskRepository.findWithSharedLockById(TASK_ID)).thenReturn(Optional.of(task));
             when(userRepository.findById(TASKER_ID)).thenReturn(Optional.empty());
 
             // Act + Assert
@@ -117,7 +117,7 @@ class OfferServiceTest {
             // Arrange
             Task task = aTask(TaskStatus.PUBLISHED);
             User tasker = aTasker();
-            when(taskRepository.findWithOptimisticLockById(TASK_ID)).thenReturn(Optional.of(task));
+            when(taskRepository.findWithSharedLockById(TASK_ID)).thenReturn(Optional.of(task));
             when(userRepository.findById(TASKER_ID)).thenReturn(Optional.of(tasker));
             when(offerRepository.findByTaskAndTasker(task, tasker))
                     .thenReturn(Optional.of(anOffer(OFFER_ID, task, tasker, OfferStatus.PENDING)));
@@ -133,7 +133,7 @@ class OfferServiceTest {
             // Arrange - paralelan zahtjev je prosao provjeru, baza je odbila drugi upis
             Task task = aTask(TaskStatus.PUBLISHED);
             User tasker = aTasker();
-            when(taskRepository.findWithOptimisticLockById(TASK_ID)).thenReturn(Optional.of(task));
+            when(taskRepository.findWithSharedLockById(TASK_ID)).thenReturn(Optional.of(task));
             when(userRepository.findById(TASKER_ID)).thenReturn(Optional.of(tasker));
             when(offerRepository.findByTaskAndTasker(task, tasker)).thenReturn(Optional.empty());
             when(offerRepository.saveAndFlush(any(Offer.class)))
@@ -150,7 +150,7 @@ class OfferServiceTest {
             // Arrange
             Task task = aTask(TaskStatus.PUBLISHED);
             User tasker = aTasker();
-            when(taskRepository.findWithOptimisticLockById(TASK_ID)).thenReturn(Optional.of(task));
+            when(taskRepository.findWithSharedLockById(TASK_ID)).thenReturn(Optional.of(task));
             when(userRepository.findById(TASKER_ID)).thenReturn(Optional.of(tasker));
             when(offerRepository.findByTaskAndTasker(task, tasker)).thenReturn(Optional.empty());
             when(offerRepository.saveAndFlush(any(Offer.class))).thenAnswer(call -> call.getArgument(0));
