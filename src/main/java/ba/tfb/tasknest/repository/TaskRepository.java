@@ -34,7 +34,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Lock(LockModeType.PESSIMISTIC_READ)
     Optional<Task> findWithSharedLockById(UUID id);
 
-    /** Kandidati za prelazak u EXPIRED - jedini pozivalac je scheduler koji tek dolazi. */
+    /** Kandidati za prelazak u EXPIRED - poziva ih TaskExpirySchedule. */
     List<Task> findByStatusAndExpiresAtBefore(TaskStatus status, LocalDateTime moment);
 
     /**

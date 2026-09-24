@@ -5,5 +5,8 @@ public enum NotificationType {
     NEW_OFFER,
     OFFER_ACCEPTED,
     NEW_MESSAGE,
-    TASK_COMPLETED
+    TASK_STARTED,
+    TASK_COMPLETED,
+    TASK_CLOSED,
+    TASK_EXPIRED
 }

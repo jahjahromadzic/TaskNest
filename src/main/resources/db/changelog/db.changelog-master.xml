@@ -15,5 +15,6 @@
     <include file="db/changelog/changes/008-seed-data.xml"/>
     <include file="db/changelog/changes/009-indexes.xml"/>
     <include file="db/changelog/changes/010-check-constraints.xml"/>
+    <include file="db/changelog/changes/011-task-lifecycle.xml"/>
 
 </databaseChangeLog>

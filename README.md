@@ -15,6 +15,7 @@ This repository contains the backend REST API. An Angular frontend is planned.
 - [Configuration](#configuration)
 - [API reference](#api-reference)
 - [Task lifecycle](#task-lifecycle)
+- [Asynchronous processing](#asynchronous-processing)
 - [Testing](#testing)
 - [Project structure](#project-structure)
 - [Roadmap](#roadmap)
@@ -33,6 +34,12 @@ This repository contains the backend REST API. An Angular frontend is planned.
   serve, which drives task matching.
 - **Task discovery** — a public listing with filters, a personalised feed of
   matching tasks for taskers, and separate views for posted and assigned work.
+- **Work execution** — the tasker reports start and completion, the client
+  confirms and closes. Confirmed work raises the tasker's completed-job count.
+- **Notifications** — taskers are notified when a matching task is published and
+  clients when their task expires, asynchronously over RabbitMQ and by email.
+- **Scheduled expiry** — a scheduler closes published tasks once their deadline
+  passes.
 - **Reference data** — categories and municipalities exposed as public endpoints.
 
 ## Tech stack
@@ -114,6 +121,9 @@ The default profile is `dev` and runs without any environment variables.
 | `RABBITMQ_PORT` | `5672` | |
 | `MAIL_HOST` | `localhost` | |
 | `MAIL_PORT` | `1025` | |
+| `MAIL_FROM` | `noreply@tasknest.ba` | Sender address on notification emails |
+| `TASK_EXPIRY_ENABLED` | `true` | Set to `false` to disable the expiry scheduler |
+| `TASK_EXPIRY_INTERVAL_MS` | `60000` | Delay between two expiry passes |
 
 ### Profiles
 
@@ -159,6 +169,9 @@ application is running.
 | POST | `/` | Client | Create a task as a draft |
 | POST | `/{id}/publish` | Client | Publish a draft |
 | POST | `/{id}/cancel` | Client | Cancel a task |
+| POST | `/{id}/start` | Assigned tasker | Report that work has started |
+| POST | `/{id}/complete` | Assigned tasker | Report that work is finished |
+| POST | `/{id}/close` | Client | Confirm the finished work and close the task |
 | GET | `/mine` | Client | Tasks posted by the caller, drafts included |
 | GET | `/matching` | Tasker | Published tasks matching the caller's coverage |
 | GET | `/assigned` | Tasker | Tasks assigned to the caller |
@@ -207,6 +220,17 @@ Paged responses use the following shape:
 |---|---|---|---|
 | GET | `/categories` | Public | Active service categories |
 | GET | `/municipalities` | Public | Municipalities, ordered by name |
+
+### Notifications — `/api/notifications`
+
+| Method | Path | Access | Description |
+|---|---|---|---|
+| GET | `/` | Authenticated | The caller's notifications, newest first |
+| GET | `/unread-count` | Authenticated | Number of unread notifications: `{ "count": 3 }` |
+| POST | `/{id}/read` | Authenticated | Mark one notification as read |
+
+Notifications belong to their recipient: reading someone else's returns `403`.
+Marking an already-read notification again succeeds and changes nothing.
 
 ### Error responses
 
@@ -257,19 +281,75 @@ Allowed transitions:
 
 Any other transition is rejected with `409 Conflict`.
 
+### Work execution
+
+Once an offer is accepted, the task moves through execution in three steps:
+
+```
+ASSIGNED ──start──► IN_PROGRESS ──complete──► COMPLETED ──close──► CLOSED
+         (tasker)               (tasker)                (client)
+```
+
+The split between `complete` and `close` is deliberate. `COMPLETED` is the
+tasker's claim that the work is done; `CLOSED` is the client confirming it. Both
+steps are needed because they are taken by different parties — without that, one
+of the two states would carry no information.
+
+Access follows from the same split. `start` and `complete` are restricted to the
+tasker whose offer was accepted, not to any account holding the tasker role;
+`close` is restricted to the task owner. Anyone else receives `403`.
+
+Because completion is self-reported, it changes nothing on the tasker's
+reputation. The `completedJobsCount` on the tasker profile is raised only on
+`close`, where the client confirms the work — otherwise a tasker could inflate it
+without performing a single job.
+
+Each transition notifies the other party: `TASK_STARTED` and `TASK_COMPLETED` go
+to the client, `TASK_CLOSED` to the tasker.
+
+**Known limitation:** nothing forces a client to close a completed task. A client
+who never closes leaves the tasker's count unchanged for good. Automatic closing
+after a grace period is the intended fix and is not implemented yet.
+
+## Asynchronous processing
+
+Notifications are produced off the request thread. A state change publishes a
+Spring application event, which is forwarded to RabbitMQ only after the database
+transaction commits, so a rolled back publication sends no message. Consumers
+then write the notification row and send the email.
+
+| Event | Routing key | Consumer writes |
+|---|---|---|
+| Task published | `task.published` | One notification per tasker covering the task's category and municipality |
+| Task expired | `task.expired` | One notification to the task owner |
+
+Both queues are durable and bound to the `tasknest.events` topic exchange.
+Email delivery is best-effort: a failing address is logged and skipped rather
+than failing the batch, because an exception would make the broker redeliver the
+message and duplicate the notifications.
+
+### Scheduled expiry
+
+A scheduler moves published tasks past their deadline to `EXPIRED` and notifies
+their owners. It runs every 60 seconds by default and only triggers the service
+method, so the rule itself is tested with a fixed clock instead of by waiting.
+The expiry filters in the listings and in offer submission remain in place: a
+window between the deadline and the next pass exists no matter how often the
+scheduler runs.
+
 ## Testing
 
 ```bash
 ./mvnw verify
 ```
 
-The suite contains **132 tests** and requires no manual setup — Testcontainers
-starts a PostgreSQL instance automatically.
+The suite contains **180 tests** and requires no manual setup — Testcontainers
+starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
-| Unit | 67 | Service business rules and the task state machine |
-| Integration | 65 | Authentication, authorisation, concurrency, JPQL queries |
+| Unit | 88 | Service business rules and the task state machine |
+| Integration | 92 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, the notification pipeline |
 
 GitHub Actions runs the same command on every push and pull request.
 
@@ -283,7 +363,9 @@ src/main/java/ba/tfb/tasknest/
 ├── dto/            Request and response records
 ├── entity/         JPA entities and enums
 ├── exception/      Application exceptions and the global handler
+├── messaging/      RabbitMQ events, publisher, listeners, mailers
 ├── repository/     Spring Data repositories and query projections
+├── scheduler/      Scheduled task expiry
 ├── security/       JWT filter, principal, authentication entry points
 └── service/        Business logic
 
@@ -294,8 +376,6 @@ src/main/resources/
 
 ## Roadmap
 
-- [ ] RabbitMQ notification pipeline
-- [ ] Scheduled expiry of published tasks
 - [ ] Messaging between client and tasker over WebSocket
 - [ ] Reviews and tasker ratings
 - [ ] Administration: task moderation and tasker verification

@@ -92,6 +92,23 @@ public class TaskerProfileService {
         return TaskerProfileResponse.from(profile);
     }
 
+    /**
+     * Uvecava brojac zavrsenih poslova taskeru.
+     * <p>
+     * Poziva se pri zatvaranju posla, ne pri prijavi zavrsetka: COMPLETED
+     * postavlja tasker sam, pa bi brojac vezan za njega bio signal koji tasker
+     * moze napumpati bez ijednog obavljenog posla. CLOSED trazi potvrdu klijenta.
+     * Zbog toga ime kolone (completed_jobs_count) broji zatvorene poslove.
+     */
+    @Transactional
+    public void recordCompletedJob(User tasker) {
+        TaskerProfile profile = taskerProfileRepository.findByUser(tasker)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Tasker has an accepted offer but no profile: " + tasker.getId()));
+
+        profile.setCompletedJobsCount(profile.getCompletedJobsCount() + 1);
+    }
+
     @Transactional(readOnly = true)
     public TaskerProfileResponse getMyProfile(UUID userId) {
         return TaskerProfileResponse.from(loadOwnProfile(userId));

@@ -6,6 +6,7 @@ import ba.tfb.tasknest.dto.task.TaskResponse;
 import ba.tfb.tasknest.dto.task.TaskSummaryResponse;
 import ba.tfb.tasknest.entity.Category;
 import ba.tfb.tasknest.entity.Municipality;
+import ba.tfb.tasknest.entity.Offer;
 import ba.tfb.tasknest.entity.Task;
 import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
@@ -16,6 +17,7 @@ import ba.tfb.tasknest.repository.CategoryRepository;
 import ba.tfb.tasknest.repository.MunicipalityRepository;
 import ba.tfb.tasknest.repository.TaskRepository;
 import ba.tfb.tasknest.repository.UserRepository;
+import ba.tfb.tasknest.messaging.TaskExpiredEvent;
 import ba.tfb.tasknest.messaging.TaskPublishedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -24,7 +26,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -49,7 +53,10 @@ public class TaskService {
     private final CategoryRepository categoryRepository;
     private final MunicipalityRepository municipalityRepository;
     private final OfferService offerService;
+    private final TaskerProfileService taskerProfileService;
+    private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
+    private final Clock clock;
 
     @Transactional
     public TaskResponse createTask(UUID clientId, CreateTaskRequest request) {
@@ -123,6 +130,98 @@ public class TaskService {
         return TaskResponse.from(task);
     }
 
+    /**
+     * Tasker prijavljuje da je poceo raditi.
+     * <p>
+     * Smije ga pokrenuti samo tasker cija je ponuda prihvacena - ne bilo koji
+     * nalog sa TASKER rolom.
+     */
+    @Transactional
+    public TaskResponse startTask(UUID taskId, UUID taskerId) {
+        Task task = loadAssignedTask(taskId, taskerId);
+
+        TaskStateMachine.validateTransition(task.getStatus(), TaskStatus.IN_PROGRESS);
+
+        task.setStatus(TaskStatus.IN_PROGRESS);
+        task.setStartedAt(LocalDateTime.now(clock));
+
+        notificationService.notifyTaskStarted(task);
+
+        return TaskResponse.from(task);
+    }
+
+    /**
+     * Tasker prijavljuje da je posao obavljen.
+     * <p>
+     * To je tvrdnja, ne potvrda: posao je zavrsen tek kad ga klijent zatvori. Zato
+     * COMPLETED nista ne mijenja na reputaciji taskera.
+     */
+    @Transactional
+    public TaskResponse completeTask(UUID taskId, UUID taskerId) {
+        Task task = loadAssignedTask(taskId, taskerId);
+
+        TaskStateMachine.validateTransition(task.getStatus(), TaskStatus.COMPLETED);
+
+        task.setStatus(TaskStatus.COMPLETED);
+        task.setCompletedAt(LocalDateTime.now(clock));
+
+        notificationService.notifyTaskCompleted(task);
+
+        return TaskResponse.from(task);
+    }
+
+    /**
+     * Klijent potvrdjuje obavljen posao i time ga zatvara.
+     * <p>
+     * Ovdje se, i samo ovdje, uvecava brojac zavrsenih poslova - jer je to jedina
+     * tacka u kojoj druga strana potvrdjuje da je posao stvarno obavljen.
+     */
+    @Transactional
+    public TaskResponse closeTask(UUID taskId, UUID clientId) {
+        Task task = loadOwnedTask(taskId, clientId);
+
+        TaskStateMachine.validateTransition(task.getStatus(), TaskStatus.CLOSED);
+
+        Offer acceptedOffer = requireAcceptedOffer(task);
+        User tasker = acceptedOffer.getTasker();
+
+        task.setStatus(TaskStatus.CLOSED);
+        taskerProfileService.recordCompletedJob(tasker);
+
+        // Posao je gotov, pa razgovor prestaje biti aktivan. Poruke ostaju.
+        offerService.archiveConversation(acceptedOffer);
+
+        notificationService.notifyTaskClosed(task, tasker);
+
+        return TaskResponse.from(task);
+    }
+
+    /**
+     * Prebacuje objavljene oglase kojima je rok prosao u EXPIRED i obavjestava
+     * njihove vlasnike. Poziva ga scheduler.
+     * <p>
+     * Provjere isteka u submitOffer i u listama ostaju i dalje: prozor izmedju
+     * trenutka isteka i sljedeceg prolaza schedulera postoji bez obzira na to
+     * koliko cesto radi.
+     *
+     * @return koliko je oglasa isteklo
+     */
+    @Transactional
+    public int expireOverdueTasks() {
+        List<Task> overdue = taskRepository.findByStatusAndExpiresAtBefore(
+                TaskStatus.PUBLISHED, LocalDateTime.now(clock));
+
+        for (Task task : overdue) {
+            TaskStateMachine.validateTransition(task.getStatus(), TaskStatus.EXPIRED);
+            task.setStatus(TaskStatus.EXPIRED);
+
+            eventPublisher.publishEvent(new TaskExpiredEvent(
+                    task.getId(), task.getTitle(), task.getClient().getId()));
+        }
+
+        return overdue.size();
+    }
+
     @Transactional(readOnly = true)
     public TaskResponse getTask(UUID taskId, UUID viewerId) {
         Task task = taskRepository.findById(taskId)
@@ -134,6 +233,38 @@ public class TaskService {
         }
 
         return TaskResponse.from(task);
+    }
+
+    /**
+     * Ucitava task koji je dodijeljen bas ovom taskeru, kroz prihvacenu ponudu.
+     * Provjera vlasnistva je ovdje drugacija od ostalih metoda u ovoj klasi, gdje
+     * je vlasnik klijent.
+     */
+    private Task loadAssignedTask(UUID taskId, UUID taskerId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
+
+        Offer acceptedOffer = task.getAcceptedOffer();
+
+        if (acceptedOffer == null || !acceptedOffer.getTasker().getId().equals(taskerId)) {
+            throw new NotResourceOwnerException("Task is not assigned to this user");
+        }
+
+        return task;
+    }
+
+    /**
+     * Prihvacena ponuda mora postojati u svakom stanju iz kojeg se posao zatvara.
+     * Ako je nema, podaci su nekonzistentni, a ne korisnik pogrijesio.
+     */
+    private Offer requireAcceptedOffer(Task task) {
+        Offer acceptedOffer = task.getAcceptedOffer();
+
+        if (acceptedOffer == null) {
+            throw new IllegalStateException("Task " + task.getId() + " has no accepted offer");
+        }
+
+        return acceptedOffer;
     }
 
     private Task loadOwnedTask(UUID taskId, UUID clientId) {

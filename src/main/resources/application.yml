@@ -47,3 +47,8 @@ app:
 
   mail:
     from: ${MAIL_FROM:noreply@tasknest.ba}
+
+  task-expiry:
+    enabled: ${TASK_EXPIRY_ENABLED:true}
+    interval-ms: ${TASK_EXPIRY_INTERVAL_MS:60000}
+    initial-delay-ms: ${TASK_EXPIRY_INITIAL_DELAY_MS:10000}

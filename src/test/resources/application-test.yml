@@ -6,6 +6,10 @@ app:
     expiration-days: 30
   mail:
     from: test@tasknest.ba
+  task-expiry:
+    # Testovi zovu expireOverdueTasks() direktno; raspored bi im u pozadini
+    # mijenjao podatke i pravio nasumicne padove.
+    enabled: false
 
 spring:
   jpa:

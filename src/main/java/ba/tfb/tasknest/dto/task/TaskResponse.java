@@ -18,6 +18,8 @@ public record TaskResponse(
         String clientName,
         LocalDateTime publishedAt,
         LocalDateTime expiresAt,
+        LocalDateTime startedAt,
+        LocalDateTime completedAt,
         LocalDateTime createdAt
 ) {
     public static TaskResponse from(Task task) {
@@ -32,6 +34,8 @@ public record TaskResponse(
                 task.getClient().getFirstName() + " " + task.getClient().getLastName(),
                 task.getPublishedAt(),
                 task.getExpiresAt(),
+                task.getStartedAt(),
+                task.getCompletedAt(),
                 task.getCreatedAt()
         );
     }

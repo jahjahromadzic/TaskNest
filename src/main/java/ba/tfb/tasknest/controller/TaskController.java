@@ -48,6 +48,32 @@ public class TaskController {
     }
 
     /**
+     * Tasker pocinje raditi na dodijeljenom poslu. Rola je samo prvi filter -
+     * servis provjerava da je poziva bas tasker cija je ponuda prihvacena.
+     */
+    @PostMapping("/{id}/start")
+    @PreAuthorize("hasRole('TASKER')")
+    public TaskResponse start(@PathVariable UUID id,
+                              @AuthenticationPrincipal UserPrincipal principal) {
+        return taskService.startTask(id, principal.getId());
+    }
+
+    @PostMapping("/{id}/complete")
+    @PreAuthorize("hasRole('TASKER')")
+    public TaskResponse complete(@PathVariable UUID id,
+                                 @AuthenticationPrincipal UserPrincipal principal) {
+        return taskService.completeTask(id, principal.getId());
+    }
+
+    /** Klijent potvrdjuje obavljen posao. */
+    @PostMapping("/{id}/close")
+    @PreAuthorize("hasRole('CLIENT')")
+    public TaskResponse close(@PathVariable UUID id,
+                              @AuthenticationPrincipal UserPrincipal principal) {
+        return taskService.closeTask(id, principal.getId());
+    }
+
+    /**
      * Public listing. Only published tasks are returned.
      */
     @GetMapping

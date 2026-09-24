@@ -27,6 +27,9 @@ public class RabbitConfig {
     public static final String TASK_PUBLISHED_QUEUE = "tasknest.task-published";
     public static final String TASK_PUBLISHED_ROUTING_KEY = "task.published";
 
+    public static final String TASK_EXPIRED_QUEUE = "tasknest.task-expired";
+    public static final String TASK_EXPIRED_ROUTING_KEY = "task.expired";
+
     /** Durable: red i poruke prezive restart brokera, pa se nista ne gubi. */
     @Bean
     public TopicExchange taskNestExchange() {
@@ -43,6 +46,18 @@ public class RabbitConfig {
         return BindingBuilder.bind(taskPublishedQueue)
                 .to(taskNestExchange)
                 .with(TASK_PUBLISHED_ROUTING_KEY);
+    }
+
+    @Bean
+    public Queue taskExpiredQueue() {
+        return QueueBuilder.durable(TASK_EXPIRED_QUEUE).build();
+    }
+
+    @Bean
+    public Binding taskExpiredBinding(Queue taskExpiredQueue, TopicExchange taskNestExchange) {
+        return BindingBuilder.bind(taskExpiredQueue)
+                .to(taskNestExchange)
+                .with(TASK_EXPIRED_ROUTING_KEY);
     }
 
     /**

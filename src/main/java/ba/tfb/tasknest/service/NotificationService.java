@@ -2,10 +2,12 @@ package ba.tfb.tasknest.service;
 
 import ba.tfb.tasknest.dto.notification.NotificationResponse;
 import ba.tfb.tasknest.entity.Notification;
+import ba.tfb.tasknest.entity.Task;
 import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.NotificationType;
 import ba.tfb.tasknest.exception.NotResourceOwnerException;
 import ba.tfb.tasknest.exception.ResourceNotFoundException;
+import ba.tfb.tasknest.messaging.TaskExpiredEvent;
 import ba.tfb.tasknest.messaging.TaskPublishedEvent;
 import ba.tfb.tasknest.repository.NotificationRepository;
 import ba.tfb.tasknest.repository.TaskerProfileRepository;
@@ -54,6 +56,64 @@ public class NotificationService {
         log.info("Upisano {} notifikacija za task {}", notifications.size(), event.taskId());
 
         return targets;
+    }
+
+    /**
+     * Obavjestava vlasnika da mu je oglas istekao. Za razliku od objave, ovdje je
+     * primalac tacno jedan - onaj koji je oglas postavio.
+     */
+    @Transactional
+    public void notifyClientAboutExpiredTask(TaskExpiredEvent event) {
+        Notification notification = new Notification();
+        notification.setRecipient(userReference(event.clientId()));
+        notification.setType(NotificationType.TASK_EXPIRED);
+        notification.setRelatedEntityId(event.taskId());
+        notification.setContent("Your task has expired: " + event.title());
+
+        notificationRepository.save(notification);
+        log.info("Upisana notifikacija o isteku taska {}", event.taskId());
+    }
+
+    /**
+     * Napredak posla: tasker je poceo, tasker je prijavio zavrsetak, klijent je
+     * potvrdio. Tri notifikacije, svaka jednom primaocu.
+     * <p>
+     * Ove se upisuju sinhrono, u istoj transakciji kao i promjena statusa - za
+     * razliku od objave i isteka, koji idu preko RabbitMQ-a. Razlika je u tome sto
+     * je ovdje primalac jedan i nema slanja maila, pa nema sta da se odvaja od
+     * zahtjeva; a atomicnost je prednost: ne postoji stanje u kojem je posao
+     * IN_PROGRESS a druga strana nije obavijestena.
+     */
+    @Transactional
+    public void notifyTaskStarted(Task task) {
+        save(task.getClient(), NotificationType.TASK_STARTED, task,
+                "Work has started on your task: " + task.getTitle());
+    }
+
+    @Transactional
+    public void notifyTaskCompleted(Task task) {
+        save(task.getClient(), NotificationType.TASK_COMPLETED, task,
+                "Work has been completed on your task: " + task.getTitle());
+    }
+
+    @Transactional
+    public void notifyTaskClosed(Task task, User tasker) {
+        save(tasker, NotificationType.TASK_CLOSED, task,
+                "The client closed the task: " + task.getTitle());
+    }
+
+    /**
+     * Primalac se prima kao ucitan entitet, ne kao ID: pozivalac ga vec ima u
+     * istoj transakciji, pa nema potrebe ni za proxyjem ni za novim upitom.
+     */
+    private void save(User recipient, NotificationType type, Task task, String content) {
+        Notification notification = new Notification();
+        notification.setRecipient(recipient);
+        notification.setType(type);
+        notification.setRelatedEntityId(task.getId());
+        notification.setContent(content);
+
+        notificationRepository.save(notification);
     }
 
     @Transactional(readOnly = true)

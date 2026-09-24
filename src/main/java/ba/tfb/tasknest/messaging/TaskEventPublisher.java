@@ -32,4 +32,14 @@ public class TaskEventPublisher {
                 RabbitConfig.TASK_PUBLISHED_ROUTING_KEY,
                 event);
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onTaskExpired(TaskExpiredEvent event) {
+        log.debug("Saljem TaskExpiredEvent za task {}", event.taskId());
+
+        rabbitTemplate.convertAndSend(
+                RabbitConfig.EXCHANGE,
+                RabbitConfig.TASK_EXPIRED_ROUTING_KEY,
+                event);
+    }
 }

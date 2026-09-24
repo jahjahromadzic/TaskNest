@@ -210,7 +210,12 @@ public class OfferService {
         }
     }
 
-    private void archiveConversation(Offer offer) {
+    /**
+     * Gasi razgovor vezan za ponudu. Prepiska ostaje citljiva - ARCHIVED znaci
+     * samo da razgovor nije vise aktivan. Javno jer ga zove i zatvaranje posla.
+     */
+    @Transactional
+    public void archiveConversation(Offer offer) {
         conversationRepository.findByOffer(offer)
                 .ifPresent(conversation ->
                         conversation.setStatus(ConversationStatus.ARCHIVED));
