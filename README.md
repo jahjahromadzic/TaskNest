@@ -17,6 +17,7 @@ This repository contains the backend REST API. An Angular frontend is planned.
 - [Task lifecycle](#task-lifecycle)
 - [Reviews and reputation](#reviews-and-reputation)
 - [Messaging](#messaging)
+- [Administration](#administration)
 - [Asynchronous processing](#asynchronous-processing)
 - [Testing](#testing)
 - [Project structure](#project-structure)
@@ -46,6 +47,8 @@ This repository contains the backend REST API. An Angular frontend is planned.
   clients when their task expires, asynchronously over RabbitMQ and by email.
 - **Scheduled expiry** — a scheduler closes published tasks once their deadline
   passes.
+- **Administration** — suspension, tasker verification and task removal, with
+  the first administrator promoted from configuration.
 - **Reference data** — categories and municipalities exposed as public endpoints.
 
 ## Tech stack
@@ -128,6 +131,7 @@ The default profile is `dev` and runs without any environment variables.
 | `MAIL_HOST` | `localhost` | |
 | `MAIL_PORT` | `1025` | |
 | `MAIL_FROM` | `noreply@tasknest.ba` | Sender address on notification emails |
+| `APP_ADMIN_EMAIL` | empty | Existing account promoted to administrator at startup |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:4200` | Comma-separated origins allowed to call the API |
 | `TASK_EXPIRY_ENABLED` | `true` | Set to `false` to disable the expiry scheduler |
 | `TASK_EXPIRY_INTERVAL_MS` | `60000` | Delay between two expiry passes |
@@ -244,6 +248,19 @@ Paged responses use the following shape:
 | GET | `/{id}/messages` | Participant | Messages, oldest first |
 | POST | `/{id}/messages` | Participant | Send a message |
 | POST | `/{id}/read` | Participant | Mark the other party's messages as read |
+
+### Administration — `/api/admin`
+
+All endpoints require the `ADMIN` role.
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/users` | Users, newest first. Filters: `status`, `email` (substring) |
+| POST | `/users/{id}/suspend` | Suspend an account and revoke its refresh tokens |
+| POST | `/users/{id}/reactivate` | Restore a suspended account |
+| POST | `/tasker-profiles/{id}/verify` | Mark a tasker as verified |
+| POST | `/tasker-profiles/{id}/unverify` | Remove the verified mark |
+| POST | `/tasks/{id}/remove` | Remove a task; body `{ "reason": "..." }` is required |
 
 ### Notifications — `/api/notifications`
 
@@ -387,6 +404,31 @@ New messages notify the recipient at most once per conversation until that
 notification is read, so a conversation of fifty messages produces one
 notification rather than fifty.
 
+## Administration
+
+There is no way to register as an administrator. An existing account is promoted
+at startup when its email matches `APP_ADMIN_EMAIL`: register normally, set the
+variable, restart. No password ever passes through configuration, the
+promotion is idempotent, and an email with no matching account only logs a
+warning.
+
+**Suspension** takes effect on the suspended user's very next request, because
+the JWT filter reads the account status from the database on every request.
+Refresh tokens are revoked as well, so a reactivated user has to sign in again.
+Nothing the user owns is cancelled — suspension is reversible and cancellation is
+not — but an offer from a suspended tasker can no longer be accepted, since the
+tasker could not sign in to do the work. Administrators cannot suspend
+themselves or each other through the API, so a single stolen admin token cannot
+lock out every other administrator.
+
+**Removing a task** is possible while it is `PUBLISHED` or `ASSIGNED`. Its offers
+are rejected, their conversations archived, and the owner receives the reason in
+a `TASK_REMOVED` notification. Work already `IN_PROGRESS` cannot be removed: the
+tasker is already on site, and a removed job could never be closed or reviewed.
+
+**Known limitation:** administrative actions are logged with the acting admin's
+id but not stored in the database, so there is no audit trail to query.
+
 ## Asynchronous processing
 
 Notifications are produced off the request thread. A state change publishes a
@@ -400,7 +442,7 @@ then write the notification row and send the email.
 | Task expired | `task.expired` | One notification to the task owner |
 
 Work-execution and review notifications (`TASK_STARTED`, `TASK_COMPLETED`,
-`TASK_CLOSED`, `REVIEW_RECEIVED`, `NEW_MESSAGE`) are written synchronously instead: they have a
+`TASK_CLOSED`, `REVIEW_RECEIVED`, `NEW_MESSAGE`, `TASK_REMOVED`) are written synchronously instead: they have a
 single recipient and send no email, and writing them in the same transaction as
 the state change means the notification cannot be missing while the change is
 visible.
@@ -425,13 +467,13 @@ scheduler runs.
 ./mvnw verify
 ```
 
-The suite contains **230 tests** and requires no manual setup — Testcontainers
+The suite contains **249 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
-| Unit | 112 | Service business rules and the task state machine |
-| Integration | 118 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, CORS, the notification pipeline |
+| Unit | 119 | Service business rules and the task state machine |
+| Integration | 130 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline |
 
 GitHub Actions runs the same command on every push and pull request.
 
@@ -439,6 +481,7 @@ GitHub Actions runs the same command on every push and pull request.
 
 ```
 src/main/java/ba/tfb/tasknest/
+├── bootstrap/      Startup promotion of the configured administrator
 ├── config/         Security and OpenAPI configuration
 ├── controller/     REST controllers
 ├── domain/         Task state machine
@@ -459,7 +502,6 @@ src/main/resources/
 ## Roadmap
 
 - [ ] Real-time message delivery over WebSocket
-- [ ] Administration: task moderation and tasker verification
 - [ ] Email verification, password reset, rate limiting
 - [ ] Angular frontend
 - [ ] Application Dockerfile

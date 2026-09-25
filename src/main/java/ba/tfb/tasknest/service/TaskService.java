@@ -197,6 +197,35 @@ public class TaskService {
     }
 
     /**
+     * Moderator uklanja oglas. Zove ga samo AdminService - vlasnistvo se ovdje ne
+     * provjerava, jer admin djeluje nad tudjim oglasom.
+     * <p>
+     * State machine dopusta REMOVED iz PUBLISHED i ASSIGNED, ali ne iz
+     * IN_PROGRESS: tasker je vec na terenu, a uklonjen posao se ne bi mogao ni
+     * zatvoriti ni ocijeniti.
+     * <p>
+     * Ciscenje je isto kao kod otkazivanja, i istim redom: task se upise i
+     * flushuje prije ponuda, da redovi budu zakljucani istim redoslijedom kao u
+     * acceptOffer.
+     */
+    @Transactional
+    public TaskResponse removeTask(UUID taskId, String reason) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
+
+        TaskStateMachine.validateTransition(task.getStatus(), TaskStatus.REMOVED);
+
+        task.setStatus(TaskStatus.REMOVED);
+        task.setAcceptedOffer(null);
+        taskRepository.flush();
+
+        offerService.rejectActiveOffers(task);
+        notificationService.notifyTaskRemoved(task, reason);
+
+        return TaskResponse.from(task);
+    }
+
+    /**
      * Prebacuje objavljene oglase kojima je rok prosao u EXPIRED i obavjestava
      * njihove vlasnike. Poziva ga scheduler.
      * <p>

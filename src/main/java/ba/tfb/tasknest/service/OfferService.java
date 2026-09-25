@@ -7,6 +7,7 @@ import ba.tfb.tasknest.entity.Conversation;
 import ba.tfb.tasknest.entity.Offer;
 import ba.tfb.tasknest.entity.Task;
 import ba.tfb.tasknest.entity.User;
+import ba.tfb.tasknest.entity.enums.AccountStatus;
 import ba.tfb.tasknest.entity.enums.ConversationStatus;
 import ba.tfb.tasknest.entity.enums.OfferStatus;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
@@ -115,6 +116,13 @@ public class OfferService {
 
         if (offer.getStatus() != OfferStatus.PENDING) {
             throw new BusinessRuleException("Only pending offers can be accepted");
+        }
+
+        // Suspenzija zamrzava, ne brise: ponude suspendovanog taskera ostaju, jer
+        // je suspenzija reverzibilna. Ali prihvatiti se ne smiju - tasker se ne
+        // moze prijaviti, pa bi posao ostao zaglavljen u ASSIGNED.
+        if (offer.getTasker().getAccountStatus() != AccountStatus.ACTIVE) {
+            throw new BusinessRuleException("This tasker's account is not active");
         }
 
         TaskStateMachine.validateTransition(task.getStatus(), TaskStatus.ASSIGNED);

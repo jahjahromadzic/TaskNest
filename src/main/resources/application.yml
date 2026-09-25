@@ -48,6 +48,10 @@ app:
   mail:
     from: ${MAIL_FROM:noreply@tasknest.ba}
 
+  admin:
+    # Email postojeceg naloga koji pri pokretanju dobija ADMIN rolu. Prazno = nista.
+    email: ${APP_ADMIN_EMAIL:}
+
   cors:
     # Lista odvojena zarezima. U produkciji postaviti na stvarni domen frontenda.
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}

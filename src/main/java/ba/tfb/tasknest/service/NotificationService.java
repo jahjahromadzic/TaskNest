@@ -148,6 +148,13 @@ public class NotificationService {
         notificationRepository.markReadFor(readerId, NotificationType.NEW_MESSAGE, conversation.getId());
     }
 
+    /** Vlasnik saznaje da mu je oglas uklonjen, i zasto. */
+    @Transactional
+    public void notifyTaskRemoved(Task task, String reason) {
+        save(task.getClient(), NotificationType.TASK_REMOVED, task,
+                "Your task was removed by a moderator: " + task.getTitle() + ". Reason: " + reason);
+    }
+
     /**
      * Primalac se prima kao ucitan entitet, ne kao ID: pozivalac ga vec ima u
      * istoj transakciji, pa nema potrebe ni za proxyjem ni za novim upitom.
