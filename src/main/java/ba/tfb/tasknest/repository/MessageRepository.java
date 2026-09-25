@@ -2,12 +2,16 @@ package ba.tfb.tasknest.repository;
 
 import ba.tfb.tasknest.entity.Conversation;
 import ba.tfb.tasknest.entity.Message;
+import ba.tfb.tasknest.repository.projection.ConversationUnreadCount;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,7 +21,6 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
 
     Page<Message> findByConversationOrderByCreatedAtAsc(Conversation conversation, Pageable pageable);
 
-
     @Query("""
             select count(m) from Message m
             where m.readAt is null
@@ -26,4 +29,41 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
                    or m.conversation.offer.task.client.id = :userId)
             """)
     long countUnreadForUser(@Param("userId") UUID userId);
+
+    /**
+     * Neprocitane poruke po razgovoru, za cijelu stranicu razgovora odjednom.
+     * Razgovori bez neprocitanih se ne vracaju - pozivalac ih tretira kao nulu.
+     */
+    @Query("""
+            select new ba.tfb.tasknest.repository.projection.ConversationUnreadCount(
+                    m.conversation.id, count(m))
+            from Message m
+            where m.readAt is null
+              and m.sender.id <> :userId
+              and m.conversation.id in :conversationIds
+            group by m.conversation.id
+            """)
+    List<ConversationUnreadCount> countUnreadByConversation(
+            @Param("userId") UUID userId,
+            @Param("conversationIds") Collection<UUID> conversationIds);
+
+    /**
+     * Oznacava procitanim poruke koje je poslala druga strana. Vlastite poruke se
+     * ne diraju - "procitano" znaci da ih je primalac vidio, ne posiljalac.
+     * <p>
+     * Bulk update zaobilazi persistence context. Ovdje je to u redu, jer
+     * transakcija koja ovo zove ne drzi te poruke ucitane.
+     *
+     * @return koliko je poruka oznaceno
+     */
+    @Modifying
+    @Query("""
+            update Message m set m.readAt = :now
+            where m.conversation = :conversation
+              and m.sender.id <> :readerId
+              and m.readAt is null
+            """)
+    int markReadByRecipient(@Param("conversation") Conversation conversation,
+                            @Param("readerId") UUID readerId,
+                            @Param("now") LocalDateTime now);
 }

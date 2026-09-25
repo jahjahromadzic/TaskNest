@@ -58,6 +58,7 @@ class AuthorizationHttpStatusTest extends AbstractIntegrationTest {
     @Autowired private MunicipalityRepository municipalityRepository;
     @Autowired private TaskRepository taskRepository;
     @Autowired private OfferRepository offerRepository;
+    @Autowired private ConversationRepository conversationRepository;
     @Autowired private TaskerProfileRepository taskerProfileRepository;
     @Autowired private RefreshTokenRepository refreshTokenRepository;
 
@@ -73,6 +74,8 @@ class AuthorizationHttpStatusTest extends AbstractIntegrationTest {
 
     @AfterEach
     void tearDown() {
+        // Razgovor nastaje s ponudom i drzi FK na nju, pa ide prvi.
+        conversationRepository.deleteAll();
         offerRepository.deleteAll();
         taskRepository.deleteAll();
         taskerProfileRepository.deleteAll();

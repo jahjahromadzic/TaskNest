@@ -11,12 +11,15 @@ import ba.tfb.tasknest.exception.BusinessRuleException;
 import ba.tfb.tasknest.exception.ResourceNotFoundException;
 import ba.tfb.tasknest.repository.CategoryRepository;
 import ba.tfb.tasknest.repository.MunicipalityRepository;
+import ba.tfb.tasknest.repository.ReviewRepository;
 import ba.tfb.tasknest.repository.TaskerProfileRepository;
 import ba.tfb.tasknest.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -31,6 +34,7 @@ public class TaskerProfileService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final MunicipalityRepository municipalityRepository;
+    private final ReviewRepository reviewRepository;
 
     @Transactional
     public TaskerProfileResponse updateProfile(UUID userId,
@@ -107,6 +111,27 @@ public class TaskerProfileService {
                         "Tasker has an accepted offer but no profile: " + tasker.getId()));
 
         profile.setCompletedJobsCount(profile.getCompletedJobsCount() + 1);
+    }
+
+    /**
+     * Preracunava keširanu prosjecnu ocjenu taskera iz njegovih ocjena.
+     * <p>
+     * Redoslijed je bitan: prvo lok na red profila, pa onda citanje prosjeka. Lok
+     * serijalizuje paralelne ocjene istom taskeru, pa ona koja ceka nakon nastavka
+     * vidi i vec commitanu ocjenu prve i svoju. To radi jer je izolacija
+     * READ_COMMITTED - svaki upit vidi najnovije commitano stanje.
+     * <p>
+     * Klijenti nemaju profil: njima se prosjek ne kesira, vec se racuna na zahtjev.
+     */
+    @Transactional
+    public void refreshAverageRating(User reviewee) {
+        taskerProfileRepository.findWithWriteLockByUser(reviewee).ifPresent(profile -> {
+            BigDecimal average = reviewRepository.findAverageRatingByReviewee(reviewee.getId())
+                    .map(value -> BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP))
+                    .orElse(null);
+
+            profile.setAverageRating(average);
+        });
     }
 
     @Transactional(readOnly = true)

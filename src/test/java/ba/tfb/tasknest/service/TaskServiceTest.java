@@ -176,9 +176,9 @@ class TaskServiceTest {
 
             // Assert
             assertThat(response.status()).isEqualTo(TaskStatus.PUBLISHED);
-            assertThat(response.publishedAt()).isNotNull();
-            // Rok vrijedi 30 dana od objave; poredi se relativno, bez ovisnosti o satu.
-            assertThat(response.expiresAt()).isEqualTo(response.publishedAt().plusDays(30));
+            // Oba vremena dolaze iz fiksnog sata, pa se tvrde tacno, a ne relativno.
+            assertThat(response.publishedAt()).isEqualTo(NOW);
+            assertThat(response.expiresAt()).isEqualTo(NOW.plusDays(30));
         }
 
         @Test

@@ -3,6 +3,7 @@ package ba.tfb.tasknest.service;
 import ba.tfb.tasknest.domain.TaskStateMachine;
 import ba.tfb.tasknest.dto.offer.CreateOfferRequest;
 import ba.tfb.tasknest.dto.offer.OfferResponse;
+import ba.tfb.tasknest.entity.Conversation;
 import ba.tfb.tasknest.entity.Offer;
 import ba.tfb.tasknest.entity.Task;
 import ba.tfb.tasknest.entity.User;
@@ -81,14 +82,24 @@ public class OfferService {
         offer.setMessage(request.message());
         offer.setStatus(OfferStatus.PENDING);
 
+        Offer saved;
         try {
             // saveAndFlush, ne save: bez flusha bi uq_offers_task_tasker pukao tek na
             // commitu, izvan ovog catch-a. Provjera iznad je check-then-act i ne stiti
             // od paralelnih zahtjeva - constraint je stvarna zastita, ovo je prevod.
-            return OfferResponse.from(offerRepository.saveAndFlush(offer));
+            saved = offerRepository.saveAndFlush(offer);
         } catch (DataIntegrityViolationException e) {
             throw new BusinessRuleException("You have already submitted an offer on this task");
         }
+
+        // Razgovor nastaje s ponudom, ne s prihvatanjem: klijent i tasker dogovaraju
+        // detalje prije nego klijent odluci. Zato withdrawOffer i odbijanje ponuda
+        // arhiviraju razgovor neprihvacene ponude - on tada vec postoji.
+        Conversation conversation = new Conversation();
+        conversation.setOffer(saved);
+        conversationRepository.save(conversation);
+
+        return OfferResponse.from(saved);
     }
 
     @Transactional
@@ -211,8 +222,11 @@ public class OfferService {
     }
 
     /**
-     * Gasi razgovor vezan za ponudu. Prepiska ostaje citljiva - ARCHIVED znaci
-     * samo da razgovor nije vise aktivan. Javno jer ga zove i zatvaranje posla.
+     * Gasi razgovor vezan za ponudu. Prepiska ostaje citljiva, ali ARCHIVED ne
+     * prima nove poruke. Javno jer ga zove i zatvaranje posla.
+     * <p>
+     * ifPresent, ne orElseThrow: ponude nastale prije nego sto je submitOffer
+     * poceo kreirati razgovore nemaju razgovor, i to nije greska.
      */
     @Transactional
     public void archiveConversation(Offer offer) {

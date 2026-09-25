@@ -3,10 +3,12 @@ package ba.tfb.tasknest.config;
 import ba.tfb.tasknest.security.JwtAuthenticationFilter;
 import ba.tfb.tasknest.security.ProblemDetailAccessDeniedHandler;
 import ba.tfb.tasknest.security.ProblemDetailAuthenticationEntryPoint;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -15,6 +17,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
@@ -46,6 +53,7 @@ public class SecurityConfig {
                                            ProblemDetailAccessDeniedHandler accessDeniedHandler)
             throws Exception {
         http
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -60,6 +68,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/municipalities/**").permitAll()
+                        // Reputacija je javna: prosjek na profilu taskera nema svrhe
+                        // ako se ocjene koje ga cine ne mogu procitati prije dogovora.
+                        .requestMatchers(HttpMethod.GET, "/api/users/*/reviews").permitAll()
                         // MORA prije /api/tasks/* - matcheri se evaluiraju po redu.
                         // Inace ih wildcard propusti kao javne, pa @PreAuthorize
                         // anonimnom korisniku vrati 403 ("nemas pravo") umjesto
@@ -100,5 +111,31 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    /**
+     * CORS za frontend koji radi na drugom originu (Angular dev server na :4200).
+     * <p>
+     * Bez ovoga preglednik odbija svaki odgovor prije nego frontend ista vidi.
+     * Mora biti u Spring Security lancu (cors() iznad), ne samo kao WebMvc
+     * konfiguracija: preflight OPTIONS nema token, pa bi ga filter odbio sa 401
+     * prije nego sto MVC dobije priliku da odgovori.
+     * <p>
+     * allowCredentials=false jer token putuje u Authorization zaglavlju, ne u
+     * kolacicu - a uz credentials bi origin morao biti eksplicitan, bez "*".
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource(
+            @Value("${app.cors.allowed-origins}") List<String> allowedOrigins) {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(allowedOrigins);
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setAllowCredentials(false);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", config);
+        return source;
     }
 }

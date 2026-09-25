@@ -91,7 +91,7 @@ public class TaskService {
 
         TaskStateMachine.validateTransition(task.getStatus(), TaskStatus.PUBLISHED);
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         task.setStatus(TaskStatus.PUBLISHED);
         task.setPublishedAt(now);
         task.setExpiresAt(now.plusDays(PUBLICATION_VALIDITY_DAYS));
@@ -286,7 +286,7 @@ public class TaskService {
                                                  UUID municipalityId,
                                                  Pageable pageable) {
         requireSortableFields(pageable);
-        return taskRepository.findOpenTasks(TaskStatus.PUBLISHED, LocalDateTime.now(),
+        return taskRepository.findOpenTasks(TaskStatus.PUBLISHED, LocalDateTime.now(clock),
                 categoryId, municipalityId, pageable);
     }
 
@@ -294,7 +294,7 @@ public class TaskService {
     public Page<TaskSummaryResponse> getMatchingTasks(UUID taskerId, Pageable pageable) {
         requireSortableFields(pageable);
         return taskRepository.findMatchingTasks(
-                taskerId, TaskStatus.PUBLISHED, LocalDateTime.now(), pageable);
+                taskerId, TaskStatus.PUBLISHED, LocalDateTime.now(clock), pageable);
     }
 
     @Transactional(readOnly = true)

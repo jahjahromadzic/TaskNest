@@ -3,7 +3,9 @@ package ba.tfb.tasknest.repository;
 import ba.tfb.tasknest.entity.TaskerProfile;
 import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.repository.projection.TaskerNotificationTarget;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,6 +16,17 @@ import java.util.UUID;
 public interface TaskerProfileRepository extends JpaRepository<TaskerProfile, UUID> {
 
     Optional<TaskerProfile> findByUser(User user);
+
+    /**
+     * Profil pod ekskluzivnim lokom (SELECT ... FOR UPDATE).
+     * <p>
+     * Potrebno pri preracunavanju prosjecne ocjene, koja je read-modify-write:
+     * bez loka dvije paralelne ocjene istom taskeru procitaju prosjek prije nego
+     * ijedna commita, pa druga prepise prvu i keširana vrijednost ispadne
+     * pogresna. Ekskluzivni, ne dijeljeni: ovdje se pise, ne samo cita.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<TaskerProfile> findWithWriteLockByUser(User user);
 
     /**
      * Srz matchinga: taskeri koji pokrivaju i datu kategoriju i datu opstinu.

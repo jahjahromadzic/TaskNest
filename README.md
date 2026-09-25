@@ -15,6 +15,8 @@ This repository contains the backend REST API. An Angular frontend is planned.
 - [Configuration](#configuration)
 - [API reference](#api-reference)
 - [Task lifecycle](#task-lifecycle)
+- [Reviews and reputation](#reviews-and-reputation)
+- [Messaging](#messaging)
 - [Asynchronous processing](#asynchronous-processing)
 - [Testing](#testing)
 - [Project structure](#project-structure)
@@ -36,6 +38,10 @@ This repository contains the backend REST API. An Angular frontend is planned.
   matching tasks for taskers, and separate views for posted and assigned work.
 - **Work execution** — the tasker reports start and completion, the client
   confirms and closes. Confirmed work raises the tasker's completed-job count.
+- **Messaging** — every offer opens a conversation between the tasker and the
+  client, with unread counts and read receipts.
+- **Reviews and reputation** — both parties review each other after a task is
+  closed, and the tasker's average rating is kept on their profile.
 - **Notifications** — taskers are notified when a matching task is published and
   clients when their task expires, asynchronously over RabbitMQ and by email.
 - **Scheduled expiry** — a scheduler closes published tasks once their deadline
@@ -122,6 +128,7 @@ The default profile is `dev` and runs without any environment variables.
 | `MAIL_HOST` | `localhost` | |
 | `MAIL_PORT` | `1025` | |
 | `MAIL_FROM` | `noreply@tasknest.ba` | Sender address on notification emails |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:4200` | Comma-separated origins allowed to call the API |
 | `TASK_EXPIRY_ENABLED` | `true` | Set to `false` to disable the expiry scheduler |
 | `TASK_EXPIRY_INTERVAL_MS` | `60000` | Delay between two expiry passes |
 
@@ -221,6 +228,23 @@ Paged responses use the following shape:
 | GET | `/categories` | Public | Active service categories |
 | GET | `/municipalities` | Public | Municipalities, ordered by name |
 
+### Reviews — `/api`
+
+| Method | Path | Access | Description |
+|---|---|---|---|
+| POST | `/tasks/{taskId}/reviews` | Client or assigned tasker | Review the other party on a closed task |
+| GET | `/users/{userId}/reviews` | Public | Reviews a user has received, newest first |
+
+### Conversations — `/api/conversations`
+
+| Method | Path | Access | Description |
+|---|---|---|---|
+| GET | `/` | Authenticated | The caller's conversations, latest activity first, with unread counts |
+| GET | `/unread-count` | Authenticated | Unread messages across all conversations: `{ "count": 3 }` |
+| GET | `/{id}/messages` | Participant | Messages, oldest first |
+| POST | `/{id}/messages` | Participant | Send a message |
+| POST | `/{id}/read` | Participant | Mark the other party's messages as read |
+
 ### Notifications — `/api/notifications`
 
 | Method | Path | Access | Description |
@@ -311,6 +335,58 @@ to the client, `TASK_CLOSED` to the tasker.
 who never closes leaves the tasker's count unchanged for good. Automatic closing
 after a grace period is the intended fix and is not implemented yet.
 
+## Reviews and reputation
+
+A closed task can be reviewed by both parties: the client reviews the tasker and
+the tasker reviews the client. The request carries only a rating from 1 to 5 and
+an optional comment — who is being reviewed is derived from the task's accepted
+offer, never taken from the request, so nobody can rate a user they never worked
+with. Anyone who is neither party receives `403`.
+
+Only `CLOSED` tasks can be reviewed. `COMPLETED` is not enough: it is the tasker's
+own claim, so allowing it would let a tasker report an invented completion and
+immediately rate the client.
+
+Each party may leave one review per task, enforced both in the service and by the
+`uq_reviews_task_reviewer` constraint — the service check alone cannot stop two
+simultaneous requests, and a constraint violation is translated into the same
+error rather than leaking as a `500`.
+
+Reviews cannot be edited or deleted. A review that can be revised after seeing
+the other side's is an invitation to retaliate, so immutability is the feature.
+
+The tasker's `averageRating` is cached on the profile and recomputed after each
+new review. The recomputation takes an exclusive lock on the profile row before
+reading the average, because the operation is read-modify-write: without the lock,
+two reviews of the same tasker arriving together both read the average before
+either commits, and the second overwrites the first with the value of a single
+review. Clients have no profile, so their average is computed on request instead.
+
+**Known limitation:** there is no deadline for reviewing — a task closed a year
+ago can still be reviewed today.
+
+## Messaging
+
+Every offer opens a conversation between the tasker who made it and the client
+who owns the task, so the two can agree on details before the client decides.
+Participants are derived from the offer and its task — role does not matter, and
+the same person can be the client in one conversation and the tasker in another.
+Anyone else receives `403`.
+
+A conversation is archived when its offer stops being live: withdrawn by the
+tasker, rejected when another offer is accepted, or when the task is cancelled
+or closed. An archived conversation remains readable but accepts no new
+messages — otherwise a rejected tasker could keep writing to the client
+indefinitely.
+
+Reading messages does not change them. Marking them read is a separate call,
+which also clears the conversation's notification. Only the other party's
+messages are marked; one's own messages are never "unread".
+
+New messages notify the recipient at most once per conversation until that
+notification is read, so a conversation of fifty messages produces one
+notification rather than fifty.
+
 ## Asynchronous processing
 
 Notifications are produced off the request thread. A state change publishes a
@@ -322,6 +398,12 @@ then write the notification row and send the email.
 |---|---|---|
 | Task published | `task.published` | One notification per tasker covering the task's category and municipality |
 | Task expired | `task.expired` | One notification to the task owner |
+
+Work-execution and review notifications (`TASK_STARTED`, `TASK_COMPLETED`,
+`TASK_CLOSED`, `REVIEW_RECEIVED`, `NEW_MESSAGE`) are written synchronously instead: they have a
+single recipient and send no email, and writing them in the same transaction as
+the state change means the notification cannot be missing while the change is
+visible.
 
 Both queues are durable and bound to the `tasknest.events` topic exchange.
 Email delivery is best-effort: a failing address is logged and skipped rather
@@ -343,13 +425,13 @@ scheduler runs.
 ./mvnw verify
 ```
 
-The suite contains **180 tests** and requires no manual setup — Testcontainers
+The suite contains **230 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
-| Unit | 88 | Service business rules and the task state machine |
-| Integration | 92 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, the notification pipeline |
+| Unit | 112 | Service business rules and the task state machine |
+| Integration | 118 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, CORS, the notification pipeline |
 
 GitHub Actions runs the same command on every push and pull request.
 
@@ -376,8 +458,7 @@ src/main/resources/
 
 ## Roadmap
 
-- [ ] Messaging between client and tasker over WebSocket
-- [ ] Reviews and tasker ratings
+- [ ] Real-time message delivery over WebSocket
 - [ ] Administration: task moderation and tasker verification
 - [ ] Email verification, password reset, rate limiting
 - [ ] Angular frontend

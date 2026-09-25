@@ -6,6 +6,8 @@ app:
     expiration-days: 30
   mail:
     from: test@tasknest.ba
+  cors:
+    allowed-origins: http://localhost:4200
   task-expiry:
     # Testovi zovu expireOverdueTasks() direktno; raspored bi im u pozadini
     # mijenjao podatke i pravio nasumicne padove.

@@ -1,7 +1,9 @@
 package ba.tfb.tasknest.service;
 
 import ba.tfb.tasknest.dto.notification.NotificationResponse;
+import ba.tfb.tasknest.entity.Conversation;
 import ba.tfb.tasknest.entity.Notification;
+import ba.tfb.tasknest.entity.Review;
 import ba.tfb.tasknest.entity.Task;
 import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.NotificationType;
@@ -100,6 +102,50 @@ public class NotificationService {
     public void notifyTaskClosed(Task task, User tasker) {
         save(tasker, NotificationType.TASK_CLOSED, task,
                 "The client closed the task: " + task.getTitle());
+    }
+
+    /**
+     * Obavjestava ocijenjenog da je dobio ocjenu. Sadrzaj ne nosi broj zvjezdica -
+     * ocjena se cita na profilu, a notifikacija koja kaze "dobili ste 1/5" bi
+     * postojala samo da zaboli.
+     */
+    @Transactional
+    public void notifyReviewReceived(Review review) {
+        save(review.getReviewee(), NotificationType.REVIEW_RECEIVED, review.getTask(),
+                "You received a review for: " + review.getTask().getTitle());
+    }
+
+    /**
+     * Obavjestava drugu stranu o novoj poruci - ali najvise jednom po razgovoru
+     * dok ta notifikacija ne bude procitana. Razgovor od 50 poruka daje jednu
+     * notifikaciju, ne 50; zvonce pokazuje da ima novih poruka, a koliko ih je
+     * broji countUnreadForUser.
+     * <p>
+     * relatedEntityId je ID razgovora, ne poruke: frontend otvara razgovor.
+     */
+    @Transactional
+    public void notifyNewMessage(Conversation conversation, User recipient) {
+        boolean alreadyPending = notificationRepository
+                .existsByRecipientAndTypeAndRelatedEntityIdAndReadFalse(
+                        recipient, NotificationType.NEW_MESSAGE, conversation.getId());
+
+        if (alreadyPending) {
+            return;
+        }
+
+        Notification notification = new Notification();
+        notification.setRecipient(recipient);
+        notification.setType(NotificationType.NEW_MESSAGE);
+        notification.setRelatedEntityId(conversation.getId());
+        notification.setContent("New message about: " + conversation.getOffer().getTask().getTitle());
+
+        notificationRepository.save(notification);
+    }
+
+    /** Otvoren razgovor gasi i zvonce za njega. */
+    @Transactional
+    public void clearNewMessageNotifications(Conversation conversation, UUID readerId) {
+        notificationRepository.markReadFor(readerId, NotificationType.NEW_MESSAGE, conversation.getId());
     }
 
     /**
