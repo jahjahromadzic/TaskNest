@@ -10,6 +10,8 @@ app:
     allowed-origins: http://localhost:4200
   task-expiry:
     enabled: false
+  task-deadlines:
+    enabled: false
 
 spring:
   jpa:

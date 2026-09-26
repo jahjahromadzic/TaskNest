@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="036-refresh-tokens-store-hash" author="jahja">
+        <renameColumn tableName="refresh_tokens"
+                      oldColumnName="token" newColumnName="token_hash"
+                      columnDataType="VARCHAR(255)"/>
+        <sql>
+            UPDATE refresh_tokens
+               SET token_hash = encode(sha256(convert_to(token_hash, 'UTF8')), 'hex')
+        </sql>
+        <rollback>
+            <sql>DELETE FROM refresh_tokens</sql>
+            <renameColumn tableName="refresh_tokens"
+                          oldColumnName="token_hash" newColumnName="token"
+                          columnDataType="VARCHAR(255)"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

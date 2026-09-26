@@ -155,6 +155,54 @@ public class TaskService {
     public TaskResponse closeTask(UUID taskId, UUID clientId) {
         Task task = loadOwnedTask(taskId, clientId);
 
+        User tasker = close(task);
+        notificationService.notifyTaskClosed(task, tasker);
+
+        return TaskResponse.from(task);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UUID> findTasksAssignedBefore(LocalDateTime cutoff) {
+        return taskRepository.findIdsAssignedBefore(TaskStatus.ASSIGNED, cutoff);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UUID> findTasksCompletedBefore(LocalDateTime cutoff) {
+        return taskRepository.findIdsCompletedBefore(TaskStatus.COMPLETED, cutoff);
+    }
+
+    @Transactional
+    public boolean releaseStaleAssignment(UUID taskId, LocalDateTime cutoff) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
+
+        if (task.getStatus() != TaskStatus.ASSIGNED
+                || task.getAssignedAt() == null
+                || !task.getAssignedAt().isBefore(cutoff)) {
+            return false;
+        }
+
+        offerService.releaseStaleAssignment(task);
+        return true;
+    }
+
+    @Transactional
+    public boolean autoCloseTask(UUID taskId, LocalDateTime cutoff) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
+
+        if (task.getStatus() != TaskStatus.COMPLETED
+                || task.getCompletedAt() == null
+                || !task.getCompletedAt().isBefore(cutoff)) {
+            return false;
+        }
+
+        User tasker = close(task);
+        notificationService.notifyTaskAutoClosed(task, tasker);
+        return true;
+    }
+
+    private User close(Task task) {
         TaskStateMachine.validateTransition(task.getStatus(), TaskStatus.CLOSED);
 
         Offer acceptedOffer = requireAcceptedOffer(task);
@@ -162,12 +210,9 @@ public class TaskService {
 
         task.setStatus(TaskStatus.CLOSED);
         taskerProfileService.recordCompletedJob(tasker);
-
         offerService.archiveConversation(acceptedOffer);
 
-        notificationService.notifyTaskClosed(task, tasker);
-
-        return TaskResponse.from(task);
+        return tasker;
     }
 
     @Transactional

@@ -12,9 +12,13 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.HexFormat;
 
 @Service
 @Slf4j
@@ -39,18 +43,30 @@ public class RefreshTokenService {
     }
 
     @Transactional
-    public RefreshToken issue(User user) {
+    public IssuedRefreshToken issue(User user) {
+        String value = generateTokenValue();
+
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
-        refreshToken.setToken(generateTokenValue());
+        refreshToken.setTokenHash(hash(value));
         refreshToken.setExpiresAt(LocalDateTime.now().plusDays(expirationDays));
+        refreshTokenRepository.save(refreshToken);
 
-        return refreshTokenRepository.save(refreshToken);
+        return new IssuedRefreshToken(user, value);
+    }
+
+    public static String hash(String tokenValue) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(tokenValue.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is not available", e);
+        }
     }
 
     @Transactional
-    public RefreshToken validateAndRotate(String tokenValue) {
-        RefreshToken existing = refreshTokenRepository.findByToken(tokenValue)
+    public IssuedRefreshToken validateAndRotate(String tokenValue) {
+        RefreshToken existing = refreshTokenRepository.findByTokenHash(hash(tokenValue))
                 .orElseThrow(() -> new InvalidRefreshTokenException("Invalid refresh token"));
 
         if (existing.getRevokedAt() != null) {
@@ -69,7 +85,7 @@ public class RefreshTokenService {
 
     @Transactional
     public void revoke(String tokenValue) {
-        refreshTokenRepository.findByToken(tokenValue).ifPresent(token -> {
+        refreshTokenRepository.findByTokenHash(hash(tokenValue)).ifPresent(token -> {
             if (token.getRevokedAt() == null) {
                 token.setRevokedAt(LocalDateTime.now());
                 refreshTokenRepository.save(token);

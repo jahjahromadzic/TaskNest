@@ -4,7 +4,6 @@ import ba.tfb.tasknest.dto.auth.AuthResponse;
 import ba.tfb.tasknest.dto.auth.LoginRequest;
 import ba.tfb.tasknest.dto.auth.RegisterRequest;
 import ba.tfb.tasknest.dto.auth.TaskerActivationResponse;
-import ba.tfb.tasknest.entity.RefreshToken;
 import ba.tfb.tasknest.entity.Role;
 import ba.tfb.tasknest.entity.TaskerProfile;
 import ba.tfb.tasknest.entity.User;
@@ -86,14 +85,14 @@ public class AuthService {
 
     @Transactional
     public AuthResponse refresh(String refreshTokenValue) {
-        RefreshToken rotated = refreshTokenService.validateAndRotate(refreshTokenValue);
-        User user = rotated.getUser();
+        IssuedRefreshToken rotated = refreshTokenService.validateAndRotate(refreshTokenValue);
+        User user = rotated.user();
 
         UserPrincipal principal = UserPrincipal.withCredentials(user);
 
         accountStatusChecker.check(principal);
 
-        return buildResponse(principal, user, rotated.getToken());
+        return buildResponse(principal, user, rotated.value());
     }
 
     @Transactional
@@ -106,7 +105,7 @@ public class AuthService {
     }
 
     private AuthResponse buildResponse(UserPrincipal principal, User user) {
-        return buildResponse(principal, user, refreshTokenService.issue(user).getToken());
+        return buildResponse(principal, user, refreshTokenService.issue(user).value());
     }
 
     private AuthResponse buildResponse(UserPrincipal principal, User user, String refreshToken) {

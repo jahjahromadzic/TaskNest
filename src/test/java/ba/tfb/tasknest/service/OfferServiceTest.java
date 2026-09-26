@@ -325,6 +325,40 @@ class OfferServiceTest {
     }
 
     @Nested
+    class AssignmentTime {
+
+        @Test
+        void acceptOffer_recordsWhenTheTaskWasAssigned() {
+            // Arrange
+            Task task = aTask(TaskStatus.PUBLISHED);
+            Offer offer = anOffer(OFFER_ID, task, aTasker(), OfferStatus.PENDING);
+            when(offerRepository.findById(OFFER_ID)).thenReturn(Optional.of(offer));
+
+            // Act
+            offerService.acceptOffer(OFFER_ID, CLIENT_ID);
+
+            // Assert
+            assertThat(task.getAssignedAt()).isEqualTo(NOW);
+        }
+
+        @Test
+        void withdrawOffer_clearsTheAssignmentTime_whenTheTaskReopens() {
+            // Arrange
+            Task task = aTask(TaskStatus.ASSIGNED);
+            Offer accepted = anOffer(OFFER_ID, task, aTasker(), OfferStatus.ACCEPTED);
+            task.setAcceptedOffer(accepted);
+            task.setAssignedAt(NOW.minusDays(3));
+            when(offerRepository.findById(OFFER_ID)).thenReturn(Optional.of(accepted));
+
+            // Act
+            offerService.withdrawOffer(OFFER_ID, TASKER_ID);
+
+            // Assert
+            assertThat(task.getAssignedAt()).isNull();
+        }
+    }
+
+    @Nested
     class ReopenAssignment {
 
         @Test

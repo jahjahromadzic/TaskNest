@@ -9,6 +9,7 @@ import ba.tfb.tasknest.entity.enums.AccountStatus;
 import ba.tfb.tasknest.repository.RefreshTokenRepository;
 import ba.tfb.tasknest.repository.UserRepository;
 import ba.tfb.tasknest.service.AuthService;
+import ba.tfb.tasknest.service.RefreshTokenService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -100,11 +101,24 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    @DisplayName("The database stores only a hash of the refresh token, never the token itself")
+    void databaseStoresOnlyAHashOfTheToken() {
+        AuthResponse initial = register("hashed.refresh@test.ba");
+
+        RefreshToken stored = refreshTokenRepository.findAll().getFirst();
+
+        assertNotEquals(initial.refreshToken(), stored.getTokenHash());
+        assertEquals(64, stored.getTokenHash().length());
+        assertTrue(refreshTokenRepository.findByTokenHash(initial.refreshToken()).isEmpty(),
+                "the raw token must not be usable as a lookup key");
+    }
+
+    @Test
     @DisplayName("An expired refresh token is rejected")
     void expiredRefreshTokenIsRejected() {
         AuthResponse initial = register("expired.refresh@test.ba");
 
-        RefreshToken stored = refreshTokenRepository.findByToken(initial.refreshToken()).orElseThrow();
+        RefreshToken stored = refreshTokenRepository.findByTokenHash(RefreshTokenService.hash(initial.refreshToken())).orElseThrow();
         stored.setExpiresAt(LocalDateTime.now().minusMinutes(1));
         refreshTokenRepository.saveAndFlush(stored);
 
@@ -166,7 +180,7 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
 
         authService.logout(initial.refreshToken());
 
-        RefreshToken stored = refreshTokenRepository.findByToken(initial.refreshToken())
+        RefreshToken stored = refreshTokenRepository.findByTokenHash(RefreshTokenService.hash(initial.refreshToken()))
                 .orElseThrow(() -> new AssertionError("the row must not be deleted"));
         assertNotNull(stored.getRevokedAt(), "revoked_at must be set");
         assertEquals(1, refreshTokenRepository.count(), "the row is kept for auditing");
@@ -196,7 +210,7 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
                         .content(refreshTokenJson(initial.refreshToken())))
                 .andExpect(status().isNoContent());
 
-        RefreshToken stored = refreshTokenRepository.findByToken(initial.refreshToken()).orElseThrow();
+        RefreshToken stored = refreshTokenRepository.findByTokenHash(RefreshTokenService.hash(initial.refreshToken())).orElseThrow();
         assertNotNull(stored.getRevokedAt());
     }
 

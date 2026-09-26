@@ -113,6 +113,7 @@ public class OfferService {
 
         task.setStatus(TaskStatus.ASSIGNED);
         task.setAcceptedOffer(offer);
+        task.setAssignedAt(LocalDateTime.now(clock));
         taskRepository.flush();
 
         offer.setStatus(OfferStatus.ACCEPTED);
@@ -208,6 +209,18 @@ public class OfferService {
         notificationService.notifyAssignmentReleased(task, accepted.getTasker());
     }
 
+    @Transactional
+    public void releaseStaleAssignment(Task task) {
+        Offer accepted = task.getAcceptedOffer();
+
+        if (task.getStatus() != TaskStatus.ASSIGNED || accepted == null) {
+            throw new BusinessRuleException("Only an assigned task can be reopened");
+        }
+
+        reopen(task, accepted, OfferStatus.REJECTED);
+        notificationService.notifyAssignmentExpired(task, accepted.getTasker());
+    }
+
     private void reopen(Task task, Offer dropped, OfferStatus droppedStatus) {
         if (task.getStatus() != TaskStatus.ASSIGNED) {
             throw new BusinessRuleException("Only an assigned task can be reopened");
@@ -218,6 +231,7 @@ public class OfferService {
         LocalDateTime now = LocalDateTime.now(clock);
         task.setStatus(TaskStatus.PUBLISHED);
         task.setAcceptedOffer(null);
+        task.setAssignedAt(null);
         task.setPublishedAt(now);
         task.setExpiresAt(now.plusDays(TaskService.PUBLICATION_VALIDITY_DAYS));
         taskRepository.flush();

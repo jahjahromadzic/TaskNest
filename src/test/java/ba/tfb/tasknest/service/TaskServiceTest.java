@@ -443,6 +443,87 @@ class TaskServiceTest {
     }
 
     @Nested
+    class Deadlines {
+
+        @Test
+        void releaseStaleAssignment_reopens_whenAssignedBeforeTheCutoff() {
+            // Arrange
+            Task task = anAssignedTask(TaskStatus.ASSIGNED);
+            task.setAssignedAt(NOW.minusDays(15));
+            when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
+
+            // Act
+            boolean released = taskService.releaseStaleAssignment(TASK_ID, NOW.minusDays(14));
+
+            // Assert
+            assertThat(released).isTrue();
+            verify(offerService).releaseStaleAssignment(task);
+        }
+
+        @Test
+        void releaseStaleAssignment_skips_whenWorkStartedAfterTheTaskWasListed() {
+            // Arrange
+            Task task = anAssignedTask(TaskStatus.IN_PROGRESS);
+            task.setAssignedAt(NOW.minusDays(15));
+            when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
+
+            // Act
+            boolean released = taskService.releaseStaleAssignment(TASK_ID, NOW.minusDays(14));
+
+            // Assert
+            assertThat(released).isFalse();
+            verify(offerService, never()).releaseStaleAssignment(any());
+        }
+
+        @Test
+        void releaseStaleAssignment_skips_whenTheTaskWasReassignedMeanwhile() {
+            // Arrange
+            Task task = anAssignedTask(TaskStatus.ASSIGNED);
+            task.setAssignedAt(NOW.minusDays(1));
+            when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
+
+            // Act
+            boolean released = taskService.releaseStaleAssignment(TASK_ID, NOW.minusDays(14));
+
+            // Assert
+            assertThat(released).isFalse();
+            verify(offerService, never()).releaseStaleAssignment(any());
+        }
+
+        @Test
+        void autoCloseTask_closesAndCredits_whenCompletedBeforeTheCutoff() {
+            // Arrange
+            Task task = anAssignedTask(TaskStatus.COMPLETED);
+            task.setCompletedAt(NOW.minusDays(8));
+            when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
+
+            // Act
+            boolean closed = taskService.autoCloseTask(TASK_ID, NOW.minusDays(7));
+
+            // Assert
+            assertThat(closed).isTrue();
+            assertThat(task.getStatus()).isEqualTo(TaskStatus.CLOSED);
+            verify(taskerProfileService).recordCompletedJob(task.getAcceptedOffer().getTasker());
+            verify(notificationService).notifyTaskAutoClosed(task, task.getAcceptedOffer().getTasker());
+        }
+
+        @Test
+        void autoCloseTask_skips_whenTheClientClosedItMeanwhile() {
+            // Arrange
+            Task task = anAssignedTask(TaskStatus.CLOSED);
+            task.setCompletedAt(NOW.minusDays(8));
+            when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
+
+            // Act
+            boolean closed = taskService.autoCloseTask(TASK_ID, NOW.minusDays(7));
+
+            // Assert
+            assertThat(closed).isFalse();
+            verify(taskerProfileService, never()).recordCompletedJob(any());
+        }
+    }
+
+    @Nested
     class ReopenTask {
 
         @Test

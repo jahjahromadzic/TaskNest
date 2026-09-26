@@ -53,6 +53,9 @@ public class Task extends BaseEntity {
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
+    @Column(name = "assigned_at")
+    private LocalDateTime assignedAt;
+
     @Column(name = "started_at")
     private LocalDateTime startedAt;
 

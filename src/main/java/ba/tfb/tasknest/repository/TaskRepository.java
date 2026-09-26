@@ -21,6 +21,14 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Lock(LockModeType.PESSIMISTIC_READ)
     Optional<Task> findWithSharedLockById(UUID id);
 
+    @Query("select t.id from Task t where t.status = :status and t.assignedAt < :cutoff")
+    List<UUID> findIdsAssignedBefore(@Param("status") TaskStatus status,
+                                     @Param("cutoff") LocalDateTime cutoff);
+
+    @Query("select t.id from Task t where t.status = :status and t.completedAt < :cutoff")
+    List<UUID> findIdsCompletedBefore(@Param("status") TaskStatus status,
+                                      @Param("cutoff") LocalDateTime cutoff);
+
     List<Task> findByStatusAndExpiresAtBefore(TaskStatus status, LocalDateTime moment);
 
     @Query("""

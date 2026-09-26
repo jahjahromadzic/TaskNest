@@ -128,6 +128,23 @@ public class NotificationService {
     }
 
     @Transactional
+    public void notifyAssignmentExpired(Task task, User tasker) {
+        save(task.getClient(), NotificationType.ASSIGNMENT_EXPIRED, task,
+                "Work did not start in time, so your task is open again: " + task.getTitle()
+                        + ". Earlier offers are active.");
+        save(tasker, NotificationType.ASSIGNMENT_EXPIRED, task,
+                "The task was reopened because work did not start in time: " + task.getTitle());
+    }
+
+    @Transactional
+    public void notifyTaskAutoClosed(Task task, User tasker) {
+        save(task.getClient(), NotificationType.TASK_AUTO_CLOSED, task,
+                "Your completed task was closed automatically: " + task.getTitle());
+        save(tasker, NotificationType.TASK_AUTO_CLOSED, task,
+                "The task was closed automatically and counted as completed: " + task.getTitle());
+    }
+
+    @Transactional
     public void notifyOfferReactivated(Task task, User tasker) {
         save(tasker, NotificationType.OFFER_REACTIVATED, task,
                 "Your offer is active again: " + task.getTitle());

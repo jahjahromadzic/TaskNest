@@ -28,7 +28,9 @@ This repository contains the backend REST API. An Angular frontend is planned.
 - **Accounts and roles** — every account starts as a client and can activate the
   tasker role from within the application.
 - **Authentication** — JWT access tokens with long-lived refresh tokens, token
-  rotation, and reuse detection. Account suspension takes effect immediately.
+  rotation, and reuse detection. Refresh tokens are stored only as SHA-256 hashes,
+  so a copy of the database does not contain usable tokens. Account suspension
+  takes effect immediately.
 - **Task management** — clients create, publish and cancel tasks. A state machine
   governs the allowed transitions.
 - **Offers** — taskers submit offers on published tasks. When a client accepts
@@ -135,6 +137,9 @@ The default profile is `dev` and runs without any environment variables.
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:4200` | Comma-separated origins allowed to call the API |
 | `TASK_EXPIRY_ENABLED` | `true` | Set to `false` to disable the expiry scheduler |
 | `TASK_EXPIRY_INTERVAL_MS` | `60000` | Delay between two expiry passes |
+| `TASK_DEADLINES_ENABLED` | `true` | Set to `false` to disable the deadline scheduler |
+| `TASK_ASSIGNMENT_START_DAYS` | `14` | Days an assigned task may wait for work to start before it reopens |
+| `TASK_COMPLETION_CLOSE_DAYS` | `7` | Days a completed task waits for the client before it closes |
 
 ### Profiles
 
@@ -349,9 +354,9 @@ without performing a single job.
 Each transition notifies the other party: `TASK_STARTED` and `TASK_COMPLETED` go
 to the client, `TASK_CLOSED` to the tasker.
 
-**Known limitation:** nothing forces a client to close a completed task. A client
-who never closes leaves the tasker's count unchanged for good. Automatic closing
-after a grace period is the intended fix and is not implemented yet.
+A completed task that the client never closes is closed automatically after
+seven days and credited to the tasker, so a silent client cannot hold back the
+tasker's record. See [Deadlines](#deadlines).
 
 ### Reopening an assigned task
 
@@ -464,7 +469,8 @@ then write the notification row and send the email.
 
 Work-execution and review notifications (`TASK_STARTED`, `TASK_COMPLETED`,
 `TASK_CLOSED`, `REVIEW_RECEIVED`, `NEW_MESSAGE`, `TASK_REMOVED`,
-`TASKER_WITHDREW`, `ASSIGNMENT_RELEASED`, `OFFER_REACTIVATED`) are written synchronously instead: they have a
+`TASKER_WITHDREW`, `ASSIGNMENT_RELEASED`, `OFFER_REACTIVATED`,
+`ASSIGNMENT_EXPIRED`, `TASK_AUTO_CLOSED`) are written synchronously instead: they have a
 single recipient and send no email, and writing them in the same transaction as
 the state change means the notification cannot be missing while the change is
 visible.
@@ -483,19 +489,39 @@ The expiry filters in the listings and in offer submission remain in place: a
 window between the deadline and the next pass exists no matter how often the
 scheduler runs.
 
+### Deadlines
+
+Every state a task can wait in eventually ends on its own, so no task depends on
+someone remembering to click:
+
+| Waiting in | Nobody acts for | What happens |
+|---|---|---|
+| `PUBLISHED` | 30 days | expires |
+| `ASSIGNED` | 14 days without work starting | reopens, exactly as if the client had released the tasker |
+| `COMPLETED` | 7 days without the client closing | closes and is credited to the tasker |
+
+A reopened task gets a new 30-day window, so if nobody takes it up it still ends
+by expiring. An automatic reopen is not counted against the tasker, because it is
+not known whose fault the delay was.
+
+The deadline scheduler processes each task in its own transaction. A task that
+changes between being listed and being processed, for example because work
+started in that moment, is skipped or rejected by `@Version` on its own, and the
+remaining tasks are still handled. The periods are configurable.
+
 ## Testing
 
 ```bash
 ./mvnw verify
 ```
 
-The suite contains **268 tests** and requires no manual setup — Testcontainers
+The suite contains **283 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
-| Unit | 128 | Service business rules and the task state machine |
-| Integration | 140 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline |
+| Unit | 135 | Service business rules and the task state machine |
+| Integration | 148 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline |
 
 GitHub Actions runs the same command on every push and pull request.
 
@@ -512,7 +538,7 @@ src/main/java/ba/tfb/tasknest/
 ├── exception/      Application exceptions and the global handler
 ├── messaging/      RabbitMQ events, publisher, listeners, mailers
 ├── repository/     Spring Data repositories and query projections
-├── scheduler/      Scheduled task expiry
+├── scheduler/      Scheduled expiry and deadlines
 ├── security/       JWT filter, principal, authentication entry points
 └── service/        Business logic
 
