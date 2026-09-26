@@ -7,11 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
-/**
- * Obavjestava vlasnika da mu je oglas istekao.
- * <p>
- * Drugi potrosac na istom exchange-u; razlikuje ih samo routing key.
- */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -21,7 +16,7 @@ public class TaskExpiredListener {
 
     @RabbitListener(queues = RabbitConfig.TASK_EXPIRED_QUEUE)
     public void onTaskExpired(TaskExpiredEvent event) {
-        log.debug("Primljen TaskExpiredEvent za task {}", event.taskId());
+        log.debug("Received TaskExpiredEvent for task {}", event.taskId());
 
         notificationService.notifyClientAboutExpiredTask(event);
     }

@@ -34,13 +34,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-/**
- * Istek oglasa od kraja do kraja: servis prebaci status, dogadjaj prodje kroz
- * pravi RabbitMQ, potrosac upise notifikaciju vlasniku.
- * <p>
- * Raspored je u test profilu ugasen (app.task-expiry.enabled=false) i servis se
- * zove direktno - inace bi pozadinska nit mijenjala podatke ispod testa.
- */
 class TaskExpiredNotificationTest extends AbstractIntegrationTest {
 
     @Autowired private AuthService authService;
@@ -76,7 +69,7 @@ class TaskExpiredNotificationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("An overdue published task expires and its owner is notified")
     void expireOverdueTasks_notifiesOwner_whenDeadlineHasPassed() {
-        // Arrange - objavljen oglas kojem je rok prosao
+        // Arrange
         UUID taskId = publishTask("Popravka slavine");
         backdateDeadline(taskId, LocalDateTime.now().minusMinutes(1));
 
@@ -88,7 +81,6 @@ class TaskExpiredNotificationTest extends AbstractIntegrationTest {
         assertThat(taskRepository.findById(taskId).orElseThrow().getStatus())
                 .isEqualTo(TaskStatus.EXPIRED);
 
-        // Poruka ide preko brokera, pa notifikacija stize u drugoj niti
         await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
             List<Notification> notifications = notificationRepository.findAll();
 
@@ -105,7 +97,7 @@ class TaskExpiredNotificationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("A task whose deadline has not passed is left published")
     void expireOverdueTasks_leavesTaskPublished_whenDeadlineIsInTheFuture() {
-        // Arrange - svjeze objavljen oglas ima rok 30 dana u buducnosti
+        // Arrange
         UUID taskId = publishTask("Jos vazi");
 
         // Act
@@ -123,7 +115,7 @@ class TaskExpiredNotificationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("A draft is never expired, however old it is")
     void expireOverdueTasks_ignoresDrafts() {
-        // Arrange - nacrt sa proslim rokom; rok bez objave ne bi trebao znaciti nista
+        // Arrange
         UUID taskId = taskService.createTask(clientId, new CreateTaskRequest(
                 "Nacrt", "Opis", category.getId(), municipality.getId(), new BigDecimal("50.00"))).id();
         backdateDeadline(taskId, LocalDateTime.now().minusDays(60));
@@ -147,7 +139,7 @@ class TaskExpiredNotificationTest extends AbstractIntegrationTest {
         await().atMost(Duration.ofSeconds(15))
                 .untilAsserted(() -> assertThat(notificationRepository.findAll()).hasSize(1));
 
-        // Act - raspored radi u krug; drugi prolaz ne smije slati opet
+        // Act
         int expired = taskService.expireOverdueTasks();
 
         // Assert
@@ -157,8 +149,6 @@ class TaskExpiredNotificationTest extends AbstractIntegrationTest {
                 .untilAsserted(() -> assertThat(notificationRepository.findAll()).hasSize(1));
     }
 
-    // ---------- helpers ----------
-
     private UUID publishTask(String title) {
         UUID taskId = taskService.createTask(clientId, new CreateTaskRequest(
                 title, "Opis", category.getId(), municipality.getId(), new BigDecimal("50.00"))).id();
@@ -166,10 +156,6 @@ class TaskExpiredNotificationTest extends AbstractIntegrationTest {
         return taskId;
     }
 
-    /**
-     * Pomjera rok u proslost direktno u bazi. Servis nema metodu za to jer je rok
-     * izveden iz trenutka objave - a test ne smije cekati 30 dana.
-     */
     private void backdateDeadline(UUID taskId, LocalDateTime deadline) {
         transactionTemplate.executeWithoutResult(status -> {
             Task task = taskRepository.findById(taskId).orElseThrow();

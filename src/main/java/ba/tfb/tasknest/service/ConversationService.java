@@ -26,13 +26,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * Poruke izmedju klijenta i taskera, u okviru jedne ponude.
- * <p>
- * Ucesnik razgovora je tasker s ponude ili klijent s posla te ponude - niko
- * drugi, i bez obzira na role. Ista osoba moze biti klijent u jednom razgovoru i
- * tasker u drugom.
- */
 @Service
 @RequiredArgsConstructor
 public class ConversationService {
@@ -42,12 +35,6 @@ public class ConversationService {
     private final NotificationService notificationService;
     private final Clock clock;
 
-    /**
-     * Razgovori korisnika, najnovija aktivnost prvo, s brojem neprocitanih.
-     * <p>
-     * Neprocitane se broje jednim grupisanim upitom za cijelu stranicu, ne po
-     * jednim za svaki razgovor.
-     */
     @Transactional(readOnly = true)
     public Page<ConversationResponse> getMyConversations(UUID userId, Pageable pageable) {
         Page<Conversation> page = conversationRepository.findAllByParticipant(userId, pageable);
@@ -65,7 +52,6 @@ public class ConversationService {
                 toResponse(conversation, userId, unread.getOrDefault(conversation.getId(), 0L)));
     }
 
-    /** Poruke razgovora, najstarija prvo. Citanje ne mijenja stanje - za to je markAsRead. */
     @Transactional(readOnly = true)
     public Page<MessageResponse> getMessages(UUID conversationId, UUID userId, Pageable pageable) {
         Conversation conversation = loadForParticipant(conversationId, userId);
@@ -74,13 +60,6 @@ public class ConversationService {
                 .map(MessageResponse::from);
     }
 
-    /**
-     * Salje poruku drugoj strani.
-     * <p>
-     * Arhiviran razgovor je samo za citanje: ponuda je mrtva ili je posao
-     * zavrsen, pa nema sta da se dogovara - a bez ovoga bi odbijeni tasker mogao
-     * neograniceno pisati klijentu koji ga je odbio.
-     */
     @Transactional
     public MessageResponse sendMessage(UUID conversationId, UUID senderId, SendMessageRequest request) {
         Conversation conversation = loadForParticipant(conversationId, senderId);
@@ -98,9 +77,6 @@ public class ConversationService {
         message.setContent(request.content());
         Message saved = messageRepository.save(message);
 
-        // Dvije paralelne poruke obje postave ovo na priblizno isti trenutak, i
-        // zadnja pobjedjuje - bezopasno, jer se nista ne racuna iz prethodne
-        // vrijednosti. Zato ovdje nema loka, za razliku od prosjeka ocjena.
         conversation.setLastMessageAt(LocalDateTime.now(clock));
 
         notificationService.notifyNewMessage(conversation, recipient);
@@ -108,12 +84,6 @@ public class ConversationService {
         return MessageResponse.from(saved);
     }
 
-    /**
-     * Oznacava procitanim poruke druge strane i gasi zvonce za ovaj razgovor.
-     * Eksplicitan poziv, ne posljedica citanja: GET ostaje bez efekata.
-     *
-     * @return koliko je poruka oznaceno
-     */
     @Transactional
     public int markAsRead(UUID conversationId, UUID readerId) {
         Conversation conversation = loadForParticipant(conversationId, readerId);
@@ -128,8 +98,6 @@ public class ConversationService {
     public long countUnread(UUID userId) {
         return messageRepository.countUnreadForUser(userId);
     }
-
-    // ---------- helpers ----------
 
     private Conversation loadForParticipant(UUID conversationId, UUID userId) {
         Conversation conversation = conversationRepository.findWithParticipantsById(conversationId)

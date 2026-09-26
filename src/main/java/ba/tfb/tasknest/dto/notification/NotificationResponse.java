@@ -11,7 +11,6 @@ public record NotificationResponse(
         NotificationType type,
         String content,
 
-        /** Task, ponuda ili poruka na koju se notifikacija odnosi; tip govori na sta. */
         UUID relatedEntityId,
 
         boolean read,

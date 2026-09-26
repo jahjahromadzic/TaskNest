@@ -9,8 +9,6 @@ app:
   cors:
     allowed-origins: http://localhost:4200
   task-expiry:
-    # Testovi zovu expireOverdueTasks() direktno; raspored bi im u pozadini
-    # mijenjao podatke i pravio nasumicne padove.
     enabled: false
 
 spring:

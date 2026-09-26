@@ -31,7 +31,6 @@ public class AuthController {
         return authService.login(request);
     }
 
-    /** Mijenja refresh token za novi par. Stari refresh token prestaje vaziti. */
     @PostMapping("/refresh")
     public AuthResponse refresh(@Valid @RequestBody RefreshTokenRequest request) {
         return authService.refresh(request.refreshToken());

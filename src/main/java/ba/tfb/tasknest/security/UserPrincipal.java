@@ -12,32 +12,22 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Adapts our User entity to what Spring Security expects.
- * Carries the user id so controllers can pass it into services.
- */
 @Getter
 public class UserPrincipal implements UserDetails {
 
     private final UUID id;
     private final String email;
 
-    /** Nije izlozen getterom - jedini pristup je kroz getPassword() iz UserDetails. */
     @Getter(AccessLevel.NONE)
     private final String passwordHash;
 
     private final AccountStatus accountStatus;
     private final List<GrantedAuthority> authorities;
 
-    /** Za provjeru lozinke pri loginu. */
     public static UserPrincipal withCredentials(User user) {
         return new UserPrincipal(user, user.getPasswordHash());
     }
 
-    /**
-     * Za JWT putanju: lozinka se tamo nikad ne provjerava, pa se hes ne nosi
-     * kroz SecurityContext duze nego sto treba.
-     */
     public static UserPrincipal withoutCredentials(User user) {
         return new UserPrincipal(user, null);
     }

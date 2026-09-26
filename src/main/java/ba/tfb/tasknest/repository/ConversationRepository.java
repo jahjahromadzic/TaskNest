@@ -15,15 +15,6 @@ public interface ConversationRepository extends JpaRepository<Conversation, UUID
 
     Optional<Conversation> findByOffer(Offer offer);
 
-    /**
-     * Razgovori u kojima korisnik ucestvuje, najnovija aktivnost prvo.
-     * <p>
-     * join fetch jer odgovor cita naslov posla i ime druge strane: bez njega bi
-     * svaki razgovor na stranici povukao jos cetiri upita (ponuda, posao, klijent,
-     * tasker). Sve veze su to-one, pa paginacija ostaje u bazi.
-     * <p>
-     * nulls last: razgovor bez ijedne poruke ide na dno, ne na vrh.
-     */
     @Query(value = """
             select c from Conversation c
             join fetch c.offer o
@@ -41,7 +32,6 @@ public interface ConversationRepository extends JpaRepository<Conversation, UUID
             """)
     Page<Conversation> findAllByParticipant(@Param("userId") UUID userId, Pageable pageable);
 
-    /** Jedan razgovor sa svime sto provjera ucesnika treba, u jednom upitu. */
     @Query("""
             select c from Conversation c
             join fetch c.offer o

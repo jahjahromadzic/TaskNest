@@ -38,16 +38,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * Izvrsenje posla protiv prave baze: ASSIGNED -> IN_PROGRESS -> COMPLETED -> CLOSED.
- * <p>
- * Unit testovi pokrivaju pravila; ovdje se provjerava ono sto se vidi samo kroz
- * bazu - brojac na profilu taskera (drugi agregat), primaoce notifikacija, i to
- * da kolona started_at iz migracije 033 stvarno postoji.
- * <p>
- * Arhiviranje razgovora se ovdje ne tvrdi: razgovore trenutno nista ne kreira, pa
- * je poziv nevidljiv u bazi. Da se poziva provjerava unit test.
- */
 class TaskLifecycleIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired private AuthService authService;
@@ -85,8 +75,6 @@ class TaskLifecycleIntegrationTest extends AbstractIntegrationTest {
         notificationRepository.deleteAll();
         conversationRepository.deleteAll();
 
-        // tasks.accepted_offer_id i offers.task_id pokazuju jedno na drugo, pa
-        // nijedna tabela ne moze biti prva. Veza se prvo raskine, pa se brise.
         transactionTemplate.executeWithoutResult(status ->
                 taskRepository.findAll().forEach(task -> task.setAcceptedOffer(null)));
 
@@ -103,7 +91,7 @@ class TaskLifecycleIntegrationTest extends AbstractIntegrationTest {
         // Arrange
         UUID taskId = assignTaskToTasker();
 
-        // Act + Assert - svaki prelaz vraca novo stanje
+        // Act + Assert
         assertThat(taskService.startTask(taskId, taskerId).status())
                 .isEqualTo(TaskStatus.IN_PROGRESS);
         assertThat(taskService.completeTask(taskId, taskerId).status())
@@ -111,7 +99,7 @@ class TaskLifecycleIntegrationTest extends AbstractIntegrationTest {
         assertThat(taskService.closeTask(taskId, clientId).status())
                 .isEqualTo(TaskStatus.CLOSED);
 
-        // Assert - i stanje je zaista u bazi, ne samo u odgovoru
+        // Assert
         assertThat(taskRepository.findById(taskId).orElseThrow().getStatus())
                 .isEqualTo(TaskStatus.CLOSED);
     }
@@ -126,7 +114,7 @@ class TaskLifecycleIntegrationTest extends AbstractIntegrationTest {
         TaskResponse started = taskService.startTask(taskId, taskerId);
         TaskResponse completed = taskService.completeTask(taskId, taskerId);
 
-        // Assert - started_at dolazi iz migracije 033; bez nje bi kontekst pao
+        // Assert
         assertThat(started.startedAt()).isNotNull();
         assertThat(completed.completedAt()).isNotNull();
         assertThat(completed.completedAt()).isAfterOrEqualTo(completed.startedAt());
@@ -139,14 +127,14 @@ class TaskLifecycleIntegrationTest extends AbstractIntegrationTest {
         UUID taskId = assignTaskToTasker();
         assertThat(completedJobsCount()).isZero();
 
-        // Act - tasker prijavljuje zavrsetak
+        // Act
         taskService.startTask(taskId, taskerId);
         taskService.completeTask(taskId, taskerId);
 
-        // Assert - sama prijava ne donosi nista, jer je tasker postavlja sam
+        // Assert
         assertThat(completedJobsCount()).isZero();
 
-        // Act - klijent potvrdjuje
+        // Act
         taskService.closeTask(taskId, clientId);
 
         // Assert
@@ -164,14 +152,13 @@ class TaskLifecycleIntegrationTest extends AbstractIntegrationTest {
         taskService.completeTask(taskId, taskerId);
         taskService.closeTask(taskId, clientId);
 
-        // Assert - klijent je obavijesten o pocetku i zavrsetku
+        // Assert
         assertThat(notificationsFor(clientId))
                 .extracting(Notification::getType)
                 .containsExactlyInAnyOrder(
                         NotificationType.TASK_STARTED, NotificationType.TASK_COMPLETED);
 
-        // Assert - tasker o zatvaranju. Notifikacija o prihvacenoj ponudi ne
-        // postoji, pa je ovo jedina koju tasker ima.
+        // Assert
         assertThat(notificationsFor(taskerId))
                 .extracting(Notification::getType)
                 .containsExactly(NotificationType.TASK_CLOSED);
@@ -191,7 +178,7 @@ class TaskLifecycleIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("The tasker cannot close their own work")
     void closeTask_isRejected_whenCalledByTheTasker() {
-        // Arrange - asimetrija: tasker prijavljuje, klijent potvrdjuje
+        // Arrange
         UUID taskId = assignTaskToTasker();
         taskService.startTask(taskId, taskerId);
         taskService.completeTask(taskId, taskerId);
@@ -200,7 +187,7 @@ class TaskLifecycleIntegrationTest extends AbstractIntegrationTest {
         assertThatThrownBy(() -> taskService.closeTask(taskId, taskerId))
                 .isInstanceOf(NotResourceOwnerException.class);
 
-        // Assert - i brojac je ostao nedirnut
+        // Assert
         assertThat(completedJobsCount()).isZero();
     }
 
@@ -223,14 +210,11 @@ class TaskLifecycleIntegrationTest extends AbstractIntegrationTest {
         UUID outsiderId = register("lifecycle.outsider@test.ba").userId();
         authService.activateTaskerRole(outsiderId);
 
-        // Act + Assert - rola TASKER nije dovoljna, mora biti dodijeljeni tasker
+        // Act + Assert
         assertThatThrownBy(() -> taskService.startTask(taskId, outsiderId))
                 .isInstanceOf(NotResourceOwnerException.class);
     }
 
-    // ---------- helpers ----------
-
-    /** Vodi task do ASSIGNED: kreiraj, objavi, ponudi, prihvati. */
     private UUID assignTaskToTasker() {
         UUID taskId = taskService.createTask(clientId, new CreateTaskRequest(
                 "Popravka slavine", "Curi ispod sudopera",

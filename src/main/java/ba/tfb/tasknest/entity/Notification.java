@@ -40,7 +40,6 @@ public class Notification {
     @Column(name = "type", nullable = false, length = 40)
     private NotificationType type;
 
-    // Polymorfna referenca (task, offer, message...) namjerno bez FK-a.
     @Column(name = "related_entity_id")
     private UUID relatedEntityId;
 

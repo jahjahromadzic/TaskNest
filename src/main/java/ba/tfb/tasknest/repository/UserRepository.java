@@ -21,11 +21,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByEmail(String email);
 
-    /**
-     * Korisnici za admin listu, najnoviji prvo. Status je opcion; email se trazi
-     * kao podniz, a prazan string znaci "bez filtera" - servis nikad ne salje
-     * null, jer Postgres ne moze odrediti tip null parametra unutar concat().
-     */
     @Query(value = """
             select new ba.tfb.tasknest.repository.projection.AdminUserRow(
                     u.id, u.email, u.firstName, u.lastName, u.accountStatus, u.createdAt)

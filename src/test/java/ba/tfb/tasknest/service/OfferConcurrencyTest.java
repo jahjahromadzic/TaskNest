@@ -35,11 +35,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Proves that concurrent access to the same task cannot produce
- * an inconsistent state. These tests deliberately avoid @Transactional
- * so that each thread runs in its own real transaction.
- */
 class OfferConcurrencyTest extends AbstractIntegrationTest {
 
     @Autowired private OfferService offerService;
@@ -152,10 +147,6 @@ class OfferConcurrencyTest extends AbstractIntegrationTest {
 
         assertNoDeadlock(caught);
 
-        // Ovdje su oba ishoda ispravna, pa se ne tvrdi da MORA biti pada. Ako ga je
-        // bilo, dozvoljena su tacno dva razloga: submit je pao na provjeri verzije
-        // taska, ili je stigao nakon accepta i regularno vidio da task vise nije
-        // PUBLISHED. Sve ostalo je greska.
         for (Throwable failure : caught) {
             assertTrue(
                     failure instanceof ObjectOptimisticLockingFailureException
@@ -173,12 +164,8 @@ class OfferConcurrencyTest extends AbstractIntegrationTest {
                 "A pending offer must never survive on an assigned task, found: " + pending.size());
     }
 
-    // ---------- helpers ----------
-
-    /** Postgres SQLSTATE za "deadlock detected". */
     private static final String DEADLOCK_SQL_STATE = "40P01";
 
-    /** Koliko duboko se ide niz lanac uzroka pri pretrazi. */
     private static final int MAX_CAUSE_DEPTH = 20;
 
     private Queue<Throwable> runInParallel(Runnable first,
@@ -221,18 +208,13 @@ class OfferConcurrencyTest extends AbstractIntegrationTest {
         return caught;
     }
 
-    /**
-     * Deadlock znaci da su transakcije opet zakljucale redove ukrstenim redoslijedom.
-     * Provjerava se i Springov tip i SQLSTATE i tekst poruke, jer prevod izuzetka
-     * ovisi o verziji drajvera i Springovom translatoru.
-     */
     private void assertNoDeadlock(Collection<Throwable> caught) {
         for (Throwable failure : caught) {
             assertFalse(
                     isDeadlock(failure),
-                    describe("DEADLOCK JE PONOVO ISKRSNUO - transakcije zakljucavaju "
-                            + "redove ukrstenim redoslijedom. Provjeri da se task upisuje "
-                            + "i flushuje PRIJE ijedne ponude, u acceptOffer i cancelTask",
+                    describe("DEADLOCK IS BACK: transactions lock rows in crossed order. "
+                            + "Check that the task is written and flushed BEFORE any offer, "
+                            + "in both acceptOffer and cancelTask",
                             failure)
             );
         }
@@ -264,16 +246,15 @@ class OfferConcurrencyTest extends AbstractIntegrationTest {
         return false;
     }
 
-    /** Poruka koja pokazuje stvarni tip i uzrok, umjesto golog "expected true but was false". */
     private static String describe(String expectation, Throwable throwable) {
         Throwable root = rootCause(throwable);
 
         String detail = expectation
-                + System.lineSeparator() + "  dobijeno: " + throwable.getClass().getName()
+                + System.lineSeparator() + "  actual:   " + throwable.getClass().getName()
                 + ": " + throwable.getMessage();
 
         if (root != throwable) {
-            detail += System.lineSeparator() + "  uzrok:    " + root.getClass().getName()
+            detail += System.lineSeparator() + "  cause:    " + root.getClass().getName()
                     + ": " + root.getMessage();
         }
 

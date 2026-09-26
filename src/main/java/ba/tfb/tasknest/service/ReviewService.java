@@ -32,12 +32,6 @@ public class ReviewService {
     private final TaskerProfileService taskerProfileService;
     private final NotificationService notificationService;
 
-    /**
-     * Ostavlja ocjenu na zatvorenom poslu.
-     * <p>
-     * Dozvoljeno samo nad CLOSED, ne nad COMPLETED: COMPLETED postavlja tasker sam,
-     * pa bi mogao prijaviti izmisljen zavrsetak i odmah ocijeniti klijenta.
-     */
     @Transactional
     public ReviewResponse createReview(UUID taskId, UUID reviewerId, CreateReviewRequest request) {
         Task task = taskRepository.findById(taskId)
@@ -64,18 +58,12 @@ public class ReviewService {
 
         Review saved = persist(review);
 
-        // Redoslijed: ocjena je flushana prije preracunavanja, da prosjek
-        // ukljucuje i nju.
         taskerProfileService.refreshAverageRating(reviewee);
         notificationService.notifyReviewReceived(saved);
 
         return ReviewResponse.from(saved);
     }
 
-    /**
-     * Ocjene koje je korisnik dobio. Javno, jer reputacija koja se ne vidi prije
-     * dogovora ne sluzi nicemu.
-     */
     @Transactional(readOnly = true)
     public Page<ReviewResponse> getReceivedReviews(UUID userId, Pageable pageable) {
         User reviewee = userRepository.findById(userId)
@@ -85,10 +73,6 @@ public class ReviewService {
                 .map(ReviewResponse::from);
     }
 
-    /**
-     * Ko koga ocjenjuje - izvedeno iz posla, nikad iz zahtjeva. Klijent ocjenjuje
-     * dodijeljenog taskera i obrnuto; iko treci ne moze ocijeniti nijednog od njih.
-     */
     private User counterpartyOf(Task task, UUID reviewerId) {
         User client = task.getClient();
         Offer acceptedOffer = task.getAcceptedOffer();
@@ -110,11 +94,6 @@ public class ReviewService {
                 "Only the client and the assigned tasker can review this task");
     }
 
-    /**
-     * saveAndFlush, ne save: provjera duplikata iznad je check-then-act i ne stiti
-     * od dva istovremena zahtjeva. Prava zastita je uq_reviews_task_reviewer, a bez
-     * flusha bi pukla na commitu, izvan ovog catch-a, i vratila 500.
-     */
     private Review persist(Review review) {
         try {
             return reviewRepository.saveAndFlush(review);

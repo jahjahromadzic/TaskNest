@@ -19,10 +19,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-/**
- * Moderacija. Rola je ovdje cijela provjera - admin djeluje nad tudjim
- * resursima, pa nema vlasnistva koje bi servis dodatno provjerio.
- */
 @RestController
 @RequestMapping("/api/admin")
 @PreAuthorize("hasRole('ADMIN')")
@@ -31,7 +27,6 @@ public class AdminController {
 
     private final AdminService adminService;
 
-    /** Sort se odbacuje: redoslijed je fiksan (najnoviji prvo) u upitu. */
     @GetMapping("/users")
     public PagedResponse<AdminUserResponse> users(
             @RequestParam(required = false) AccountStatus status,

@@ -18,13 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Poruke prijavljenog korisnika. Bez provjere role: ko smije u koji razgovor
- * odlucuje servis, iz ponude i posla.
- * <p>
- * Oba paginirana endpointa odbacuju sort iz zahtjeva - redoslijed je fiksan u
- * upitima, a nepoznato polje bi u Spring Dati puklo kao 500.
- */
 @RestController
 @RequestMapping("/api/conversations")
 @RequiredArgsConstructor
@@ -62,7 +55,6 @@ public class ConversationController {
         return conversationService.sendMessage(id, principal.getId(), request);
     }
 
-    /** Frontend zove ovo kad korisnik otvori razgovor. */
     @PostMapping("/{id}/read")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void markAsRead(@PathVariable UUID id,

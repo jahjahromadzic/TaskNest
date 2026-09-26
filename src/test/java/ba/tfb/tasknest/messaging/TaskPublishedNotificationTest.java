@@ -29,13 +29,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-/**
- * Cijeli asinhroni tok protiv pravog RabbitMQ brokera: objava oglasa, poruka na
- * exchange, potrosac, upisana notifikacija.
- * <p>
- * Tvrdnje su u await bloku jer se obrada desava u drugoj niti nakon commita -
- * u trenutku kad publishTask vrati odgovor, notifikacija jos ne postoji.
- */
 class TaskPublishedNotificationTest extends AbstractIntegrationTest {
 
     @Autowired private AuthService authService;
@@ -73,14 +66,14 @@ class TaskPublishedNotificationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("Publishing a task notifies every tasker covering its category and municipality")
     void publishTask_notifiesCoveringTaskers() {
-        // Arrange - tasker koji pokriva bas tu kategoriju i opstinu
+        // Arrange
         UUID taskerId = registerTaskerCovering(
                 "notify.tasker@test.ba", category.getId(), municipality.getId());
 
         // Act
         UUID taskId = publishTask("Popravka slavine");
 
-        // Assert - obrada je asinhrona, pa se ceka da poruka prodje kroz broker
+        // Assert
         await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
             List<Notification> notifications = notificationRepository.findAll();
 
@@ -97,14 +90,14 @@ class TaskPublishedNotificationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("A tasker covering a different municipality is not notified")
     void publishTask_doesNotNotifyTaskersOutsideTheArea() {
-        // Arrange - tasker pokriva istu kategoriju, ali drugu opstinu
+        // Arrange
         Municipality elsewhere = municipalityRepository.findAll().get(1);
         registerTaskerCovering("notify.elsewhere@test.ba", category.getId(), elsewhere.getId());
 
         // Act
         publishTask("Popravka slavine");
 
-        // Assert - nema sta da stigne; kratko cekanje da se potvrdi da ostaje prazno
+        // Assert
         await().during(Duration.ofSeconds(3))
                 .atMost(Duration.ofSeconds(6))
                 .untilAsserted(() -> assertThat(notificationRepository.findAll()).isEmpty());
@@ -116,7 +109,7 @@ class TaskPublishedNotificationTest extends AbstractIntegrationTest {
         // Arrange
         registerTaskerCovering("notify.draft@test.ba", category.getId(), municipality.getId());
 
-        // Act - samo kreiranje, bez objave
+        // Act
         taskService.createTask(clientId, new CreateTaskRequest(
                 "Nacrt", null, category.getId(), municipality.getId(), new BigDecimal("50.00")));
 
@@ -125,8 +118,6 @@ class TaskPublishedNotificationTest extends AbstractIntegrationTest {
                 .atMost(Duration.ofSeconds(6))
                 .untilAsserted(() -> assertThat(notificationRepository.findAll()).isEmpty());
     }
-
-    // ---------- helpers ----------
 
     private UUID publishTask(String title) {
         UUID taskId = taskService.createTask(clientId, new CreateTaskRequest(

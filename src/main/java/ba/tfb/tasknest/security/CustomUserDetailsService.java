@@ -26,10 +26,6 @@ public class CustomUserDetailsService implements UserDetailsService {
                         new UsernameNotFoundException("No user with email " + email));
     }
 
-    /**
-     * Ucitava korisnika za JWT putanju - svjeze iz baze, da suspenzija djeluje
-     * odmah, a ne tek po isteku tokena. Bez hesa lozinke, tamo nije potreban.
-     */
     @Transactional(readOnly = true)
     public Optional<UserPrincipal> loadUserById(UUID id) {
         return userRepository.findById(id).map(UserPrincipal::withoutCredentials);

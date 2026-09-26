@@ -20,11 +20,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-/**
- * Mailer je najbolji pokusaj: nijedna greska ne smije izaci iz njega, jer bi
- * listener tada odbio poruku, RabbitMQ bi je ponovo isporucio i notifikacije
- * bi se duplirale.
- */
 @ExtendWith(MockitoExtension.class)
 class NewTaskMailerTest {
 
@@ -56,18 +51,18 @@ class NewTaskMailerTest {
 
     @Test
     void sendNewTaskEmails_swallowsFailure_whenMailServerIsDown() {
-        // Arrange - mail server nedostupan
+        // Arrange
         NewTaskMailer mailer = new NewTaskMailer(mailSender, "noreply@tasknest.ba");
         doThrow(new MailSendException("connection refused")).when(mailSender).send(any(SimpleMailMessage.class));
 
-        // Act + Assert - izuzetak ne smije izaci; notifikacije su vec upisane
+        // Act + Assert
         assertThatCode(() -> mailer.sendNewTaskEmails(List.of(target("a@test.ba", "Mirza")), EVENT))
                 .doesNotThrowAnyException();
     }
 
     @Test
     void sendNewTaskEmails_continuesWithOthers_whenOneRecipientFails() {
-        // Arrange - prvi primalac puca, drugi je ispravan
+        // Arrange
         NewTaskMailer mailer = new NewTaskMailer(mailSender, "noreply@tasknest.ba");
         doThrow(new MailSendException("bad address"))
                 .doNothing()
@@ -77,7 +72,7 @@ class NewTaskMailerTest {
         mailer.sendNewTaskEmails(List.of(target("bad@test.ba", "Prvi"),
                 target("good@test.ba", "Drugi")), EVENT);
 
-        // Assert - jedna neispravna adresa ne smije zaustaviti ostale
+        // Assert
         verify(mailSender, times(2)).send(any(SimpleMailMessage.class));
     }
 

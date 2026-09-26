@@ -47,11 +47,6 @@ public class TaskerProfileService {
         return TaskerProfileResponse.from(profile);
     }
 
-    /**
-     * Replaces the covered categories. This is the first half of the
-     * matching rule: a task reaches only taskers who cover both its
-     * category and its municipality.
-     */
     @Transactional
     public TaskerProfileResponse updateCategories(UUID userId,
                                                   UpdateCoverageRequest request) {
@@ -76,9 +71,6 @@ public class TaskerProfileService {
         return TaskerProfileResponse.from(profile);
     }
 
-    /**
-     * Replaces the covered municipalities. Second half of the matching rule.
-     */
     @Transactional
     public TaskerProfileResponse updateMunicipalities(UUID userId,
                                                       UpdateCoverageRequest request) {
@@ -96,14 +88,6 @@ public class TaskerProfileService {
         return TaskerProfileResponse.from(profile);
     }
 
-    /**
-     * Uvecava brojac zavrsenih poslova taskeru.
-     * <p>
-     * Poziva se pri zatvaranju posla, ne pri prijavi zavrsetka: COMPLETED
-     * postavlja tasker sam, pa bi brojac vezan za njega bio signal koji tasker
-     * moze napumpati bez ijednog obavljenog posla. CLOSED trazi potvrdu klijenta.
-     * Zbog toga ime kolone (completed_jobs_count) broji zatvorene poslove.
-     */
     @Transactional
     public void recordCompletedJob(User tasker) {
         TaskerProfile profile = taskerProfileRepository.findByUser(tasker)
@@ -113,16 +97,6 @@ public class TaskerProfileService {
         profile.setCompletedJobsCount(profile.getCompletedJobsCount() + 1);
     }
 
-    /**
-     * Preracunava keširanu prosjecnu ocjenu taskera iz njegovih ocjena.
-     * <p>
-     * Redoslijed je bitan: prvo lok na red profila, pa onda citanje prosjeka. Lok
-     * serijalizuje paralelne ocjene istom taskeru, pa ona koja ceka nakon nastavka
-     * vidi i vec commitanu ocjenu prve i svoju. To radi jer je izolacija
-     * READ_COMMITTED - svaki upit vidi najnovije commitano stanje.
-     * <p>
-     * Klijenti nemaju profil: njima se prosjek ne kesira, vec se racuna na zahtjev.
-     */
     @Transactional
     public void refreshAverageRating(User reviewee) {
         taskerProfileRepository.findWithWriteLockByUser(reviewee).ifPresent(profile -> {
@@ -139,9 +113,6 @@ public class TaskerProfileService {
         return TaskerProfileResponse.from(loadOwnProfile(userId));
     }
 
-    /**
-     * Public view of a tasker profile, as a client sees it.
-     */
     @Transactional(readOnly = true)
     public TaskerProfileResponse getProfile(UUID profileId) {
         TaskerProfile profile = taskerProfileRepository.findById(profileId)
@@ -150,12 +121,6 @@ public class TaskerProfileService {
         return TaskerProfileResponse.from(profile);
     }
 
-    /**
-     * Pravilo stoji ovdje, a ne samo u @NotEmpty na DTO-u: ta anotacija vazi na
-     * HTTP granici, a servise ce zvati i RabbitMQ listener i buduci admin tok.
-     * Prazan skup bi inace tiho obrisao svu pokrivenost, a null bacio NPE -
-     * tasker bez pokrivenosti ne moze biti uparen ni s jednim taskom.
-     */
     private Set<UUID> requireNonEmpty(UpdateCoverageRequest request, String what) {
         if (request == null || request.ids() == null || request.ids().isEmpty()) {
             throw new BusinessRuleException(
@@ -164,10 +129,6 @@ public class TaskerProfileService {
         return request.ids();
     }
 
-    /**
-     * findAllById tiho preskace nenadjene ID-eve, pa se mora porediti sa
-     * trazenim skupom. U gresku idu samo oni koji stvarno fale.
-     */
     private <T> void requireAllFound(Set<UUID> requestedIds,
                                      Set<T> found,
                                      Function<T, UUID> idOf,
@@ -186,9 +147,6 @@ public class TaskerProfileService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
-        // Poruka pokriva oba slucaja: korisnik nikad nije aktivirao Tasker rolu,
-        // ili rola postoji a profil fali. Kroz kontroler je moguc samo drugi,
-        // jer @PreAuthorize vec garantuje rolu.
         return taskerProfileRepository.findByUser(user)
                 .orElseThrow(() -> new BusinessRuleException(
                         "This account has no tasker profile - activate the tasker role first"));

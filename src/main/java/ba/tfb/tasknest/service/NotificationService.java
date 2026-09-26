@@ -34,19 +34,13 @@ public class NotificationService {
     private final TaskerProfileRepository taskerProfileRepository;
     private final UserRepository userRepository;
 
-    /**
-     * Upisuje notifikaciju svakom taskeru koji pokriva i kategoriju i opstinu
-     * objavljenog oglasa.
-     *
-     * @return mete kojima je notifikacija upisana, da pozivalac moze poslati i mail
-     */
     @Transactional
     public List<TaskerNotificationTarget> notifyTaskersAboutNewTask(TaskPublishedEvent event) {
         List<TaskerNotificationTarget> targets = taskerProfileRepository.findNotificationTargets(
                 event.categoryId(), event.municipalityId(), event.clientId());
 
         if (targets.isEmpty()) {
-            log.debug("Nema taskera koji pokrivaju task {}", event.taskId());
+            log.debug("No taskers cover task {}", event.taskId());
             return List.of();
         }
 
@@ -55,15 +49,11 @@ public class NotificationService {
                 .toList();
 
         notificationRepository.saveAll(notifications);
-        log.info("Upisano {} notifikacija za task {}", notifications.size(), event.taskId());
+        log.info("Stored {} notifications for task {}", notifications.size(), event.taskId());
 
         return targets;
     }
 
-    /**
-     * Obavjestava vlasnika da mu je oglas istekao. Za razliku od objave, ovdje je
-     * primalac tacno jedan - onaj koji je oglas postavio.
-     */
     @Transactional
     public void notifyClientAboutExpiredTask(TaskExpiredEvent event) {
         Notification notification = new Notification();
@@ -73,19 +63,9 @@ public class NotificationService {
         notification.setContent("Your task has expired: " + event.title());
 
         notificationRepository.save(notification);
-        log.info("Upisana notifikacija o isteku taska {}", event.taskId());
+        log.info("Stored expiry notification for task {}", event.taskId());
     }
 
-    /**
-     * Napredak posla: tasker je poceo, tasker je prijavio zavrsetak, klijent je
-     * potvrdio. Tri notifikacije, svaka jednom primaocu.
-     * <p>
-     * Ove se upisuju sinhrono, u istoj transakciji kao i promjena statusa - za
-     * razliku od objave i isteka, koji idu preko RabbitMQ-a. Razlika je u tome sto
-     * je ovdje primalac jedan i nema slanja maila, pa nema sta da se odvaja od
-     * zahtjeva; a atomicnost je prednost: ne postoji stanje u kojem je posao
-     * IN_PROGRESS a druga strana nije obavijestena.
-     */
     @Transactional
     public void notifyTaskStarted(Task task) {
         save(task.getClient(), NotificationType.TASK_STARTED, task,
@@ -104,25 +84,12 @@ public class NotificationService {
                 "The client closed the task: " + task.getTitle());
     }
 
-    /**
-     * Obavjestava ocijenjenog da je dobio ocjenu. Sadrzaj ne nosi broj zvjezdica -
-     * ocjena se cita na profilu, a notifikacija koja kaze "dobili ste 1/5" bi
-     * postojala samo da zaboli.
-     */
     @Transactional
     public void notifyReviewReceived(Review review) {
         save(review.getReviewee(), NotificationType.REVIEW_RECEIVED, review.getTask(),
                 "You received a review for: " + review.getTask().getTitle());
     }
 
-    /**
-     * Obavjestava drugu stranu o novoj poruci - ali najvise jednom po razgovoru
-     * dok ta notifikacija ne bude procitana. Razgovor od 50 poruka daje jednu
-     * notifikaciju, ne 50; zvonce pokazuje da ima novih poruka, a koliko ih je
-     * broji countUnreadForUser.
-     * <p>
-     * relatedEntityId je ID razgovora, ne poruke: frontend otvara razgovor.
-     */
     @Transactional
     public void notifyNewMessage(Conversation conversation, User recipient) {
         boolean alreadyPending = notificationRepository
@@ -142,23 +109,17 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
-    /** Otvoren razgovor gasi i zvonce za njega. */
     @Transactional
     public void clearNewMessageNotifications(Conversation conversation, UUID readerId) {
         notificationRepository.markReadFor(readerId, NotificationType.NEW_MESSAGE, conversation.getId());
     }
 
-    /** Vlasnik saznaje da mu je oglas uklonjen, i zasto. */
     @Transactional
     public void notifyTaskRemoved(Task task, String reason) {
         save(task.getClient(), NotificationType.TASK_REMOVED, task,
                 "Your task was removed by a moderator: " + task.getTitle() + ". Reason: " + reason);
     }
 
-    /**
-     * Primalac se prima kao ucitan entitet, ne kao ID: pozivalac ga vec ima u
-     * istoj transakciji, pa nema potrebe ni za proxyjem ni za novim upitom.
-     */
     private void save(User recipient, NotificationType type, Task task, String content) {
         Notification notification = new Notification();
         notification.setRecipient(recipient);
@@ -181,10 +142,6 @@ public class NotificationService {
         return notificationRepository.countByRecipientAndReadFalse(userReference(userId));
     }
 
-    /**
-     * Oznacava notifikaciju procitanom. Ponovni poziv nad vec procitanom je bez
-     * efekta, da klijent koji dvaput klikne ne dobije gresku.
-     */
     @Transactional
     public NotificationResponse markAsRead(UUID notificationId, UUID userId) {
         Notification notification = notificationRepository.findById(notificationId)
@@ -202,8 +159,6 @@ public class NotificationService {
     private Notification buildNotification(TaskerNotificationTarget target, TaskPublishedEvent event) {
         Notification notification = new Notification();
 
-        // getReferenceById, ne findById: treba samo strani kljuc, pa nema razloga
-        // ucitavati cijelog korisnika iz baze za svaku notifikaciju.
         notification.setRecipient(userReference(target.userId()));
         notification.setType(NotificationType.NEW_TASK_IN_AREA);
         notification.setRelatedEntityId(event.taskId());

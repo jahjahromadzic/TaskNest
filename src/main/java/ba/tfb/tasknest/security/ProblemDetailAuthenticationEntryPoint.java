@@ -8,13 +8,6 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
-/**
- * Neautentikovan zahtjev na zasticeni endpoint.
- * <p>
- * Prosljedjuje izuzetak istom resolveru koji opsluzuje @RestControllerAdvice,
- * pa odgovor izlazi kao ProblemDetail, identicno svim ostalim greskama. Ranije
- * je ovdje stajao HttpStatusEntryPoint koji vraca status bez ikakvog tijela.
- */
 @Component
 public class ProblemDetailAuthenticationEntryPoint implements AuthenticationEntryPoint {
 

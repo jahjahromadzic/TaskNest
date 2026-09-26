@@ -17,32 +17,9 @@ public interface TaskerProfileRepository extends JpaRepository<TaskerProfile, UU
 
     Optional<TaskerProfile> findByUser(User user);
 
-    /**
-     * Profil pod ekskluzivnim lokom (SELECT ... FOR UPDATE).
-     * <p>
-     * Potrebno pri preracunavanju prosjecne ocjene, koja je read-modify-write:
-     * bez loka dvije paralelne ocjene istom taskeru procitaju prosjek prije nego
-     * ijedna commita, pa druga prepise prvu i keširana vrijednost ispadne
-     * pogresna. Ekskluzivni, ne dijeljeni: ovdje se pise, ne samo cita.
-     */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<TaskerProfile> findWithWriteLockByUser(User user);
 
-    /**
-     * Srz matchinga: taskeri koji pokrivaju i datu kategoriju i datu opstinu.
-     * <p>
-     * Vraca projekciju, ne entitete - pozivalac je notifikacijski tok koji
-     * iterira rezultat, pa bi TaskerProfile znacio tri dodatna upita po taskeru.
-     * <p>
-     * {@code c.active = true} je namjerno OVDJE, a ne u ciscenju spojne tabele
-     * pri deaktivaciji kategorije: red u tasker_categories ostaje, pa ponovna
-     * aktivacija kategorije sama vraca prethodni izbor taskera. Ciscenjem bi se
-     * izbor nepovratno izgubio na jedan admin klik.
-     * <p>
-     * Vlasnik oglasa se iskljucuje: jedan nalog moze imati i CLIENT i TASKER
-     * rolu, pa bi inace dobio notifikaciju o vlastitom oglasu. Ogledalo uslova
-     * {@code t.client.id <> :taskerId} u TaskRepository.findMatchingTasks.
-     */
     @Query("""
             select distinct new ba.tfb.tasknest.repository.projection.TaskerNotificationTarget(
                     u.id,
@@ -56,6 +33,7 @@ public interface TaskerProfileRepository extends JpaRepository<TaskerProfile, UU
               and c.active = true
               and m.id = :municipalityId
               and u.id <> :clientId
+              and u.accountStatus = ba.tfb.tasknest.entity.enums.AccountStatus.ACTIVE
             """)
     List<TaskerNotificationTarget> findNotificationTargets(@Param("categoryId") UUID categoryId,
                                                            @Param("municipalityId") UUID municipalityId,

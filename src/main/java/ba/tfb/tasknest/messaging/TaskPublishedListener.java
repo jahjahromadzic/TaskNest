@@ -10,13 +10,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/**
- * Potrosac dogadjaja o objavi oglasa.
- * <p>
- * Radi izvan zahtjeva koji je oglas objavio, pa klijent ne ceka upis
- * notifikacija. Ako obrada pukne, poruka se ne potvrdjuje i RabbitMQ je
- * ponovo isporuci.
- */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -27,13 +20,11 @@ public class TaskPublishedListener {
 
     @RabbitListener(queues = RabbitConfig.TASK_PUBLISHED_QUEUE)
     public void onTaskPublished(TaskPublishedEvent event) {
-        log.debug("Primljen TaskPublishedEvent za task {}", event.taskId());
+        log.debug("Received TaskPublishedEvent for task {}", event.taskId());
 
         List<TaskerNotificationTarget> targets =
                 notificationService.notifyTaskersAboutNewTask(event);
 
-        // Mailovi tek nakon sto su notifikacije commitane, i izvan te transakcije:
-        // zapis u bazi je ono sto mora opstati, mail je najbolji pokusaj.
         mailer.sendNewTaskEmails(targets, event);
     }
 }

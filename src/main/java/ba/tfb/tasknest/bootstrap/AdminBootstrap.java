@@ -15,17 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Locale;
 import java.util.Optional;
 
-/**
- * Kako nastaje prvi admin.
- * <p>
- * Registracija ga ne smije praviti, a endpoint "napravi admina" trazi da admin
- * vec postoji. Zato: nalog se registruje normalno, a app.admin.email ga pri
- * pokretanju unaprijedi. Lozinka nikad ne prolazi kroz konfiguraciju, i u
- * repozitoriju nema kredencijala.
- * <p>
- * Idempotentno: nalog koji je vec admin ostaje takav, pa je bezbjedno na svakom
- * restartu. Nalog registrovan nakon pokretanja postaje admin tek na sljedecem.
- */
 @Component
 @Slf4j
 public class AdminBootstrap {
@@ -53,8 +42,6 @@ public class AdminBootstrap {
         Optional<User> candidate = userRepository.findByEmail(email);
 
         if (candidate.isEmpty()) {
-            // Upozorenje, ne greska: aplikacija radi i bez admina, a nalog se
-            // moze registrovati pa pokupiti na sljedecem restartu.
             log.warn("app.admin.email is set to {} but no such account exists; register it and restart", email);
             return;
         }

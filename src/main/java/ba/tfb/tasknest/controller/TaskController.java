@@ -47,10 +47,6 @@ public class TaskController {
         return taskService.cancelTask(id, principal.getId());
     }
 
-    /**
-     * Tasker pocinje raditi na dodijeljenom poslu. Rola je samo prvi filter -
-     * servis provjerava da je poziva bas tasker cija je ponuda prihvacena.
-     */
     @PostMapping("/{id}/start")
     @PreAuthorize("hasRole('TASKER')")
     public TaskResponse start(@PathVariable UUID id,
@@ -65,7 +61,6 @@ public class TaskController {
         return taskService.completeTask(id, principal.getId());
     }
 
-    /** Klijent potvrdjuje obavljen posao. */
     @PostMapping("/{id}/close")
     @PreAuthorize("hasRole('CLIENT')")
     public TaskResponse close(@PathVariable UUID id,
@@ -73,9 +68,6 @@ public class TaskController {
         return taskService.closeTask(id, principal.getId());
     }
 
-    /**
-     * Public listing. Only published tasks are returned.
-     */
     @GetMapping
     public PagedResponse<TaskSummaryResponse> browse(
             @RequestParam(required = false) UUID categoryId,
@@ -85,9 +77,6 @@ public class TaskController {
         return PagedResponse.from(taskService.browseTasks(categoryId, municipalityId, pageable));
     }
 
-    /**
-     * Tasks in the categories and municipalities this tasker covers.
-     */
     @GetMapping("/matching")
     @PreAuthorize("hasRole('TASKER')")
     public PagedResponse<TaskSummaryResponse> matching(
@@ -97,9 +86,6 @@ public class TaskController {
         return PagedResponse.from(taskService.getMatchingTasks(principal.getId(), pageable));
     }
 
-    /**
-     * Everything the client posted, drafts included.
-     */
     @GetMapping("/mine")
     @PreAuthorize("hasRole('CLIENT')")
     public PagedResponse<TaskSummaryResponse> mine(
@@ -109,9 +95,6 @@ public class TaskController {
         return PagedResponse.from(taskService.getMyTasks(principal.getId(), pageable));
     }
 
-    /**
-     * Tasks this tasker was assigned through an accepted offer.
-     */
     @GetMapping("/assigned")
     @PreAuthorize("hasRole('TASKER')")
     public PagedResponse<TaskSummaryResponse> assigned(
@@ -121,11 +104,6 @@ public class TaskController {
         return PagedResponse.from(taskService.getAssignedTasks(principal.getId(), pageable));
     }
 
-    /**
-     * Kept last on purpose: literal paths above must be matched before
-     * this one, otherwise "matching" or "mine" would be parsed as an id.
-     * principal is null for anonymous callers, which is allowed here.
-     */
     @GetMapping("/{id}")
     public TaskResponse getOne(@PathVariable UUID id,
                                @AuthenticationPrincipal UserPrincipal principal) {

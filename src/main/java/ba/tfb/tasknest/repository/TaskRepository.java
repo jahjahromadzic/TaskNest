@@ -18,34 +18,11 @@ import java.util.UUID;
 
 public interface TaskRepository extends JpaRepository<Task, UUID> {
 
-    /**
-     * Cita task uz dijeljeni lock na redu, za odluke koje se donose na osnovu
-     * stanja taska a upisuju u drugu tabelu.
-     * <p>
-     * OPTIMISTIC ovdje nije dovoljan: on samo procita verziju na kraju
-     * transakcije, pa ako paralelni acceptOffer jos nije commitao, procita se
-     * stara commitana verzija, provjera prodje i ponuda se upise na vec
-     * dodijeljen task. PESSIMISTIC_READ (SELECT ... FOR SHARE) blokira tudji
-     * UPDATE nad tim redom dok se ne commita.
-     * <p>
-     * Dijeljeni, ne ekskluzivni: dvije paralelne ponude na isti task se ne
-     * smetaju medjusobno - blokiraju se samo naspram prihvatanja ponude.
-     */
     @Lock(LockModeType.PESSIMISTIC_READ)
     Optional<Task> findWithSharedLockById(UUID id);
 
-    /** Kandidati za prelazak u EXPIRED - poziva ih TaskExpirySchedule. */
     List<Task> findByStatusAndExpiresAtBefore(TaskStatus status, LocalDateTime moment);
 
-    /**
-     * Public listing of open tasks. Category and municipality are optional
-     * filters - a null value means "any".
-     * <p>
-     * Istek se filtrira ovdje, ne samo statusom: task ostaje PUBLISHED dok ga
-     * scheduler ne prebaci u EXPIRED, pa bi javna lista prikazivala oglase
-     * kojima je rok prosao. Isti prozor koji submitOffer vec pokriva.
-     * Indeks idx_tasks_status_expires_at(status, expires_at) pokriva oba uslova.
-     */
     @Query("""
         select new ba.tfb.tasknest.dto.task.TaskSummaryResponse(
             t.id, t.title, t.budget, t.status,
@@ -64,11 +41,6 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
                                             @Param("municipalityId") UUID municipalityId,
                                             Pageable pageable);
 
-    /**
-     * Tasks matching what a tasker covers. Mirror of findNotificationTargets:
-     * there we ask which taskers fit a task, here which tasks fit a tasker.
-     * The tasker's own tasks are excluded, since one account can hold both roles.
-     */
     @Query("""
         select new ba.tfb.tasknest.dto.task.TaskSummaryResponse(
             t.id, t.title, t.budget, t.status,
@@ -93,9 +65,6 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
                                                 @Param("now") LocalDateTime now,
                                                 Pageable pageable);
 
-    /**
-     * Everything the client posted, drafts included.
-     */
     @Query("""
         select new ba.tfb.tasknest.dto.task.TaskSummaryResponse(
             t.id, t.title, t.budget, t.status,
@@ -108,9 +77,6 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     Page<TaskSummaryResponse> findByClientId(@Param("clientId") UUID clientId,
                                              Pageable pageable);
 
-    /**
-     * Tasks a tasker was assigned through an accepted offer.
-     */
     @Query("""
         select new ba.tfb.tasknest.dto.task.TaskSummaryResponse(
             t.id, t.title, t.budget, t.status,

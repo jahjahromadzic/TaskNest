@@ -42,12 +42,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Pravila razgovora, bez Springa i baze.
- * <p>
- * Nastanak razgovora s ponudom, arhiviranje i brojanje neprocitanih nad pravim
- * podacima pokriva integracioni test.
- */
 @ExtendWith(MockitoExtension.class)
 class ConversationServiceTest {
 
@@ -84,7 +78,7 @@ class ConversationServiceTest {
             // Act
             conversationService.sendMessage(CONVERSATION_ID, TASKER_ID, aMessage());
 
-            // Assert - primalac je druga strana; notifikacija je na drugom agregatu
+            // Assert
             ArgumentCaptor<User> recipient = ArgumentCaptor.forClass(User.class);
             verify(notificationService).notifyNewMessage(eq(conversation), recipient.capture());
             assertThat(recipient.getValue().getId()).isEqualTo(CLIENT_ID);
@@ -130,13 +124,13 @@ class ConversationServiceTest {
             // Act
             conversationService.sendMessage(CONVERSATION_ID, CLIENT_ID, aMessage());
 
-            // Assert - vrijeme iz injektovanog sata
+            // Assert
             assertThat(conversation.getLastMessageAt()).isEqualTo(NOW);
         }
 
         @Test
         void sendMessage_throwsBusinessRule_whenConversationIsArchived() {
-            // Arrange - ponuda odbijena ili posao zatvoren
+            // Arrange
             stubConversation(aConversation(ConversationStatus.ARCHIVED));
 
             // Act + Assert
@@ -144,7 +138,7 @@ class ConversationServiceTest {
                     .isInstanceOf(BusinessRuleException.class)
                     .hasMessageContaining("archived");
 
-            // Assert - nista nije upisano ni poslano
+            // Assert
             verify(messageRepository, never()).save(any());
             verify(notificationService, never()).notifyNewMessage(any(), any());
         }
@@ -186,7 +180,7 @@ class ConversationServiceTest {
 
         @Test
         void getMessages_isAllowed_whenConversationIsArchived() {
-            // Arrange - arhiviran znaci samo za citanje, ne zakljucan
+            // Arrange
             Conversation archived = aConversation(ConversationStatus.ARCHIVED);
             stubConversation(archived);
             when(messageRepository.findByConversationOrderByCreatedAtAsc(eq(archived), any(Pageable.class)))
@@ -208,7 +202,7 @@ class ConversationServiceTest {
             // Act
             conversationService.markAsRead(CONVERSATION_ID, CLIENT_ID);
 
-            // Assert - procitan razgovor bez ugasenog zvonca bio bi nekonzistentan
+            // Assert
             verify(notificationService).clearNewMessageNotifications(conversation, CLIENT_ID);
         }
 
@@ -241,14 +235,14 @@ class ConversationServiceTest {
             ConversationResponse seenByTasker =
                     conversationService.getMyConversations(TASKER_ID, PageRequest.of(0, 20)).getContent().getFirst();
 
-            // Assert - isti razgovor, razlicita "druga strana"
+            // Assert
             assertThat(seenByClient.otherPartyId()).isEqualTo(TASKER_ID);
             assertThat(seenByTasker.otherPartyId()).isEqualTo(CLIENT_ID);
         }
 
         @Test
         void getMyConversations_reportsZeroUnread_whenTheGroupedQueryOmitsAConversation() {
-            // Arrange - grupisani upit ne vraca razgovore bez neprocitanih
+            // Arrange
             Conversation withUnread = aConversation(ConversationStatus.OPEN);
             Conversation allRead = aConversation(ConversationStatus.OPEN);
             allRead.setId(UUID.randomUUID());
@@ -267,7 +261,7 @@ class ConversationServiceTest {
 
         @Test
         void getMyConversations_skipsTheCountQuery_whenThePageIsEmpty() {
-            // Arrange - prazan IN () nije nesto sto treba slati bazi
+            // Arrange
             when(conversationRepository.findAllByParticipant(eq(CLIENT_ID), any()))
                     .thenReturn(Page.empty());
 
@@ -279,8 +273,6 @@ class ConversationServiceTest {
             verify(messageRepository, never()).countUnreadByConversation(any(), anyCollection());
         }
     }
-
-    // ---------- fixtures ----------
 
     private void stubConversation(Conversation conversation) {
         when(conversationRepository.findWithParticipantsById(CONVERSATION_ID))

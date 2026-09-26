@@ -12,14 +12,6 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Infrastruktura za asinhrone dogadjaje.
- * <p>
- * Objava oglasa treba da obavijesti sve taskere koji ga pokrivaju. Da se to radi
- * u istom zahtjevu, klijent bi cekao upis notifikacija i slanje mailova, a pad
- * mail servera bi oborio objavu oglasa. Ovako publishTask samo ostavi poruku i
- * vrati odgovor, a obrada ide odvojeno.
- */
 @Configuration
 public class RabbitConfig {
 
@@ -30,7 +22,6 @@ public class RabbitConfig {
     public static final String TASK_EXPIRED_QUEUE = "tasknest.task-expired";
     public static final String TASK_EXPIRED_ROUTING_KEY = "task.expired";
 
-    /** Durable: red i poruke prezive restart brokera, pa se nista ne gubi. */
     @Bean
     public TopicExchange taskNestExchange() {
         return new TopicExchange(EXCHANGE, true, false);
@@ -60,10 +51,6 @@ public class RabbitConfig {
                 .with(TASK_EXPIRED_ROUTING_KEY);
     }
 
-    /**
-     * JSON umjesto Java serijalizacije: poruka je citljiva u RabbitMQ konzoli i
-     * ne veze posiljaoca i primaoca za istu Java klasu.
-     */
     @Bean
     public MessageConverter rabbitMessageConverter() {
         return new JacksonJsonMessageConverter();

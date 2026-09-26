@@ -41,13 +41,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Administracija kroz pravi HTTP lanac.
- * <p>
- * Ovdje je rola cijela provjera - nema vlasnistva koje bi servis dodatno
- * provjerio - pa se @PreAuthorize mora vidjeti kroz filter, a ne preskociti
- * direktnim pozivom servisa.
- */
 @AutoConfigureMockMvc
 class AdminEndpointTest extends AbstractIntegrationTest {
 
@@ -85,8 +78,6 @@ class AdminEndpointTest extends AbstractIntegrationTest {
         tasker = register("mod.tasker@test.ba");
         authService.activateTaskerRole(tasker.userId());
 
-        // Admin nastaje tacno onako kako nastaje u produkciji: registracija, pa
-        // unapredjenje preko konfigurisanog emaila.
         promoteToAdmin("admin@test.ba");
     }
 
@@ -139,11 +130,11 @@ class AdminEndpointTest extends AbstractIntegrationTest {
         @Test
         @DisplayName("Promotion is idempotent and ignores a missing account")
         void bootstrap_isIdempotent_andToleratesMissingAccount() {
-            // Act - drugi restart s istim emailom, pa email bez naloga
+            // Act
             promoteToAdmin("admin@test.ba");
             promoteToAdmin("nepostoji@test.ba");
 
-            // Assert - i dalje jedna ADMIN rola, bez izuzetka
+            // Assert
             long adminRoles = transactionTemplate.execute(status ->
                     userRepository.findById(admin.userId()).orElseThrow().getRoles().stream()
                             .filter(role -> role.getName() == RoleName.ADMIN).count());
@@ -157,7 +148,7 @@ class AdminEndpointTest extends AbstractIntegrationTest {
         @Test
         @DisplayName("A suspended user's existing token stops working on the very next request")
         void suspend_takesEffectImmediately() throws Exception {
-            // Arrange - token radi prije suspenzije
+            // Arrange
             mockMvc.perform(get("/api/notifications").header("Authorization", bearer(tasker)))
                     .andExpect(status().isOk());
 
@@ -167,11 +158,11 @@ class AdminEndpointTest extends AbstractIntegrationTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.accountStatus").value("SUSPENDED"));
 
-            // Assert - isti, jos nevazeci-po-vremenu token vise ne prolazi
+            // Assert
             mockMvc.perform(get("/api/notifications").header("Authorization", bearer(tasker)))
                     .andExpect(status().isUnauthorized());
 
-            // Assert - ni refresh token ne moze izdati novi par
+            // Assert
             mockMvc.perform(post("/api/auth/refresh")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"refreshToken\":\"" + tasker.refreshToken() + "\"}"))
@@ -204,11 +195,11 @@ class AdminEndpointTest extends AbstractIntegrationTest {
                             .header("Authorization", bearer(admin)))
                     .andExpect(status().isOk());
 
-            // Assert - ponuda i dalje postoji, reverzibilno
+            // Assert
             assertThat(offerRepository.findById(offerId).orElseThrow().getStatus())
                     .isEqualTo(OfferStatus.PENDING);
 
-            // Assert - ali se ne moze prihvatiti
+            // Assert
             assertThatThrownBy(() -> offerService.acceptOffer(offerId, client.userId()))
                     .isInstanceOf(BusinessRuleException.class)
                     .hasMessageContaining("not active");
@@ -275,7 +266,7 @@ class AdminEndpointTest extends AbstractIntegrationTest {
             offerService.acceptOffer(submitOffer(taskId), client.userId());
             taskService.startTask(taskId, tasker.userId());
 
-            // Act + Assert - state machine ne dopusta IN_PROGRESS -> REMOVED
+            // Act + Assert
             mockMvc.perform(post("/api/admin/tasks/{id}/remove", taskId)
                             .header("Authorization", bearer(admin))
                             .contentType(MediaType.APPLICATION_JSON)
@@ -312,8 +303,6 @@ class AdminEndpointTest extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.verified").value(true));
         }
     }
-
-    // ---------- helpers ----------
 
     private void promoteToAdmin(String email) {
         AdminBootstrap bootstrap = new AdminBootstrap(userRepository, roleRepository, email);

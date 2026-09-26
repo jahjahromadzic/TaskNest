@@ -4,15 +4,6 @@ import org.springframework.data.domain.Page;
 
 import java.util.List;
 
-/**
- * Stabilan oblik paginiranog odgovora.
- * <p>
- * Spring Data upozorava da serijalizovani oblik njegovog Page-a nije dio javnog
- * ugovora i da se moze mijenjati izmedju verzija. Direktnim vracanjem Page-a u
- * odgovor su curili i interni detalji (pageable.offset, sort.unsorted, unpaged),
- * a sort se pojavljivao dvaput. Ovdje je samo ono sto klijentu treba da iscrta
- * listu i paginaciju.
- */
 public record PagedResponse<T>(
         List<T> content,
         int page,

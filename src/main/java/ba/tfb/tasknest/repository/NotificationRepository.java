@@ -21,18 +21,9 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
 
     long countByRecipientAndReadFalse(User recipient);
 
-    /**
-     * Da li primalac vec ima neprocitanu notifikaciju ovog tipa za isti entitet.
-     * Koristi se da razgovor od 50 poruka ne napravi 50 notifikacija.
-     */
     boolean existsByRecipientAndTypeAndRelatedEntityIdAndReadFalse(
             User recipient, NotificationType type, UUID relatedEntityId);
 
-    /**
-     * Gasi notifikacije ovog tipa za dati entitet. Otvaranje razgovora mora
-     * ugasiti i zvonce za njega, inace bi korisnik procitao poruke a
-     * notifikacija bi i dalje stajala.
-     */
     @Modifying
     @Query("""
             update Notification n set n.read = true

@@ -29,12 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
-/**
- * Poslovna pravila TaskerProfileService-a, bez Springa i baze.
- * <p>
- * Pokrivenost kategorijama i opstinama je preduslov za matching, pa je
- * tezisce na tome da se skup stvarno ZAMIJENI i da se neispravan ulaz odbije.
- */
 @ExtendWith(MockitoExtension.class)
 class TaskerProfileServiceTest {
 
@@ -70,7 +64,7 @@ class TaskerProfileServiceTest {
 
         @Test
         void updateCategories_throwsBusinessRule_whenUserHasNoTaskerProfile() {
-            // Arrange - korisnik postoji, ali nikad nije aktivirao Tasker rolu
+            // Arrange
             User user = aUser();
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
             when(taskerProfileRepository.findByUser(user)).thenReturn(Optional.empty());
@@ -111,14 +105,13 @@ class TaskerProfileServiceTest {
 
         @Test
         void updateCategories_throwsNotFound_whenOnlySomeIdsExist() {
-            // Arrange - findAllById tiho preskace nenadjene, pa se trazena i
-            // vracena velicina moraju porediti; inace bi pogresan ID prosao neopazeno.
+            // Arrange
             TaskerProfile profile = aProfile();
             givenProfileExists(profile);
             when(categoryRepository.findAllById(Set.of(CATEGORY_A, CATEGORY_B)))
                     .thenReturn(List.of(aCategory(CATEGORY_A, "Vodoinstalacije", true)));
 
-            // Act + Assert - u poruci smije biti samo ID koji fali, ne i onaj ispravan
+            // Act + Assert
             assertThatThrownBy(() ->
                     taskerProfileService.updateCategories(USER_ID, coverage(CATEGORY_A, CATEGORY_B)))
                     .isInstanceOf(ResourceNotFoundException.class)
@@ -132,7 +125,7 @@ class TaskerProfileServiceTest {
 
         @Test
         void updateCategories_throwsBusinessRule_whenAnyCategoryIsInactive() {
-            // Arrange - jedna aktivna, jedna ugasena
+            // Arrange
             TaskerProfile profile = aProfile();
             givenProfileExists(profile);
             when(categoryRepository.findAllById(Set.of(CATEGORY_A, CATEGORY_B)))
@@ -152,7 +145,7 @@ class TaskerProfileServiceTest {
 
         @Test
         void updateCategories_replacesPreviousSelection_whenIdsAreValid() {
-            // Arrange - profil vec pokriva staru kategoriju
+            // Arrange
             TaskerProfile profile = aProfile();
             givenProfileExists(profile);
             when(categoryRepository.findAllById(Set.of(CATEGORY_A, CATEGORY_B)))
@@ -164,7 +157,7 @@ class TaskerProfileServiceTest {
             TaskerProfileResponse response =
                     taskerProfileService.updateCategories(USER_ID, coverage(CATEGORY_A, CATEGORY_B));
 
-            // Assert - zamjena, ne dopisivanje: stara kategorija mora nestati
+            // Assert
             assertThat(response.categories())
                     .containsExactly("Elektroinstalacije", "Vodoinstalacije");
             assertThat(profile.getCategories()).hasSize(2);
@@ -173,15 +166,8 @@ class TaskerProfileServiceTest {
                     .doesNotContain("Stara kategorija");
         }
 
-        /**
-         * Pravilo garantuje servis, ne @NotEmpty na DTO-u: nista se ne ucitava ni
-         * ne mijenja prije provjere, pa ni pozivalac mimo kontrolera ne moze
-         * praznim skupom obrisati pokrivenost.
-         */
         @Test
         void updateCategories_throwsBusinessRule_whenIdSetIsEmpty() {
-            // Arrange - namjerno bez ijednog stuba: provjera je prije svakog upita
-
             // Act + Assert
             assertThatThrownBy(() ->
                     taskerProfileService.updateCategories(USER_ID, new UpdateCoverageRequest(Set.of())))
@@ -191,8 +177,6 @@ class TaskerProfileServiceTest {
 
         @Test
         void updateCategories_throwsBusinessRule_whenIdSetIsNull() {
-            // Arrange - null je ranije bio NPE
-
             // Act + Assert
             assertThatThrownBy(() ->
                     taskerProfileService.updateCategories(USER_ID, new UpdateCoverageRequest(null)))
@@ -313,8 +297,6 @@ class TaskerProfileServiceTest {
         }
     }
 
-    // ---------- fixtures ----------
-
     private void givenProfileExists(TaskerProfile profile) {
         User user = profile.getUser();
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
@@ -333,7 +315,6 @@ class TaskerProfileServiceTest {
         return user;
     }
 
-    /** Profil koji vec ima po jednu kategoriju i opstinu, da se vidi zamjena. */
     private TaskerProfile aProfile() {
         TaskerProfile profile = new TaskerProfile();
         profile.setId(PROFILE_ID);

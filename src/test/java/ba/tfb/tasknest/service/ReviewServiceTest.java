@@ -32,12 +32,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Pravila ocjenjivanja, bez Springa i baze.
- * <p>
- * Jedinstvenost (task, recenzent) i CHECK na ocjeni su u bazi i njih provjerava
- * integracioni test; ovdje se testira ko smije ocijeniti koga i kada.
- */
 @ExtendWith(MockitoExtension.class)
 class ReviewServiceTest {
 
@@ -66,7 +60,7 @@ class ReviewServiceTest {
             // Act
             ReviewResponse response = reviewService.createReview(TASK_ID, CLIENT_ID, aRequest(5));
 
-            // Assert - ocijenjeni je izveden iz prihvacene ponude, ne iz zahtjeva
+            // Assert
             assertThat(response.reviewerId()).isEqualTo(CLIENT_ID);
             assertThat(response.revieweeId()).isEqualTo(TASKER_ID);
         }
@@ -80,14 +74,14 @@ class ReviewServiceTest {
             // Act
             ReviewResponse response = reviewService.createReview(TASK_ID, TASKER_ID, aRequest(4));
 
-            // Assert - ocjenjuje se u oba smjera
+            // Assert
             assertThat(response.reviewerId()).isEqualTo(TASKER_ID);
             assertThat(response.revieweeId()).isEqualTo(CLIENT_ID);
         }
 
         @Test
         void createReview_throwsNotOwner_whenCallerIsNeitherPartyToTheTask() {
-            // Arrange - treci korisnik s poznatim ID-em posla
+            // Arrange
             Task task = aClosedTask();
             when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
             when(userRepository.findById(OUTSIDER_ID)).thenReturn(Optional.of(aUser(OUTSIDER_ID)));
@@ -96,7 +90,7 @@ class ReviewServiceTest {
             assertThatThrownBy(() -> reviewService.createReview(TASK_ID, OUTSIDER_ID, aRequest(1)))
                     .isInstanceOf(NotResourceOwnerException.class);
 
-            // Assert - nista nije upisano
+            // Assert
             verify(reviewRepository, never()).saveAndFlush(any());
         }
 
@@ -117,7 +111,7 @@ class ReviewServiceTest {
 
         @Test
         void createReview_throwsBusinessRule_whenTaskIsOnlyCompleted() {
-            // Arrange - COMPLETED postavlja tasker sam, pa jos nije potvrdjeno
+            // Arrange
             Task task = aTask(TaskStatus.COMPLETED);
             when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
 
@@ -129,7 +123,7 @@ class ReviewServiceTest {
 
         @Test
         void createReview_throwsBusinessRule_whenTaskWasCancelled() {
-            // Arrange - nema obavljenog posla, nema sta ocijeniti
+            // Arrange
             Task task = aTask(TaskStatus.CANCELLED);
             when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
 
@@ -154,14 +148,14 @@ class ReviewServiceTest {
 
         @Test
         void createReview_translatesConstraintViolation_whenTwoReviewsRaceThroughTheCheck() {
-            // Arrange - provjera iznad je check-then-act; unique constraint je mreza
+            // Arrange
             Task task = aClosedTask();
             when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
             when(userRepository.findById(CLIENT_ID)).thenReturn(Optional.of(aUser(CLIENT_ID)));
             when(reviewRepository.saveAndFlush(any()))
                     .thenThrow(new DataIntegrityViolationException("uq_reviews_task_reviewer"));
 
-            // Act + Assert - baza ne smije procuriti kao 500
+            // Act + Assert
             assertThatThrownBy(() -> reviewService.createReview(TASK_ID, CLIENT_ID, aRequest(5)))
                     .isInstanceOf(BusinessRuleException.class)
                     .hasMessageContaining("already reviewed");
@@ -180,7 +174,7 @@ class ReviewServiceTest {
             // Act
             reviewService.createReview(TASK_ID, CLIENT_ID, aRequest(5));
 
-            // Assert - prosjek je keširan na drugom agregatu, pa je poziv ugovor
+            // Assert
             ArgumentCaptor<User> refreshed = ArgumentCaptor.forClass(User.class);
             verify(taskerProfileService).refreshAverageRating(refreshed.capture());
             assertThat(refreshed.getValue().getId()).isEqualTo(TASKER_ID);
@@ -201,8 +195,6 @@ class ReviewServiceTest {
             assertThat(notified.getValue().getReviewee().getId()).isEqualTo(CLIENT_ID);
         }
     }
-
-    // ---------- fixtures ----------
 
     private void stubLookups(Task task, UUID reviewerId) {
         when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));

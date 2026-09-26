@@ -22,10 +22,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Vidljivost u javnoj listi, protiv prave baze. Filter isteka zivi u JPQL-u pa
- * se mockovima ne moze provjeriti.
- */
 class TaskBrowseIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired private TaskRepository taskRepository;
@@ -83,10 +79,10 @@ class TaskBrowseIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("A task still marked PUBLISHED but past its expiry is not listed")
     void findOpenTasks_returnsEmpty_whenExpiryHasPassed() {
-        // Arrange - scheduler ga jos nije prebacio u EXPIRED
+        // Arrange
         persistTask(TaskStatus.PUBLISHED, LocalDateTime.now().minusMinutes(1));
 
-        // Act + Assert - bez filtera isteka javna lista bi prikazala mrtav oglas
+        // Act + Assert
         assertThat(browse().getContent()).isEmpty();
     }
 
@@ -114,7 +110,7 @@ class TaskBrowseIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("An expired task is excluded from a tasker's matching feed too")
     void findMatchingTasks_returnsEmpty_whenExpiryHasPassed() {
-        // Arrange - matching ne smije biti popustljiviji od javne liste
+        // Arrange
         persistTask(TaskStatus.PUBLISHED, LocalDateTime.now().minusMinutes(1));
 
         // Act
@@ -125,8 +121,6 @@ class TaskBrowseIntegrationTest extends AbstractIntegrationTest {
         // Assert
         assertThat(page.getContent()).isEmpty();
     }
-
-    // ---------- helpers ----------
 
     private Page<TaskSummaryResponse> browse() {
         return taskRepository.findOpenTasks(

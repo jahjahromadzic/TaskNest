@@ -16,10 +16,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-/**
- * Reads the bearer token on every request and, when valid,
- * puts the authenticated user into the security context.
- */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -62,11 +58,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private void authenticate(UserPrincipal principal, HttpServletRequest request) {
         try {
-            // Status se provjerava na svakom zahtjevu, ne samo pri loginu: token
-            // vrijedi do sat vremena, a suspenzija mora djelovati odmah.
             accountStatusChecker.check(principal);
         } catch (AccountStatusException e) {
-            log.debug("Token odbijen za korisnika {}: {}", principal.getId(), e.getMessage());
+            log.debug("Token rejected for user {}: {}", principal.getId(), e.getMessage());
             return;
         }
 
@@ -77,7 +71,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
-    /** RFC 7235: shema je case-insensitive, pa "bearer" i "BEARER" moraju proci. */
     private static boolean hasBearerPrefix(String header) {
         return header.length() > PREFIX.length()
                 && header.regionMatches(true, 0, PREFIX, 0, PREFIX.length());

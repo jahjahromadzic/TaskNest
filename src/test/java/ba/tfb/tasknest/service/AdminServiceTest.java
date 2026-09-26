@@ -70,14 +70,14 @@ class AdminServiceTest {
             // Act
             AdminUserResponse response = adminService.suspendUser(ADMIN_ID, USER_ID);
 
-            // Assert - opoziv je bulk upit, pa je poziv dio ugovora
+            // Assert
             assertThat(response.accountStatus()).isEqualTo(AccountStatus.SUSPENDED);
             verify(refreshTokenRepository).revokeAllByUser(USER_ID, NOW);
         }
 
         @Test
         void suspendUser_throwsBusinessRule_whenAdminTargetsThemselves() {
-            // Act + Assert - sistem ne smije ostati bez admina zbog jednog klika
+            // Act + Assert
             assertThatThrownBy(() -> adminService.suspendUser(ADMIN_ID, ADMIN_ID))
                     .isInstanceOf(BusinessRuleException.class)
                     .hasMessageContaining("your own");
@@ -85,7 +85,7 @@ class AdminServiceTest {
 
         @Test
         void suspendUser_throwsBusinessRule_whenTargetIsAnotherAdmin() {
-            // Arrange - ukraden admin token ne smije zakljucati ostale
+            // Arrange
             User otherAdmin = aUser(USER_ID, RoleName.CLIENT, RoleName.ADMIN);
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(otherAdmin));
 
@@ -117,7 +117,7 @@ class AdminServiceTest {
 
         @Test
         void reactivateUser_throwsBusinessRule_whenUserDeactivatedThemselves() {
-            // Arrange - to je korisnikova odluka, ne moderatorska
+            // Arrange
             User user = aUser(USER_ID, RoleName.CLIENT);
             user.setAccountStatus(AccountStatus.DEACTIVATED);
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
@@ -154,20 +154,18 @@ class AdminServiceTest {
 
         @Test
         void listUsers_normalizesTheEmailFilter() {
-            // Arrange - emailovi su u bazi mala slova
+            // Arrange
             when(userRepository.findForAdmin(eq(AccountStatus.SUSPENDED), eq("amra@test"), any()))
                     .thenReturn(Page.empty());
 
             // Act
             var page = adminService.listUsers(AccountStatus.SUSPENDED, "  Amra@Test ", PageRequest.of(0, 20));
 
-            // Assert - i prazna stranica ne salje upit za role
+            // Assert
             assertThat(page).isEmpty();
             verify(userRepository, never()).findRolesFor(anyCollection());
         }
     }
-
-    // ---------- fixtures ----------
 
     private User aUser(UUID id, RoleName... roleNames) {
         User user = new User();

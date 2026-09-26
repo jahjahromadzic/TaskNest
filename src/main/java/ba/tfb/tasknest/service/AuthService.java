@@ -40,15 +40,8 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final TaskerProfileRepository taskerProfileRepository;
 
-    /**
-     * Registers a new account. Every account starts as a client;
-     * the tasker role is activated later from within the app.
-     */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        // Normalizacija JEDNOM, prije provjere: ranije se provjeravao sirovi unos
-        // a upisivala mala slova, pa je "Foo@Test.ba" prolazio provjeru i pucao
-        // na unique constraintu.
         String email = normalizeEmail(request.email());
 
         if (userRepository.existsByEmail(email)) {
@@ -68,9 +61,6 @@ public class AuthService {
         user.getRoles().add(clientRole);
 
         try {
-            // saveAndFlush, ne save: provjera iznad je check-then-act i ne stiti od
-            // paralelnih registracija istog emaila. Unique constraint je stvarna
-            // zastita, a bez flusha bi pukao tek na commitu, izvan ovog catch-a.
             User saved = userRepository.saveAndFlush(user);
             return buildResponse(UserPrincipal.withCredentials(saved), saved);
         } catch (DataIntegrityViolationException e) {
@@ -78,8 +68,6 @@ public class AuthService {
         }
     }
 
-    // Vise nije readOnly: login sada upisuje refresh token, a u read-only
-    // transakciji Hibernate radi u FlushMode.MANUAL pa bi insert tiho izostao.
     @Transactional
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(normalizeEmail(request.email()))
@@ -91,17 +79,11 @@ public class AuthService {
 
         UserPrincipal principal = UserPrincipal.withCredentials(user);
 
-        // Namjerno TEK nakon provjere lozinke: inace bi neko bez lozinke saznao
-        // da nalog postoji i da je suspendovan. Baca LockedException / DisabledException.
         accountStatusChecker.check(principal);
 
         return buildResponse(principal, user);
     }
 
-    /**
-     * Mijenja refresh token za novi par tokena. Stari se pri tome opoziva
-     * (rotacija) - vidi {@link RefreshTokenService#validateAndRotate(String)}.
-     */
     @Transactional
     public AuthResponse refresh(String refreshTokenValue) {
         RefreshToken rotated = refreshTokenService.validateAndRotate(refreshTokenValue);
@@ -109,20 +91,16 @@ public class AuthService {
 
         UserPrincipal principal = UserPrincipal.withCredentials(user);
 
-        // Status se provjerava i ovdje, ne samo pri loginu: refresh token zivi
-        // danima, pa suspenzija u medjuvremenu mora sprijeciti novi access token.
         accountStatusChecker.check(principal);
 
         return buildResponse(principal, user, rotated.getToken());
     }
 
-    /** Opoziv umjesto brisanja - red ostaje kao audit trag. */
     @Transactional
     public void logout(String refreshTokenValue) {
         refreshTokenService.revoke(refreshTokenValue);
     }
 
-    /** Locale.ROOT, ne podrazumijevani - u turskom "I" ne prelazi u "i". */
     private String normalizeEmail(String email) {
         return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
     }
@@ -168,9 +146,6 @@ public class AuthService {
         profile.setVerified(false);
         taskerProfileRepository.save(profile);
 
-        // Namjerno bez novog para tokena: role se citaju iz baze na svaki zahtjev,
-        // pa postojeci access token vec od sljedeceg poziva nosi i TASKER rolu.
-        // Izdavanje novog refresh tokena bi ovdje samo gomilalo redove.
         return new TaskerActivationResponse(
                 user.getId(),
                 profile.getId(),

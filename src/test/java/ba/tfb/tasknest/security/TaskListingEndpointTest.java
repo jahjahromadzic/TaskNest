@@ -21,10 +21,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Endpointi za listanje: sta je javno, sta zahtijeva prijavu, i kako se
- * ponasaju na neispravan sort i pretjeranu velicinu strane.
- */
 @AutoConfigureMockMvc
 class TaskListingEndpointTest extends AbstractIntegrationTest {
 
@@ -43,8 +39,6 @@ class TaskListingEndpointTest extends AbstractIntegrationTest {
         userRepository.deleteAll();
     }
 
-    // ---------- javno vs prijavljeno ----------
-
     @Test
     @DisplayName("The public listing stays reachable without a token")
     void browse_isPublic_whenNoTokenIsSent() throws Exception {
@@ -55,8 +49,6 @@ class TaskListingEndpointTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("An anonymous call to /mine is 401, not 403")
     void mine_isUnauthorised_whenAnonymous() throws Exception {
-        // 403 bi znacilo "nemas pravo" i klijent ne bi znao da treba na login.
-        // Prije ispravke je /api/tasks/* propustao i literalne putanje.
         mockMvc.perform(get("/api/tasks/mine"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401));
@@ -81,7 +73,6 @@ class TaskListingEndpointTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("A client without the tasker role still gets 403 on /matching")
     void matching_isForbidden_whenCallerLacksTaskerRole() throws Exception {
-        // Provjera role mora ostati na snazi - 401 samo za neprijavljene
         AuthResponse client = register("listing.client@test.ba");
 
         mockMvc.perform(get("/api/tasks/matching")
@@ -93,12 +84,9 @@ class TaskListingEndpointTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("A single task is reachable without a token")
     void getOne_isPublic_whenNoTokenIsSent() throws Exception {
-        // Nepostojeci id daje 404, ne 401 - dakle putanja je javna
         mockMvc.perform(get("/api/tasks/" + UUID.randomUUID()))
                 .andExpect(status().isNotFound());
     }
-
-    // ---------- sort i velicina strane ----------
 
     @Test
     @DisplayName("An unknown sort field is 400 with a ProblemDetail, not 500")
@@ -113,7 +101,6 @@ class TaskListingEndpointTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("The Swagger placeholder sort value is 400, not 500")
     void browse_isBadRequest_whenSortIsSwaggerPlaceholder() throws Exception {
-        // Tacan zahtjev koji je prijavljen kao 500
         mockMvc.perform(get("/api/tasks").param("sort", "[\"string\"]"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400));
@@ -134,8 +121,6 @@ class TaskListingEndpointTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.size").value(50));
     }
 
-    // ---------- oblik paginiranog odgovora ----------
-
     @Test
     @DisplayName("A paged response exposes only the documented fields")
     void browse_returnsStablePageShape() throws Exception {
@@ -153,8 +138,6 @@ class TaskListingEndpointTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("Spring Data internals do not leak into the response")
     void browse_doesNotLeakSpringDataInternals() throws Exception {
-        // Oblik Page-a nije dio Spring Datinog javnog ugovora; ako ova polja
-        // ponovo izadju, znaci da se negdje vraca Page umjesto PagedResponse.
         mockMvc.perform(get("/api/tasks"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.pageable").doesNotExist())
@@ -175,8 +158,6 @@ class TaskListingEndpointTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.page").exists())
                 .andExpect(jsonPath("$.pageable").doesNotExist());
     }
-
-    // ---------- helpers ----------
 
     private AuthResponse register(String email) {
         return authService.register(

@@ -30,10 +30,6 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
             """)
     long countUnreadForUser(@Param("userId") UUID userId);
 
-    /**
-     * Neprocitane poruke po razgovoru, za cijelu stranicu razgovora odjednom.
-     * Razgovori bez neprocitanih se ne vracaju - pozivalac ih tretira kao nulu.
-     */
     @Query("""
             select new ba.tfb.tasknest.repository.projection.ConversationUnreadCount(
                     m.conversation.id, count(m))
@@ -47,15 +43,6 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
             @Param("userId") UUID userId,
             @Param("conversationIds") Collection<UUID> conversationIds);
 
-    /**
-     * Oznacava procitanim poruke koje je poslala druga strana. Vlastite poruke se
-     * ne diraju - "procitano" znaci da ih je primalac vidio, ne posiljalac.
-     * <p>
-     * Bulk update zaobilazi persistence context. Ovdje je to u redu, jer
-     * transakcija koja ovo zove ne drzi te poruke ucitane.
-     *
-     * @return koliko je poruka oznaceno
-     */
     @Modifying
     @Query("""
             update Message m set m.readAt = :now

@@ -21,10 +21,6 @@ public class JwtService {
 
     static final String TYPE_CLAIM = "type";
 
-    /**
-     * Vrsta tokena. Refresh tokeni ce biti potpisani istim kljucem, pa bez ove
-     * oznake bi refresh token prosao kao access token.
-     */
     static final String ACCESS_TOKEN_TYPE = "access";
 
     private final SecretKey key;
@@ -34,14 +30,13 @@ public class JwtService {
                       @Value("${app.jwt.expiration-minutes}") long expirationMinutes) {
         if (secret == null || secret.isBlank()) {
             throw new IllegalStateException(
-                    "app.jwt.secret nije postavljen. Postavi JWT_SECRET varijablu okruzenja "
-                            + "- aplikacija namjerno ne startuje s praznim kljucem za potpisivanje.");
+                    "app.jwt.secret is not set. Set the JWT_SECRET environment variable; "
+                            + "the application refuses to start with an empty signing key.");
         }
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationMinutes = expirationMinutes;
     }
 
-    /** Koliko sekundi vrijedi access token - klijent po tome zna kad da osvjezi. */
     public long getAccessTokenExpirySeconds() {
         return expirationMinutes * 60;
     }
@@ -59,10 +54,6 @@ public class JwtService {
                 .compact();
     }
 
-    /**
-     * Provjerava potpis, istek i vrstu tokena u jednom prolazu. Vraca prazno umjesto
-     * da baca, jer je odbijen token normalan slucaj na filteru, a ne greska.
-     */
     public Optional<Claims> parseAccessToken(String token) {
         try {
             Claims claims = Jwts.parser()
@@ -73,24 +64,23 @@ public class JwtService {
 
             String type = claims.get(TYPE_CLAIM, String.class);
             if (!ACCESS_TOKEN_TYPE.equals(type)) {
-                log.debug("Token odbijen: ocekivan type '{}', dobijen '{}'", ACCESS_TOKEN_TYPE, type);
+                log.debug("Token rejected: expected type '{}', got '{}'", ACCESS_TOKEN_TYPE, type);
                 return Optional.empty();
             }
 
             return Optional.of(claims);
         } catch (JwtException | IllegalArgumentException e) {
-            log.debug("Token odbijen: {}: {}", e.getClass().getSimpleName(), e.getMessage());
+            log.debug("Token rejected: {}: {}", e.getClass().getSimpleName(), e.getMessage());
             return Optional.empty();
         }
     }
 
-    /** Subject je nas UUID, ali se ne vjeruje na rijec - neispravan oblik ne smije biti 500. */
     public Optional<UUID> extractUserId(Claims claims) {
         String subject = claims.getSubject();
         try {
             return Optional.of(UUID.fromString(subject));
         } catch (IllegalArgumentException e) {
-            log.debug("Token odbijen: subject '{}' nije UUID", subject);
+            log.debug("Token rejected: subject '{}' is not a UUID", subject);
             return Optional.empty();
         }
     }

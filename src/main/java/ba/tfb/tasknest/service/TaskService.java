@@ -38,13 +38,6 @@ public class TaskService {
 
     private static final int PUBLICATION_VALIDITY_DAYS = 30;
 
-    /**
-     * Polja po kojima je dozvoljeno sortirati listu. Bijela lista, a ne bilo koje
-     * ime: Spring Data ubacuje ime u JPQL, pa nepoznato polje daje
-     * PropertyReferenceException i 500. Uz to, ovdje su samo polja koja su ili
-     * indeksirana ili jeftina za sortiranje - sortiranje po description-u nad
-     * velikom tabelom nije nesto sto klijent smije naruciti.
-     */
     private static final Set<String> SORTABLE_FIELDS =
             Set.of("publishedAt", "createdAt", "updatedAt", "expiresAt", "budget", "title", "status");
 
@@ -96,8 +89,6 @@ public class TaskService {
         task.setPublishedAt(now);
         task.setExpiresAt(now.plusDays(PUBLICATION_VALIDITY_DAYS));
 
-        // Springov dogadjaj, ne direktno na RabbitMQ: TaskEventPublisher ga hvata
-        // tek nakon commita, pa se poruka ne salje za objavu koja se rollbackuje.
         eventPublisher.publishEvent(new TaskPublishedEvent(
                 task.getId(),
                 task.getTitle(),
@@ -114,28 +105,15 @@ public class TaskService {
 
         TaskStateMachine.validateTransition(task.getStatus(), TaskStatus.CANCELLED);
 
-        // Isti redoslijed kao u acceptOffer: task se upise i flushuje prije ponuda,
-        // da sve operacije koje diraju i task i ponude zakljucavaju redove istim
-        // redom. Ovdje je tasks i ranije isao prvi, ali samo slucajno - kroz
-        // auto-flush koji okine upit u rejectActiveOffers. Ovako je namjerno.
         task.setStatus(TaskStatus.CANCELLED);
         task.setAcceptedOffer(null);
         taskRepository.flush();
 
-        // Otkazivanje je dozvoljeno i iz ASSIGNED i IN_PROGRESS, gdje vec postoji
-        // prihvacena ponuda i otvoren razgovor. Bez ovoga bi otkazani task ostavio
-        // ponudu u ACCEPTED, acceptedOffer koji na nju pokazuje i razgovor u OPEN.
         offerService.rejectActiveOffers(task);
 
         return TaskResponse.from(task);
     }
 
-    /**
-     * Tasker prijavljuje da je poceo raditi.
-     * <p>
-     * Smije ga pokrenuti samo tasker cija je ponuda prihvacena - ne bilo koji
-     * nalog sa TASKER rolom.
-     */
     @Transactional
     public TaskResponse startTask(UUID taskId, UUID taskerId) {
         Task task = loadAssignedTask(taskId, taskerId);
@@ -150,12 +128,6 @@ public class TaskService {
         return TaskResponse.from(task);
     }
 
-    /**
-     * Tasker prijavljuje da je posao obavljen.
-     * <p>
-     * To je tvrdnja, ne potvrda: posao je zavrsen tek kad ga klijent zatvori. Zato
-     * COMPLETED nista ne mijenja na reputaciji taskera.
-     */
     @Transactional
     public TaskResponse completeTask(UUID taskId, UUID taskerId) {
         Task task = loadAssignedTask(taskId, taskerId);
@@ -170,12 +142,6 @@ public class TaskService {
         return TaskResponse.from(task);
     }
 
-    /**
-     * Klijent potvrdjuje obavljen posao i time ga zatvara.
-     * <p>
-     * Ovdje se, i samo ovdje, uvecava brojac zavrsenih poslova - jer je to jedina
-     * tacka u kojoj druga strana potvrdjuje da je posao stvarno obavljen.
-     */
     @Transactional
     public TaskResponse closeTask(UUID taskId, UUID clientId) {
         Task task = loadOwnedTask(taskId, clientId);
@@ -188,7 +154,6 @@ public class TaskService {
         task.setStatus(TaskStatus.CLOSED);
         taskerProfileService.recordCompletedJob(tasker);
 
-        // Posao je gotov, pa razgovor prestaje biti aktivan. Poruke ostaju.
         offerService.archiveConversation(acceptedOffer);
 
         notificationService.notifyTaskClosed(task, tasker);
@@ -196,18 +161,6 @@ public class TaskService {
         return TaskResponse.from(task);
     }
 
-    /**
-     * Moderator uklanja oglas. Zove ga samo AdminService - vlasnistvo se ovdje ne
-     * provjerava, jer admin djeluje nad tudjim oglasom.
-     * <p>
-     * State machine dopusta REMOVED iz PUBLISHED i ASSIGNED, ali ne iz
-     * IN_PROGRESS: tasker je vec na terenu, a uklonjen posao se ne bi mogao ni
-     * zatvoriti ni ocijeniti.
-     * <p>
-     * Ciscenje je isto kao kod otkazivanja, i istim redom: task se upise i
-     * flushuje prije ponuda, da redovi budu zakljucani istim redoslijedom kao u
-     * acceptOffer.
-     */
     @Transactional
     public TaskResponse removeTask(UUID taskId, String reason) {
         Task task = taskRepository.findById(taskId)
@@ -225,16 +178,6 @@ public class TaskService {
         return TaskResponse.from(task);
     }
 
-    /**
-     * Prebacuje objavljene oglase kojima je rok prosao u EXPIRED i obavjestava
-     * njihove vlasnike. Poziva ga scheduler.
-     * <p>
-     * Provjere isteka u submitOffer i u listama ostaju i dalje: prozor izmedju
-     * trenutka isteka i sljedeceg prolaza schedulera postoji bez obzira na to
-     * koliko cesto radi.
-     *
-     * @return koliko je oglasa isteklo
-     */
     @Transactional
     public int expireOverdueTasks() {
         List<Task> overdue = taskRepository.findByStatusAndExpiresAtBefore(
@@ -264,11 +207,6 @@ public class TaskService {
         return TaskResponse.from(task);
     }
 
-    /**
-     * Ucitava task koji je dodijeljen bas ovom taskeru, kroz prihvacenu ponudu.
-     * Provjera vlasnistva je ovdje drugacija od ostalih metoda u ovoj klasi, gdje
-     * je vlasnik klijent.
-     */
     private Task loadAssignedTask(UUID taskId, UUID taskerId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
@@ -282,10 +220,6 @@ public class TaskService {
         return task;
     }
 
-    /**
-     * Prihvacena ponuda mora postojati u svakom stanju iz kojeg se posao zatvara.
-     * Ako je nema, podaci su nekonzistentni, a ne korisnik pogrijesio.
-     */
     private Offer requireAcceptedOffer(Task task) {
         Offer acceptedOffer = task.getAcceptedOffer();
 
@@ -307,9 +241,6 @@ public class TaskService {
         return task;
     }
 
-    /**
-     * Public listing. Only published tasks are visible to everyone.
-     */
     @Transactional(readOnly = true)
     public Page<TaskSummaryResponse> browseTasks(UUID categoryId,
                                                  UUID municipalityId,
@@ -338,10 +269,6 @@ public class TaskService {
         return taskRepository.findAssignedToTasker(taskerId, pageable);
     }
 
-    /**
-     * Odbija nepoznato polje za sortiranje prije nego stigne do Spring Date.
-     * Bez ovoga ?sort=bilokako daje 500 umjesto 400.
-     */
     private void requireSortableFields(Pageable pageable) {
         pageable.getSort().forEach(order -> {
             if (!SORTABLE_FIELDS.contains(order.getProperty())) {

@@ -30,29 +30,15 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Pokriva rupe nadjene u pregledu auth sloja: provjeru statusa naloga na obje
- * putanje, normalizaciju emaila pri registraciji i ponasanje JWT filtera.
- */
 @AutoConfigureMockMvc
 class AuthIntegrationTest extends AbstractIntegrationTest {
 
-    /**
-     * Zasticena putanja koja namjerno nema kontroler. Bez tokena vraca 401, a s
-     * ispravnim tokenom 404 - razlika izmedju to dvoje je dokaz da je filter
-     * autentikovao zahtjev. Prefiks __ da niko nikad ne mapira kontroler na nju.
-     */
     private static final String PROTECTED_PROBE = "/api/__auth_probe";
 
     @Autowired private MockMvc mockMvc;
     @Autowired private AuthService authService;
     @Autowired private JwtService jwtService;
 
-    /**
-     * Spy, ne obican @Autowired: duplikat uhvacen prije upisa i duplikat uhvacen
-     * na constraintu daju spolja isti izuzetak i istu poruku, pa se razlikuju
-     * jedino po tome da li je INSERT uopste pokusan.
-     */
     @MockitoSpyBean private UserRepository userRepository;
 
     @Value("${app.jwt.secret}")
@@ -62,12 +48,9 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
 
     @AfterEach
     void tearDown() {
-        // Prije korisnika: refresh_tokens ima FK na users.
         refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
     }
-
-    // ---------- login ----------
 
     @Test
     @DisplayName("Login with a wrong password is rejected")
@@ -104,8 +87,6 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
         );
     }
 
-    // ---------- registracija ----------
-
     @Test
     @DisplayName("Registering the same email twice is rejected with a business error")
     void duplicateRegistrationIsRejected() {
@@ -132,11 +113,6 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
         assertTrue(thrown.getMessage().toLowerCase().contains("already exists"),
                 "Expected a duplicate-email message, got: " + thrown.getMessage());
 
-        // Ovo je jedina tvrdnja koja razlikuje ispravku od buga. Bez normalizacije
-        // prije provjere, existsByEmail gleda sirovi unos, ne nadje nista, kod produzi
-        // i tek INSERT pukne na unique constraintu - a taj pad se hvata i pretvara u
-        // ISTI BusinessRuleException, pa su izuzetak, poruka i broj redova identicni.
-        // Razlikuje ih samo to da li je do upisa uopste doslo.
         verify(userRepository, never()).saveAndFlush(any(User.class));
 
         assertEquals(1, userRepository.count(), "Only one account may exist for that email");
@@ -153,8 +129,6 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
         assertDoesNotThrow(() ->
                 authService.login(new LoginRequest("NORMALISE.ME@test.ba", "password123")));
     }
-
-    // ---------- JWT filter ----------
 
     @Test
     @DisplayName("Protected endpoint without an Authorization header is 401")
@@ -175,7 +149,6 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
     void requestWithExpiredTokenIsUnauthorised() throws Exception {
         AuthResponse registered = register("expired.token@test.ba", "password123");
 
-        // Negativan vijek trajanja -> token kojem je istek vec prosao.
         JwtService expiredTokenIssuer = new JwtService(jwtSecret, -1L);
         String expired = expiredTokenIssuer.generateToken(principalOf(registered.userId()));
 
@@ -188,7 +161,6 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
     void requestWithValidTokenIsAuthenticated() throws Exception {
         AuthResponse registered = register("valid.token@test.ba", "password123");
 
-        // 404, a ne 401: filter je autentikovao zahtjev, samo nema kontrolera na toj putanji.
         mockMvc.perform(get(PROTECTED_PROBE)
                         .header("Authorization", "Bearer " + registered.token()))
                 .andExpect(status().isNotFound());
@@ -210,7 +182,6 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
         AuthResponse registered = register("suspended.later@test.ba", "password123");
         String token = registered.token();
 
-        // Token i dalje ispravno potpisan i neistekao - mijenja se samo status naloga.
         mockMvc.perform(get(PROTECTED_PROBE).header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
 
@@ -231,8 +202,6 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + registered.token()))
                 .andExpect(status().isUnauthorized());
     }
-
-    // ---------- helpers ----------
 
     private AuthResponse register(String email, String password) {
         return authService.register(

@@ -35,7 +35,6 @@ public class Task extends BaseEntity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    /** Nullable - @DecimalMin propusta null, isto kao CHECK u bazi. */
     @DecimalMin("0.00")
     @Column(name = "budget", precision = 10, scale = 2)
     private BigDecimal budget;

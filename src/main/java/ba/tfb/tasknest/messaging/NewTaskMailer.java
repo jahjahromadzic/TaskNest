@@ -9,14 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/**
- * Salje mail taskerima o novom oglasu u njihovoj oblasti.
- * <p>
- * Nijedna greska ne izlazi iz ove klase, i to je namjerno. Notifikacije su vec
- * upisane u bazu kad se ovo pozove; ako bi izuzetak izasao do listenera, poruka
- * ne bi bila potvrdjena, RabbitMQ bi je ponovo isporucio i notifikacije bi se
- * duplirale. Mail je najbolji pokusaj, baza je trajni zapis.
- */
 @Component
 @Slf4j
 public class NewTaskMailer {
@@ -32,11 +24,10 @@ public class NewTaskMailer {
 
     public void sendNewTaskEmails(List<TaskerNotificationTarget> targets, TaskPublishedEvent event) {
         for (TaskerNotificationTarget target : targets) {
-            // Hvata se po primaocu: jedna neispravna adresa ne smije zaustaviti ostale.
             try {
                 mailSender.send(buildMessage(target, event));
             } catch (Exception e) {
-                log.warn("Slanje maila na {} nije uspjelo za task {}: {}",
+                log.warn("Sending mail to {} failed for task {}: {}",
                         target.email(), event.taskId(), e.getMessage());
             }
         }

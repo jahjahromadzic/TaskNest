@@ -5,23 +5,13 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <!--
-        Indeksi na kolonama po kojima se stvarno pretrazuje. Kolone pokrivene
-        UNIQUE constraintom (users.email, offers(task_id, tasker_id),
-        reviews(task_id, reviewer_id), conversations.offer_id,
-        tasker_profiles.user_id, verification_tokens.token, refresh_tokens.token)
-        vec imaju indeks i ovdje se namjerno ne dupliraju.
-    -->
-
     <changeSet id="021-index-tasker-categories-category" author="jahja">
-        <!-- PK je (tasker_profile_id, category_id); matching upit trazi po kategoriji. -->
         <createIndex tableName="tasker_categories" indexName="idx_tasker_categories_category">
             <column name="category_id"/>
         </createIndex>
     </changeSet>
 
     <changeSet id="022-index-tasker-municipalities-municipality" author="jahja">
-        <!-- PK je (tasker_profile_id, municipality_id); matching upit trazi po opstini. -->
         <createIndex tableName="tasker_municipalities" indexName="idx_tasker_municipalities_municipality">
             <column name="municipality_id"/>
         </createIndex>
@@ -34,7 +24,6 @@
     </changeSet>
 
     <changeSet id="024-index-tasks-feed" author="jahja">
-        <!-- Pretraga oglasa: opstina + kategorija + status. -->
         <createIndex tableName="tasks" indexName="idx_tasks_municipality_category_status">
             <column name="municipality_id"/>
             <column name="category_id"/>
@@ -43,7 +32,6 @@
     </changeSet>
 
     <changeSet id="025-index-tasks-status-expires" author="jahja">
-        <!-- Scheduler: PUBLISHED taskovi kojima je expires_at prosao. -->
         <createIndex tableName="tasks" indexName="idx_tasks_status_expires_at">
             <column name="status"/>
             <column name="expires_at"/>
@@ -51,7 +39,6 @@
     </changeSet>
 
     <changeSet id="026-index-offers-tasker" author="jahja">
-        <!-- UNIQUE je (task_id, tasker_id), pa tasker_id sam nije pokriven. -->
         <createIndex tableName="offers" indexName="idx_offers_tasker">
             <column name="tasker_id"/>
         </createIndex>
@@ -72,7 +59,6 @@
     </changeSet>
 
     <changeSet id="029-index-reviews-reviewee" author="jahja">
-        <!-- UNIQUE je (task_id, reviewer_id), pa reviewee_id nije pokriven. -->
         <createIndex tableName="reviews" indexName="idx_reviews_reviewee">
             <column name="reviewee_id"/>
         </createIndex>

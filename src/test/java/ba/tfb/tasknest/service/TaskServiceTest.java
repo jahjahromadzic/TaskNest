@@ -49,12 +49,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Poslovna pravila TaskService-a, bez Springa i baze.
- * <p>
- * Hibernate i transakcijski mehanizmi (dirty checking, flush, optimistic
- * locking) se ovdje namjerno ne testiraju - to pokrivaju integracioni testovi.
- */
 @ExtendWith(MockitoExtension.class)
 class TaskServiceTest {
 
@@ -76,7 +70,6 @@ class TaskServiceTest {
     @Mock private NotificationService notificationService;
     @Mock private ApplicationEventPublisher eventPublisher;
 
-    /** Fiksan sat: granica isteka se testira tacno, bez cekanja stvarnog vremena. */
     private final Clock clock = Clock.fixed(NOW.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
 
     private TaskService taskService;
@@ -152,7 +145,7 @@ class TaskServiceTest {
             // Act
             TaskResponse response = taskService.createTask(CLIENT_ID, aRequest());
 
-            // Assert - novi task nikad ne krece kao objavljen
+            // Assert
             assertThat(response.status()).isEqualTo(TaskStatus.DRAFT);
             assertThat(response.publishedAt()).isNull();
             assertThat(response.expiresAt()).isNull();
@@ -176,7 +169,6 @@ class TaskServiceTest {
 
             // Assert
             assertThat(response.status()).isEqualTo(TaskStatus.PUBLISHED);
-            // Oba vremena dolaze iz fiksnog sata, pa se tvrde tacno, a ne relativno.
             assertThat(response.publishedAt()).isEqualTo(NOW);
             assertThat(response.expiresAt()).isEqualTo(NOW.plusDays(30));
         }
@@ -228,7 +220,6 @@ class TaskServiceTest {
             assertThatThrownBy(() -> taskService.cancelTask(TASK_ID, OTHER_USER_ID))
                     .isInstanceOf(NotResourceOwnerException.class);
 
-            // Vlasnistvo se provjerava prije ikakvog ciscenja
             verify(offerService, never()).rejectActiveOffers(any());
         }
 
@@ -245,7 +236,7 @@ class TaskServiceTest {
 
         @Test
         void cancelTask_throwsInvalidTransition_whenTaskIsCompleted() {
-            // Arrange - COMPLETED smije samo u CLOSED, ne u CANCELLED
+            // Arrange
             Task task = aTask(TaskStatus.COMPLETED, aClient());
             when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
 
@@ -267,12 +258,9 @@ class TaskServiceTest {
             // Assert
             assertThat(response.status()).isEqualTo(TaskStatus.CANCELLED);
             assertThat(task.getAcceptedOffer())
-                    .as("otkazan task ne smije pokazivati na prihvacenu ponudu")
+                    .as("a cancelled task must not point to an accepted offer")
                     .isNull();
 
-            // Ovdje je verify opravdan: ciscenje ponuda i razgovora je vlasnistvo
-            // OfferService-a, pa je samo delegiranje ono sto TaskService obecava.
-            // Da li ponude stvarno odu u REJECTED provjerava OfferServiceTest.
             verify(offerService).rejectActiveOffers(task);
         }
     }
@@ -298,7 +286,7 @@ class TaskServiceTest {
             task.setId(TASK_ID);
             when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
 
-            // Act - javni oglas vidi i neprijavljen posjetilac
+            // Act
             TaskResponse response = taskService.getTask(TASK_ID, null);
 
             // Assert
@@ -326,7 +314,7 @@ class TaskServiceTest {
             Task task = aTask(TaskStatus.DRAFT, aClient());
             when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
 
-            // Act + Assert - 404, ne 403: postojanje tudjeg nacrta se ne odaje
+            // Act + Assert
             assertThatThrownBy(() -> taskService.getTask(TASK_ID, OTHER_USER_ID))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
@@ -337,7 +325,7 @@ class TaskServiceTest {
             Task task = aTask(TaskStatus.DRAFT, aClient());
             when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
 
-            // Act + Assert - viewerId je null za neprijavljenog, ne smije proci
+            // Act + Assert
             assertThatThrownBy(() -> taskService.getTask(TASK_ID, null))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
@@ -348,8 +336,6 @@ class TaskServiceTest {
 
         @Test
         void browseTasks_throwsBusinessRule_whenSortFieldIsUnknown() {
-            // Arrange - nepoznato polje je ranije dolazilo do Spring Date i davalo 500
-
             // Act + Assert
             assertThatThrownBy(() -> taskService.browseTasks(null, null,
                     PageRequest.of(0, 20, Sort.by("nemaOvogPolja"))))
@@ -360,8 +346,6 @@ class TaskServiceTest {
 
         @Test
         void browseTasks_throwsBusinessRule_whenOneOfSeveralSortFieldsIsUnknown() {
-            // Arrange - prvo polje je ispravno, drugo nije
-
             // Act + Assert
             assertThatThrownBy(() -> taskService.browseTasks(null, null,
                     PageRequest.of(0, 20, Sort.by("publishedAt").and(Sort.by("opis")))))
@@ -385,7 +369,7 @@ class TaskServiceTest {
 
         @Test
         void getMatchingTasks_throwsBusinessRule_whenSortFieldIsUnknown() {
-            // Act + Assert - provjera vazi na svim listajucim metodama, ne samo browse
+            // Act + Assert
             assertThatThrownBy(() -> taskService.getMatchingTasks(CLIENT_ID,
                     PageRequest.of(0, 20, Sort.by("drop table"))))
                     .isInstanceOf(BusinessRuleException.class);
@@ -411,7 +395,7 @@ class TaskServiceTest {
 
         @Test
         void expireOverdueTasks_movesTaskToExpired_whenDeadlineHasPassed() {
-            // Arrange - rok je prosao u odnosu na fiksan sat
+            // Arrange
             Task overdue = aTask(TaskStatus.PUBLISHED, aClient());
             overdue.setExpiresAt(NOW.minusDays(1));
             when(taskRepository.findByStatusAndExpiresAtBefore(TaskStatus.PUBLISHED, NOW))
@@ -436,7 +420,7 @@ class TaskServiceTest {
             // Act
             taskService.expireOverdueTasks();
 
-            // Assert - dogadjaj je ugovor prema notifikacijama, pa se verifikuje
+            // Assert
             ArgumentCaptor<TaskExpiredEvent> events = ArgumentCaptor.forClass(TaskExpiredEvent.class);
             verify(eventPublisher, times(2)).publishEvent(events.capture());
             assertThat(events.getAllValues())
@@ -470,14 +454,14 @@ class TaskServiceTest {
             // Act
             TaskResponse response = taskService.startTask(TASK_ID, TASKER_ID);
 
-            // Assert - vrijeme pocetka dolazi iz injektovanog sata, ne iz sistemskog
+            // Assert
             assertThat(response.status()).isEqualTo(TaskStatus.IN_PROGRESS);
             assertThat(response.startedAt()).isEqualTo(NOW);
         }
 
         @Test
         void startTask_throwsNotOwner_whenCallerIsNotTheAssignedTasker() {
-            // Arrange - drugi tasker pogodio ID tudjeg posla
+            // Arrange
             Task task = anAssignedTask(TaskStatus.ASSIGNED);
             when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
 
@@ -488,7 +472,7 @@ class TaskServiceTest {
 
         @Test
         void startTask_throwsNotOwner_whenClientTriesToStartTheirOwnTask() {
-            // Arrange - vlasnik posla nije taj koji ga izvrsava
+            // Arrange
             Task task = anAssignedTask(TaskStatus.ASSIGNED);
             when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
 
@@ -499,7 +483,7 @@ class TaskServiceTest {
 
         @Test
         void startTask_throwsNotOwner_whenTaskHasNoAcceptedOffer() {
-            // Arrange - objavljen task nema kome biti dodijeljen
+            // Arrange
             Task task = aTask(TaskStatus.PUBLISHED, aClient());
             when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
 
@@ -510,7 +494,7 @@ class TaskServiceTest {
 
         @Test
         void startTask_throwsInvalidTransition_whenWorkIsAlreadyUnderway() {
-            // Arrange - prihvacena ponuda postoji, ali je posao vec u toku
+            // Arrange
             Task task = anAssignedTask(TaskStatus.IN_PROGRESS);
             when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
 
@@ -546,8 +530,7 @@ class TaskServiceTest {
             // Act
             taskService.completeTask(TASK_ID, TASKER_ID);
 
-            // Assert - brojac raste samo kad klijent potvrdi. To je cijela razlika
-            // izmedju COMPLETED i CLOSED, pa se odsustvo poziva verifikuje.
+            // Assert
             verify(taskerProfileService, never()).recordCompletedJob(any());
         }
 
@@ -599,7 +582,7 @@ class TaskServiceTest {
             // Act
             taskService.closeTask(TASK_ID, CLIENT_ID);
 
-            // Assert - brojac zivi na drugom agregatu, pa je poziv dio ugovora
+            // Assert
             ArgumentCaptor<User> credited = ArgumentCaptor.forClass(User.class);
             verify(taskerProfileService).recordCompletedJob(credited.capture());
             assertThat(credited.getValue().getId()).isEqualTo(TASKER_ID);
@@ -614,7 +597,7 @@ class TaskServiceTest {
             // Act
             taskService.closeTask(TASK_ID, CLIENT_ID);
 
-            // Assert - razgovorima upravlja OfferService, pa je poziv ugovor
+            // Assert
             verify(offerService).archiveConversation(task.getAcceptedOffer());
         }
 
@@ -631,7 +614,7 @@ class TaskServiceTest {
 
         @Test
         void closeTask_throwsNotOwner_whenTaskerTriesToCloseTheirOwnWork() {
-            // Arrange - asimetrija: tasker prijavljuje zavrsetak, klijent potvrdjuje
+            // Arrange
             Task task = anAssignedTask(TaskStatus.COMPLETED);
             when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
 
@@ -640,8 +623,6 @@ class TaskServiceTest {
                     .isInstanceOf(NotResourceOwnerException.class);
         }
     }
-
-    // ---------- fixtures ----------
 
     private CreateTaskRequest aRequest() {
         return new CreateTaskRequest(
@@ -685,7 +666,6 @@ class TaskServiceTest {
         return tasker;
     }
 
-    /** Task s prihvacenom ponudom - polazna tacka svakog prelaza u izvrsenju. */
     private Task anAssignedTask(TaskStatus status) {
         Task task = aTask(status, aClient());
 

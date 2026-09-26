@@ -33,7 +33,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OfferService {
 
-    /** Ponude koje jos "zive" - one koje otkazivanje taska mora povuci sa sobom. */
     private static final Set<OfferStatus> ACTIVE_STATUSES =
             EnumSet.of(OfferStatus.PENDING, OfferStatus.ACCEPTED);
 
@@ -42,15 +41,8 @@ public class OfferService {
     private final UserRepository userRepository;
     private final ConversationRepository conversationRepository;
 
-
     @Transactional
     public OfferResponse submitOffer(UUID taskId, UUID taskerId, CreateOfferRequest request) {
-        // Dijeljeni lock na redu, ne obican findById i ne OPTIMISTIC: odluka se
-        // donosi na osnovu stanja taska, a upisuje se u offers. OPTIMISTIC je
-        // ovdje propustao - samo procita verziju na kraju transakcije, pa dok
-        // paralelni acceptOffer nije commitao, procitala bi se stara verzija,
-        // provjera bi prosla i ponuda bi ostala viseci u PENDING na vec
-        // dodijeljenom tasku. FOR SHARE blokira taj UPDATE dok mi ne zavrsimo.
         Task task = taskRepository.findWithSharedLockById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
 
@@ -58,13 +50,10 @@ public class OfferService {
             throw new BusinessRuleException("Offers can only be submitted on published tasks");
         }
 
-        // Task ostaje PUBLISHED dok ga scheduler ne prebaci u EXPIRED, pa se istek
-        // mora provjeriti i ovdje - taj prozor postoji bez obzira na scheduler.
         if (task.getExpiresAt() != null && task.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new BusinessRuleException("This task has expired and no longer accepts offers");
         }
 
-        // A user may hold both CLIENT and TASKER roles, so this case is real
         if (task.getClient().getId().equals(taskerId)) {
             throw new BusinessRuleException("You cannot submit an offer on your own task");
         }
@@ -85,17 +74,11 @@ public class OfferService {
 
         Offer saved;
         try {
-            // saveAndFlush, ne save: bez flusha bi uq_offers_task_tasker pukao tek na
-            // commitu, izvan ovog catch-a. Provjera iznad je check-then-act i ne stiti
-            // od paralelnih zahtjeva - constraint je stvarna zastita, ovo je prevod.
             saved = offerRepository.saveAndFlush(offer);
         } catch (DataIntegrityViolationException e) {
             throw new BusinessRuleException("You have already submitted an offer on this task");
         }
 
-        // Razgovor nastaje s ponudom, ne s prihvatanjem: klijent i tasker dogovaraju
-        // detalje prije nego klijent odluci. Zato withdrawOffer i odbijanje ponuda
-        // arhiviraju razgovor neprihvacene ponude - on tada vec postoji.
         Conversation conversation = new Conversation();
         conversation.setOffer(saved);
         conversationRepository.save(conversation);
@@ -118,25 +101,12 @@ public class OfferService {
             throw new BusinessRuleException("Only pending offers can be accepted");
         }
 
-        // Suspenzija zamrzava, ne brise: ponude suspendovanog taskera ostaju, jer
-        // je suspenzija reverzibilna. Ali prihvatiti se ne smiju - tasker se ne
-        // moze prijaviti, pa bi posao ostao zaglavljen u ASSIGNED.
         if (offer.getTasker().getAccountStatus() != AccountStatus.ACTIVE) {
             throw new BusinessRuleException("This tasker's account is not active");
         }
 
         TaskStateMachine.validateTransition(task.getStatus(), TaskStatus.ASSIGNED);
 
-        // Task se upisuje prvi i flushuje odmah, prije nego se takne ijedna ponuda.
-        // Ranije su se svi UPDATE-ovi skupljali do prvog flusha, pa je Hibernate
-        // birao redoslijed: dvije paralelne transakcije zakljucavale su redove u
-        // offers ukrsteno (Tx1 offerOne pa offerTwo, Tx2 obrnuto) i Postgres je
-        // prijavljivao deadlock umjesto konflikta verzija.
-        //
-        // Ovako obje transakcije prvo udare u isti red u tasks: druga ceka na
-        // redu, a kad se prva commita, njen UPDATE ... WHERE version = ? pogodi
-        // nula redova i dobije OptimisticLockException. Nema ukrstenih lokova
-        // jer transakcija koja ceka jos ne drzi nijedan lock nad offers.
         task.setStatus(TaskStatus.ASSIGNED);
         task.setAcceptedOffer(offer);
         taskRepository.flush();
@@ -147,9 +117,6 @@ public class OfferService {
         return OfferResponse.from(offer);
     }
 
-    /**
-     * A tasker withdraws their own offer. Allowed only while still pending.
-     */
     @Transactional
     public OfferResponse withdrawOffer(UUID offerId, UUID taskerId) {
         Offer offer = offerRepository.findById(offerId)
@@ -169,9 +136,6 @@ public class OfferService {
         return OfferResponse.from(offer);
     }
 
-    /**
-     * The client lists all offers received on their own task.
-     */
     @Transactional(readOnly = true)
     public List<OfferResponse> getOffersForTask(UUID taskId, UUID clientId) {
         Task task = taskRepository.findById(taskId)
@@ -186,9 +150,6 @@ public class OfferService {
                 .toList();
     }
 
-    /**
-     * The tasker lists their own offers.
-     */
     @Transactional(readOnly = true)
     public List<OfferResponse> getMyOffers(UUID taskerId) {
         User tasker = userRepository.findById(taskerId)
@@ -199,12 +160,6 @@ public class OfferService {
                 .toList();
     }
 
-    /**
-     * Odbija sve jos zive ponude taska (PENDING i ACCEPTED) i arhivira im razgovore.
-     * Zove se pri otkazivanju taska. Stoji ovdje, a ne u TaskService-u, jer je
-     * zivotni ciklus ponude i razgovora vlasnistvo ovog servisa - inace bi se
-     * arhiviranje duplo pisalo na dva mjesta.
-     */
     @Transactional
     public void rejectActiveOffers(Task task) {
         for (Offer offer : offerRepository.findByTask(task)) {
@@ -229,13 +184,6 @@ public class OfferService {
         }
     }
 
-    /**
-     * Gasi razgovor vezan za ponudu. Prepiska ostaje citljiva, ali ARCHIVED ne
-     * prima nove poruke. Javno jer ga zove i zatvaranje posla.
-     * <p>
-     * ifPresent, ne orElseThrow: ponude nastale prije nego sto je submitOffer
-     * poceo kreirati razgovore nemaju razgovor, i to nije greska.
-     */
     @Transactional
     public void archiveConversation(Offer offer) {
         conversationRepository.findByOffer(offer)

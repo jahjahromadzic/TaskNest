@@ -30,23 +30,9 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Isti scenariji kao u {@link AuthorizationIntegrationTest}, ali preko pravog
- * servera - jer MockMvc ne izvrsava ERROR dispatch.
- * <p>
- * Konkretno: AccessDeniedHandler odgovara sa sendError(403), sto radi interni
- * forward na /error. Taj forward ponovo prolazi kroz security lanac bez
- * Authorization headera, pa ako /error nije javan, entry point pregazi 403 u
- * 401. MockMvc se zaustavi na sendError i pokaze 403 - dakle lazno zeleno.
- * Ovaj test je jedini koji tu razliku vidi.
- */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class AuthorizationHttpStatusTest extends AbstractIntegrationTest {
 
-    /** Obican RestTemplate s ugasenim error handlerom - zanima nas status, ne izuzetak. */
-    // JdkClientHttpRequestFactory, ne podrazumijevani HttpURLConnection: taj kod
-    // statusa 401 tretira odgovor kao izazov za autentikaciju i ne vrati tijelo,
-    // pa bi test tvrdio da ProblemDetail fali iako ga server posalje.
     private final RestTemplate restTemplate = new RestTemplate(new JdkClientHttpRequestFactory());
 
     @Value("${local.server.port}")
@@ -74,7 +60,6 @@ class AuthorizationHttpStatusTest extends AbstractIntegrationTest {
 
     @AfterEach
     void tearDown() {
-        // Razgovor nastaje s ponudom i drzi FK na nju, pa ide prvi.
         conversationRepository.deleteAll();
         offerRepository.deleteAll();
         taskRepository.deleteAll();
@@ -125,12 +110,6 @@ class AuthorizationHttpStatusTest extends AbstractIntegrationTest {
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
     }
 
-    // ---------- helpers ----------
-
-    /**
-     * Vraca bajtove, ne String: RestTemplate ne mapira application/problem+json u
-     * String pa bi tijelo ispalo null iako ga server posalje (provjereno curl-om).
-     */
     private ResponseEntity<byte[]> submitOffer(UUID taskId, String token) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

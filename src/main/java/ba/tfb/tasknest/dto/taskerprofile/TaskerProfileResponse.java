@@ -29,8 +29,6 @@ public record TaskerProfileResponse(
                 profile.getBio(),
                 profile.isVerified(),
                 profile.getAverageRating(),
-                // Kolona je nullable, a polje u odgovoru je int - profil nastao mimo
-                // activateTaskerRole (SQL seed, import) bi inace pukao na unboxingu.
                 profile.getCompletedJobsCount() == null ? 0 : profile.getCompletedJobsCount(),
                 profile.getCategories().stream().map(Category::getName).sorted().toList(),
                 profile.getMunicipalities().stream().map(Municipality::getName).sorted().toList()

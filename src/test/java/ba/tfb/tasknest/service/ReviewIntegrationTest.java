@@ -45,13 +45,6 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * Ocjene protiv prave baze.
- * <p>
- * Unit testovi pokrivaju ko smije ocijeniti koga; ovdje se provjerava ono sto
- * postoji samo u bazi - keširana prosjecna ocjena na profilu, jedinstvenost
- * (task, recenzent), i da paralelne ocjene istom taskeru ne pokvare prosjek.
- */
 class ReviewIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired private AuthService authService;
@@ -111,14 +104,14 @@ class ReviewIntegrationTest extends AbstractIntegrationTest {
         // Act
         reviewService.createReview(taskId, clientId, new CreateReviewRequest(5, "Odlicno"));
 
-        // Assert - scale 2, jer je kolona DECIMAL(3,2)
+        // Assert
         assertThat(cachedAverage()).isEqualByComparingTo("5.00");
     }
 
     @Test
     @DisplayName("The cached average is recomputed as more reviews arrive")
     void createReview_recomputesTheAverage_acrossSeveralTasks() {
-        // Arrange - dva zatvorena posla istog taskera
+        // Arrange
         UUID firstTask = closedTask();
         UUID secondTask = closedTask();
 
@@ -138,7 +131,7 @@ class ReviewIntegrationTest extends AbstractIntegrationTest {
         UUID second = closedTask();
         UUID third = closedTask();
 
-        // Act - 13 / 3 = 4.333...
+        // Act
         reviewService.createReview(first, clientId, new CreateReviewRequest(5, null));
         reviewService.createReview(second, clientId, new CreateReviewRequest(4, null));
         reviewService.createReview(third, clientId, new CreateReviewRequest(4, null));
@@ -153,7 +146,7 @@ class ReviewIntegrationTest extends AbstractIntegrationTest {
         // Arrange
         UUID taskId = closedTask();
 
-        // Act - jedinstvenost je na (task, recenzent), pa dvije ocjene po poslu
+        // Act
         reviewService.createReview(taskId, clientId, new CreateReviewRequest(5, "Dobar majstor"));
         reviewService.createReview(taskId, taskerId, new CreateReviewRequest(4, "Korektan klijent"));
 
@@ -176,7 +169,7 @@ class ReviewIntegrationTest extends AbstractIntegrationTest {
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("already reviewed");
 
-        // Assert - prva ocjena je ostala nedirnuta
+        // Assert
         assertThat(reviewRepository.findAll()).hasSize(1);
         assertThat(cachedAverage()).isEqualByComparingTo("5.00");
     }
@@ -190,7 +183,7 @@ class ReviewIntegrationTest extends AbstractIntegrationTest {
         // Act
         reviewService.createReview(taskId, taskerId, new CreateReviewRequest(3, "Kasnio je"));
 
-        // Assert - prosjek klijenta postoji, ali se racuna na zahtjev
+        // Assert
         assertThat(reviewRepository.findAverageRatingByReviewee(clientId)).contains(3.0);
         assertThat(taskerProfileRepository.findByUser(user(clientId))).isEmpty();
         assertThat(cachedAverage()).isNull();
@@ -235,30 +228,25 @@ class ReviewIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("Two reviews of the same tasker at the same time still leave the average correct")
     void concurrentReviews_leaveTheCachedAverageConsistent() throws Exception {
-        // Arrange - dva zatvorena posla istog taskera, dva razlicita recenzenta
+        // Arrange
         UUID firstTask = closedTask();
         UUID secondTask = closedTask();
         UUID otherClientId = register("review.client2@test.ba").userId();
         reassignClient(secondTask, otherClientId);
 
-        // Act - bez @Transactional na testu, pa svaka nit ima svoju transakciju
+        // Act
         Queue<Throwable> caught = runInParallel(
                 () -> reviewService.createReview(firstTask, clientId, new CreateReviewRequest(5, null)),
                 () -> reviewService.createReview(secondTask, otherClientId, new CreateReviewRequest(3, null)));
 
-        // Assert - obje ocjene su prosle; ovdje se nista ne takmici za isti red
+        // Assert
         assertThat(caught).isEmpty();
         assertThat(reviewRepository.findAll()).hasSize(2);
 
-        // Assert - i keširani prosjek je 4.00, a ne 5.00 ili 3.00. Bez loka na
-        // profilu obje transakcije procitaju prosjek prije nego ijedna commita, pa
-        // druga prepise prvu i ostane vrijednost jedne jedine ocjene.
+        // Assert
         assertThat(cachedAverage()).isEqualByComparingTo("4.00");
     }
 
-    // ---------- helpers ----------
-
-    /** Vodi task od kreiranja do CLOSED, jedinog stanja u kojem se smije ocjenjivati. */
     private UUID closedTask() {
         UUID taskId = taskService.createTask(clientId, new CreateTaskRequest(
                 "Popravka slavine", "Curi ispod sudopera",
@@ -276,11 +264,6 @@ class ReviewIntegrationTest extends AbstractIntegrationTest {
         return taskId;
     }
 
-    /**
-     * Prebacuje posao na drugog klijenta. Potrebno samo za test utrkivanja: dvije
-     * ocjene istom taskeru moraju doci od razlicitih recenzenata da se ne sudaraju
-     * na jedinstvenosti umjesto na prosjeku.
-     */
     private void reassignClient(UUID taskId, UUID newClientId) {
         transactionTemplate.executeWithoutResult(status ->
                 taskRepository.findById(taskId).orElseThrow().setClient(user(newClientId)));
@@ -306,17 +289,12 @@ class ReviewIntegrationTest extends AbstractIntegrationTest {
         }
 
         startSignal.countDown();
-        assertThat(finished.await(15, TimeUnit.SECONDS)).as("nitima je isteklo vrijeme").isTrue();
+        assertThat(finished.await(15, TimeUnit.SECONDS)).as("threads did not finish in time").isTrue();
         pool.shutdown();
 
         return caught;
     }
 
-    /**
-     * Ocjena s profila taskera. Vraca null kad prosjek nije upisan - namjerno se
-     * ne koristi Optional.map, jer bi prazan Optional nad null vrijednoscu bio
-     * nerazluciv od nepostojeceg profila.
-     */
     private BigDecimal cachedAverage() {
         TaskerProfile profile = taskerProfileRepository.findByUser(user(taskerId)).orElseThrow();
         return profile.getAverageRating();

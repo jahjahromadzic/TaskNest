@@ -76,8 +76,6 @@ class NotificationEndpointTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("An unknown sort field is ignored instead of failing with 500")
     void myNotifications_ignoresUnknownSortField() throws Exception {
-        // Ranije je ovo prolazilo do Spring Date i vracalo 500. Redoslijed je
-        // fiksan (najnovije prvo), pa se sort iz zahtjeva ne prenosi dalje.
         persistNotification(owner.userId(), "Prva");
 
         mockMvc.perform(get("/api/notifications")
@@ -154,8 +152,6 @@ class NotificationEndpointTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/notifications"))
                 .andExpect(status().isUnauthorized());
     }
-
-    // ---------- helpers ----------
 
     private String bearer(AuthResponse user) {
         return "Bearer " + user.token();

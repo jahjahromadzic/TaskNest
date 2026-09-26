@@ -16,13 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-/**
- * Ocjene se ostavljaju u kontekstu posla, a citaju u kontekstu korisnika - pa
- * kontroler mapira /api i slaze oba puta, isto kao OfferController.
- * <p>
- * Bez provjere role: ocjenjuju i klijent i tasker. Ko smije ocijeniti koji posao
- * odlucuje servis, iz prihvacene ponude.
- */
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -38,16 +31,6 @@ public class ReviewController {
         return reviewService.createReview(taskId, principal.getId(), request);
     }
 
-    /**
-     * Javno - reputacija se cita prije dogovora, a ne nakon prijave.
-     * <p>
-     * Redoslijed je fiksan (najnovije prvo) i dolazi iz imena metode u
-     * repozitoriju, pa se sort iz zahtjeva namjerno odbacuje. Da se prenese dalje,
-     * ?sort=bilosta bi puklo u Spring Dati kao 500 - isto kao sto se ranije
-     * desavalo listama oglasa, koje su zato dobile bijelu listu polja.
-     * <p>
-     * Pageable se i dalje vezuje, da ostane na snazi konfigurisani max-page-size.
-     */
     @GetMapping("/users/{userId}/reviews")
     public PagedResponse<ReviewResponse> received(
             @PathVariable UUID userId,

@@ -31,13 +31,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * Moderacija. Svaka metoda je iza ADMIN role na kontroleru; vlasnistvo se ne
- * provjerava, jer admin po definiciji djeluje nad tudjim resursima.
- * <p>
- * Admin akcije se ne pamte u bazi - svaka ide u log s ID-em admina. Trag u bazi
- * trazio bi zasebnu tabelu i van je opsega.
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -49,10 +42,6 @@ public class AdminService {
     private final TaskService taskService;
     private final Clock clock;
 
-    /**
-     * Korisnici za admin listu. Dva upita po stranici bez obzira na njenu
-     * velicinu: projekcija redova, pa role za sve njih odjednom.
-     */
     @Transactional(readOnly = true)
     public Page<AdminUserResponse> listUsers(AccountStatus status, String email, Pageable pageable) {
         String emailFilter = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
@@ -71,14 +60,6 @@ public class AdminService {
         return page.map(row -> toResponse(row, roles.getOrDefault(row.id(), Set.of())));
     }
 
-    /**
-     * Suspenduje nalog. Access token pada vec na sljedecem zahtjevu, jer JWT
-     * filter na svakom zahtjevu cita status iz baze; refresh tokeni se ipak
-     * opozivaju, da suspenzija ne zavisi od jedne jedine provjere.
-     * <p>
-     * Nista od korisnikovih oglasa i ponuda se ne dira: suspenzija je
-     * reverzibilna, a otkazivanje nije. acceptOffer odbija ponude suspendovanih.
-     */
     @Transactional
     public AdminUserResponse suspendUser(UUID adminId, UUID userId) {
         if (adminId.equals(userId)) {
@@ -87,8 +68,6 @@ public class AdminService {
 
         User user = loadUser(userId);
 
-        // Jedan ukraden admin token ne smije moci zakljucati sve ostale admine.
-        // Admin se uklanja konfiguracijom ili u bazi - sto trazi pristup serveru.
         if (isAdmin(user)) {
             throw new BusinessRuleException("Administrators cannot be suspended through the API");
         }
@@ -100,13 +79,6 @@ public class AdminService {
         return toResponse(user);
     }
 
-    /**
-     * Vraca suspendovan nalog u ACTIVE. Stari tokeni ostaju opozvani, pa se
-     * korisnik prijavljuje ponovo.
-     * <p>
-     * DEACTIVATED se ne vraca: to je korisnikova odluka o vlastitom nalogu, ne
-     * moderatorska.
-     */
     @Transactional
     public AdminUserResponse reactivateUser(UUID adminId, UUID userId) {
         User user = loadUser(userId);
@@ -121,7 +93,6 @@ public class AdminService {
         return toResponse(user);
     }
 
-    /** Oznaka povjerenja za klijente. Nijedna poslovna odluka ne zavisi od nje. */
     @Transactional
     public TaskerProfileResponse setTaskerVerified(UUID adminId, UUID profileId, boolean verified) {
         TaskerProfile profile = taskerProfileRepository.findById(profileId)
@@ -140,8 +111,6 @@ public class AdminService {
         log.info("Admin {} removed task {}: {}", adminId, taskId, reason);
         return removed;
     }
-
-    // ---------- helpers ----------
 
     private User loadUser(UUID userId) {
         return userRepository.findById(userId)

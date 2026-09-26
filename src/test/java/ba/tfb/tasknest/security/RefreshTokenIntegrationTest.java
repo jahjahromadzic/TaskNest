@@ -28,13 +28,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Refresh tokeni: izdavanje, rotacija, opoziv i granicni slucajevi.
- */
 @AutoConfigureMockMvc
 class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
 
-    /** Zasticena putanja bez kontrolera: 401 bez autentikacije, 404 sa njom. */
     private static final String PROTECTED_PROBE = "/api/__auth_probe";
 
     @Autowired private MockMvc mockMvc;
@@ -47,8 +43,6 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
         refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
     }
-
-    // ---------- izdavanje i rotacija ----------
 
     @Test
     @DisplayName("Registration issues both an access token and a refresh token")
@@ -73,8 +67,6 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
         assertNotEquals(initial.refreshToken(), refreshed.refreshToken(),
                 "rotation must hand out a different refresh token");
         assertEquals(initial.userId(), refreshed.userId());
-        // Access token se namjerno ne poredi: dva JWT-a izdata istom korisniku unutar
-        // iste sekunde su bajt-identicna, jer iat/exp imaju rezoluciju od sekunde.
     }
 
     @Test
@@ -94,11 +86,9 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
         AuthResponse initial = register("replay@test.ba");
         AuthResponse current = authService.refresh(initial.refreshToken());
 
-        // Stari token stize ponovo - tretira se kao moguca krada.
         assertThrows(InvalidRefreshTokenException.class,
                 () -> authService.refresh(initial.refreshToken()));
 
-        // Posljedica odluke iz handleReuse: i tekuci, do maloprije ispravan token je mrtav.
         assertThrows(InvalidRefreshTokenException.class,
                 () -> authService.refresh(current.refreshToken()),
                 "reuse detection must invalidate the whole family, not just the replayed token");
@@ -108,8 +98,6 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
                         .count(),
                 "no active refresh token may survive reuse detection");
     }
-
-    // ---------- odbijanje ----------
 
     @Test
     @DisplayName("An expired refresh token is rejected")
@@ -156,8 +144,6 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
     void refreshTokenIsNotAcceptedAsAccessToken() throws Exception {
         AuthResponse initial = register("not.a.bearer@test.ba");
 
-        // Refresh token nije JWT, pa parseAccessToken ne prolazi. Cak i da jeste,
-        // zaustavio bi ga type claim, koji mora biti "access".
         mockMvc.perform(get(PROTECTED_PROBE)
                         .header("Authorization", "Bearer " + initial.refreshToken()))
                 .andExpect(status().isUnauthorized());
@@ -173,8 +159,6 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
                 "an access JWT is not stored in refresh_tokens and must not be exchangeable");
     }
 
-    // ---------- odjava ----------
-
     @Test
     @DisplayName("Logout revokes the token but keeps the row as an audit trail")
     void logoutRevokesTokenAndKeepsRow() {
@@ -187,8 +171,6 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
         assertNotNull(stored.getRevokedAt(), "revoked_at must be set");
         assertEquals(1, refreshTokenRepository.count(), "the row is kept for auditing");
     }
-
-    // ---------- kroz HTTP ----------
 
     @Test
     @DisplayName("POST /api/auth/refresh works end to end and is publicly reachable")
@@ -218,9 +200,6 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
         assertNotNull(stored.getRevokedAt());
     }
 
-    // ---------- helpers ----------
-
-    /** Token je base64url, dakle bez znakova koji bi trazili escape u JSON-u. */
     private String refreshTokenJson(String refreshToken) {
         return "{\"refreshToken\":\"" + refreshToken + "\"}";
     }

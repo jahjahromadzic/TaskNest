@@ -5,11 +5,6 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <!--
-        completed_at je postojao od pocetka, started_at nije. Bez njega je
-        IN_PROGRESS stanje bez ijednog vremena, pa se ne moze odgovoriti koliko
-        posao traje. updated_at nije zamjena - mijenja ga svaka izmjena reda.
-    -->
     <changeSet id="033-tasks-started-at" author="jahja">
         <addColumn tableName="tasks">
             <column name="started_at" type="TIMESTAMP"/>

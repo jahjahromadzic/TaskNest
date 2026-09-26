@@ -42,12 +42,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * Poruke protiv prave baze.
- * <p>
- * Ovdje se prvi put vidi da archiveConversation radi: prije ovog koraka razgovori
- * nisu nastajali, pa su sva cetiri poziva bila bez efekta.
- */
 class ConversationIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired private AuthService authService;
@@ -132,7 +126,7 @@ class ConversationIntegrationTest extends AbstractIntegrationTest {
         @Test
         @DisplayName("Accepting one offer archives the others' conversations and keeps its own open")
         void acceptOffer_archivesOnlyTheRejectedConversations() {
-            // Arrange - dvije ponude na isti posao
+            // Arrange
             UUID taskId = publishedTask();
             UUID accepted = submitOffer(taskId, taskerId);
             UUID rejected = submitOffer(taskId, otherTaskerId);
@@ -159,7 +153,7 @@ class ConversationIntegrationTest extends AbstractIntegrationTest {
             // Act
             taskService.closeTask(taskId, clientId);
 
-            // Assert - ovo je test koji je iz koraka #1 morao biti uklonjen
+            // Assert
             assertThat(conversationStatusFor(offerId)).isEqualTo(ConversationStatus.ARCHIVED);
         }
 
@@ -187,11 +181,11 @@ class ConversationIntegrationTest extends AbstractIntegrationTest {
             // Arrange
             UUID conversationId = conversationOf(submitOffer(publishedTask(), taskerId));
 
-            // Act - dogovor prije prihvatanja je cijeli smisao
+            // Act
             conversationService.sendMessage(conversationId, clientId, text("Kada mozete doci?"));
             conversationService.sendMessage(conversationId, taskerId, text("Sutra u 10."));
 
-            // Assert - najstarija prvo
+            // Assert
             var messages = conversationService.getMessages(conversationId, clientId, PageRequest.of(0, 50));
             assertThat(messages.getContent())
                     .extracting(m -> m.content())
@@ -212,7 +206,7 @@ class ConversationIntegrationTest extends AbstractIntegrationTest {
                     conversationId, taskerId, text("Ipak bih...")))
                     .isInstanceOf(BusinessRuleException.class);
 
-            // Assert - prepiska ostaje citljiva
+            // Assert
             assertThat(conversationService.getMessages(conversationId, clientId, PageRequest.of(0, 50)))
                     .hasSize(1);
         }
@@ -220,7 +214,7 @@ class ConversationIntegrationTest extends AbstractIntegrationTest {
         @Test
         @DisplayName("Someone outside the conversation can neither read nor write")
         void conversation_isClosedToOutsiders() {
-            // Arrange - drugi tasker, bez ponude na ovom poslu
+            // Arrange
             UUID conversationId = conversationOf(submitOffer(publishedTask(), taskerId));
 
             // Act + Assert
@@ -242,12 +236,12 @@ class ConversationIntegrationTest extends AbstractIntegrationTest {
             // Arrange
             UUID conversationId = conversationOf(submitOffer(publishedTask(), taskerId));
 
-            // Act - klijent salje dvije, tasker jednu
+            // Act
             conversationService.sendMessage(conversationId, clientId, text("Prva"));
             conversationService.sendMessage(conversationId, clientId, text("Druga"));
             conversationService.sendMessage(conversationId, taskerId, text("Odgovor"));
 
-            // Assert - svako vidi samo ono sto je poslala druga strana
+            // Assert
             assertThat(conversationService.countUnread(taskerId)).isEqualTo(2);
             assertThat(conversationService.countUnread(clientId)).isEqualTo(1);
             assertThat(onlyConversationOf(taskerId).unreadCount()).isEqualTo(2);
@@ -264,7 +258,7 @@ class ConversationIntegrationTest extends AbstractIntegrationTest {
             // Act
             int marked = conversationService.markAsRead(conversationId, taskerId);
 
-            // Assert - tasker je procitao klijentovu; klijentova neprocitana ostaje
+            // Assert
             assertThat(marked).isEqualTo(1);
             assertThat(conversationService.countUnread(taskerId)).isZero();
             assertThat(conversationService.countUnread(clientId)).isEqualTo(1);
@@ -276,12 +270,12 @@ class ConversationIntegrationTest extends AbstractIntegrationTest {
             // Arrange
             UUID conversationId = conversationOf(submitOffer(publishedTask(), taskerId));
 
-            // Act - tri poruke zaredom
+            // Act
             conversationService.sendMessage(conversationId, clientId, text("Jedan"));
             conversationService.sendMessage(conversationId, clientId, text("Dva"));
             conversationService.sendMessage(conversationId, clientId, text("Tri"));
 
-            // Assert - jedna notifikacija, ne tri
+            // Assert
             assertThat(newMessageNotificationsFor(taskerId)).hasSize(1);
         }
 
@@ -295,16 +289,16 @@ class ConversationIntegrationTest extends AbstractIntegrationTest {
             // Act
             conversationService.markAsRead(conversationId, taskerId);
 
-            // Assert - zvonce ugaseno
+            // Assert
             assertThat(newMessageNotificationsFor(taskerId))
                     .singleElement()
                     .extracting(Notification::isRead)
                     .isEqualTo(true);
 
-            // Act - nova poruka nakon citanja
+            // Act
             conversationService.sendMessage(conversationId, clientId, text("Druga"));
 
-            // Assert - nova, neprocitana notifikacija
+            // Assert
             assertThat(newMessageNotificationsFor(taskerId))
                     .filteredOn(n -> !n.isRead())
                     .hasSize(1);
@@ -317,7 +311,7 @@ class ConversationIntegrationTest extends AbstractIntegrationTest {
         @Test
         @DisplayName("Conversations are listed by latest activity, silent ones last")
         void getMyConversations_ordersByLatestActivity() {
-            // Arrange - tri razgovora istog taskera, poruke u dva
+            // Arrange
             UUID quiet = conversationOf(submitOffer(publishedTask(), taskerId));
             UUID older = conversationOf(submitOffer(publishedTask(), taskerId));
             UUID newer = conversationOf(submitOffer(publishedTask(), taskerId));
@@ -329,12 +323,10 @@ class ConversationIntegrationTest extends AbstractIntegrationTest {
             List<UUID> order = conversationService.getMyConversations(taskerId, PageRequest.of(0, 20))
                     .getContent().stream().map(ConversationResponse::id).toList();
 
-            // Assert - bez poruke ide na dno, ne na vrh
+            // Assert
             assertThat(order).containsExactly(newer, older, quiet);
         }
     }
-
-    // ---------- helpers ----------
 
     private UUID publishedTask() {
         UUID taskId = taskService.createTask(clientId, new CreateTaskRequest(

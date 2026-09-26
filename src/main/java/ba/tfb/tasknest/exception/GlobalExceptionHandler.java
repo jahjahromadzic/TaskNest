@@ -49,42 +49,23 @@ public class GlobalExceptionHandler {
                 "Invalid email or password");
     }
 
-    /**
-     * Poruka se prenosi iz izuzetka: klijentu je bitna razlika izmedju isteklog
-     * tokena (treba nova prijava) i neispravnog (greska u klijentu).
-     */
     @ExceptionHandler(InvalidRefreshTokenException.class)
     public ProblemDetail handleInvalidRefreshToken(InvalidRefreshTokenException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
-    /**
-     * Suspendovan ili deaktiviran nalog (LockedException / DisabledException).
-     * 403, a ne 401: lozinka je bila ispravna, pa ponovna prijava ne pomaze i
-     * klijent ne treba da ulazi u petlju autentikacije.
-     */
     @ExceptionHandler(AccountStatusException.class)
     public ProblemDetail handleAccountStatus(AccountStatusException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN,
                 "This account is not active");
     }
 
-    /**
-     * Prijavljen korisnik bez potrebnog prava. Stize s dva mjesta: iz @PreAuthorize
-     * unutar kontrolera, i iz security lanca preko ProblemDetailAccessDeniedHandler-a.
-     * Oba puta zavrsavaju ovdje, pa je odgovor isti.
-     */
     @ExceptionHandler(AccessDeniedException.class)
     public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN,
                 "You do not have permission to perform this action");
     }
 
-    /**
-     * Zahtjev bez ispravne autentikacije. Namjerno posljednji u nizu handlera za
-     * AuthenticationException - specificniji (BadCredentials, AccountStatus)
-     * imaju prednost.
-     */
     @ExceptionHandler(AuthenticationException.class)
     public ProblemDetail handleUnauthenticated(AuthenticationException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED,

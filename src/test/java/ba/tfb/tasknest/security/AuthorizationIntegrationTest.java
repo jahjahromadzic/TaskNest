@@ -27,13 +27,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Dokazuje da role stvarno vaze na HTTP granici. Prije uvodjenja @PreAuthorize
- * nalog samo s CLIENT rolom mogao je poslati ponudu i dobiti 201.
- * <p>
- * Svaki negativni slucaj ima i pozitivnu kontrolu - inace bi test prolazio i da
- * anotacije blokiraju sve redom.
- */
 @AutoConfigureMockMvc
 class AuthorizationIntegrationTest extends AbstractIntegrationTest {
 
@@ -53,20 +46,10 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
     private String clientToken;
     private String taskerToken;
 
-    /** Objavljen task klijenta A - na njega tasker legitimno salje ponudu. */
     private UUID publishedTaskId;
 
-    /**
-     * Objavljen task DRUGOG klijenta. Klijent A na njega nema domensku prepreku,
-     * pa ako ga odbijemo, odbijeni smo iskljucivo zbog role.
-     */
     private UUID foreignTaskId;
 
-    /**
-     * Task koji posjeduje sam tasker (kreiran kroz servis, koji role ne provjerava).
-     * Bez njega bi publish/cancel testovi dobili 403 zbog vlasnistva, pa ne bi
-     * dokazivali nista o roli.
-     */
     private UUID taskerOwnedTaskId;
 
     @BeforeEach
@@ -80,7 +63,6 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
         AuthResponse tasker = register("authz.tasker@test.ba");
         authService.activateTaskerRole(tasker.userId());
         taskerOwnedTaskId = createDraftTask(tasker.userId());
-        // Svaki nalog krece kao CLIENT, pa se ta rola skida da ostane cist TASKER.
         removeRole(tasker.userId(), RoleName.CLIENT);
         taskerToken = tasker.token();
 
@@ -89,7 +71,6 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
 
     @AfterEach
     void tearDown() {
-        // Razgovor nastaje s ponudom i drzi FK na nju, pa ide prvi.
         conversationRepository.deleteAll();
         offerRepository.deleteAll();
         taskRepository.deleteAll();
@@ -98,13 +79,9 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
         userRepository.deleteAll();
     }
 
-    // ---------- CLIENT ne smije u TASKER akcije ----------
-
     @Test
     @DisplayName("A client-only account cannot submit an offer")
     void clientCannotSubmitOffer() throws Exception {
-        // Tudji task: nema ni vlasnickih ni domenskih prepreka, pa je rola
-        // jedini razlog odbijanja. Na vlastiti task bi pao na poslovnom pravilu.
         mockMvc.perform(asUser(post("/api/tasks/" + foreignTaskId + "/offers"), clientToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"price\":45.00,\"message\":\"ok\"}"))
@@ -124,8 +101,6 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(asUser(get("/api/offers/mine"), clientToken))
                 .andExpect(status().isForbidden());
     }
-
-    // ---------- TASKER ne smije u CLIENT akcije ----------
 
     @Test
     @DisplayName("A tasker-only account cannot create a task")
@@ -157,8 +132,6 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
-    // ---------- pozitivne kontrole ----------
-
     @Test
     @DisplayName("A client can create a task")
     void clientCanCreateTask() throws Exception {
@@ -184,8 +157,6 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk());
     }
 
-    // ---------- aktivacija role ----------
-
     @Test
     @DisplayName("Activating the tasker role needs no particular role, only a login")
     void anyAuthenticatedUserCanActivateTaskerRole() throws Exception {
@@ -201,8 +172,6 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(post("/api/auth/activate-tasker"))
                 .andExpect(status().isUnauthorized());
     }
-
-    // ---------- oblik odgovora ----------
 
     @Test
     @DisplayName("A 403 carries a ProblemDetail body, like every other error")
@@ -223,8 +192,6 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.title").value("Unauthorized"))
                 .andExpect(jsonPath("$.detail").isNotEmpty());
     }
-
-    // ---------- helpers ----------
 
     private MockHttpServletRequestBuilder asUser(MockHttpServletRequestBuilder builder, String token) {
         return builder.header("Authorization", "Bearer " + token);
@@ -252,7 +219,6 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
         return taskId;
     }
 
-    /** Kreiranje ide kroz servis, koji role ne provjerava - endpoint je predmet testa. */
     private CreateTaskRequest taskRequest() {
         return new CreateTaskRequest(
                 "Seed task",

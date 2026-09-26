@@ -36,12 +36,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-/**
- * Poslovna pravila OfferService-a, bez Springa i baze.
- * <p>
- * Konkurentnost i optimistic locking pokriva OfferConcurrencyTest - ovdje se
- * testiraju pravila koja ne zavise od baze.
- */
 @ExtendWith(MockitoExtension.class)
 class OfferServiceTest {
 
@@ -76,7 +70,7 @@ class OfferServiceTest {
 
         @Test
         void submitOffer_throwsBusinessRule_whenTaskHasExpired() {
-            // Arrange - status je jos PUBLISHED jer scheduler nije stigao
+            // Arrange
             Task task = aTask(TaskStatus.PUBLISHED);
             task.setExpiresAt(LocalDateTime.now().minusMinutes(1));
             when(taskRepository.findWithSharedLockById(TASK_ID)).thenReturn(Optional.of(task));
@@ -89,7 +83,7 @@ class OfferServiceTest {
 
         @Test
         void submitOffer_throwsBusinessRule_whenUserOffersOnOwnTask() {
-            // Arrange - isti korisnik moze imati i CLIENT i TASKER rolu
+            // Arrange
             Task task = aTask(TaskStatus.PUBLISHED);
             when(taskRepository.findWithSharedLockById(TASK_ID)).thenReturn(Optional.of(task));
 
@@ -130,7 +124,7 @@ class OfferServiceTest {
 
         @Test
         void submitOffer_throwsBusinessRule_whenUniqueConstraintFires() {
-            // Arrange - paralelan zahtjev je prosao provjeru, baza je odbila drugi upis
+            // Arrange
             Task task = aTask(TaskStatus.PUBLISHED);
             User tasker = aTasker();
             when(taskRepository.findWithSharedLockById(TASK_ID)).thenReturn(Optional.of(task));
@@ -139,7 +133,7 @@ class OfferServiceTest {
             when(offerRepository.saveAndFlush(any(Offer.class)))
                     .thenThrow(new DataIntegrityViolationException("uq_offers_task_tasker"));
 
-            // Act + Assert - tehnicka greska se prevodi u poslovnu, ne izlazi kao 500
+            // Act + Assert
             assertThatThrownBy(() -> offerService.submitOffer(TASK_ID, TASKER_ID, aRequest()))
                     .isInstanceOf(BusinessRuleException.class)
                     .hasMessageContaining("already submitted");
@@ -181,7 +175,7 @@ class OfferServiceTest {
                     .isInstanceOf(NotResourceOwnerException.class);
 
             assertThat(offer.getStatus())
-                    .as("odbijen zahtjev ne smije promijeniti stanje ponude")
+                    .as("a rejected request must not change the offer")
                     .isEqualTo(OfferStatus.PENDING);
         }
 
@@ -200,7 +194,7 @@ class OfferServiceTest {
 
         @Test
         void acceptOffer_throwsInvalidTransition_whenTaskIsNotPublished() {
-            // Arrange - DRAFT -> ASSIGNED nije dozvoljen prelaz
+            // Arrange
             Task task = aTask(TaskStatus.DRAFT);
             Offer offer = anOffer(OFFER_ID, task, aTasker(), OfferStatus.PENDING);
             when(offerRepository.findById(OFFER_ID)).thenReturn(Optional.of(offer));
@@ -250,7 +244,7 @@ class OfferServiceTest {
             assertThat(rival.getStatus()).isEqualTo(OfferStatus.REJECTED);
             assertThat(rivalConversation.getStatus()).isEqualTo(ConversationStatus.ARCHIVED);
             assertThat(accepted.getStatus())
-                    .as("prihvacena ponuda ne smije biti odbijena zajedno s ostalima")
+                    .as("the accepted offer must not be rejected along with the others")
                     .isEqualTo(OfferStatus.ACCEPTED);
         }
     }
@@ -273,7 +267,7 @@ class OfferServiceTest {
 
         @Test
         void withdrawOffer_throwsBusinessRule_whenOfferIsNotPending() {
-            // Arrange - prihvacena ponuda se ne povlaci
+            // Arrange
             Offer offer = anOffer(OFFER_ID, aTask(TaskStatus.ASSIGNED), aTasker(), OfferStatus.ACCEPTED);
             when(offerRepository.findById(OFFER_ID)).thenReturn(Optional.of(offer));
 
@@ -301,7 +295,7 @@ class OfferServiceTest {
 
         @Test
         void withdrawOffer_succeeds_whenOfferHasNoConversation() {
-            // Arrange - razgovor ne postoji dok se ne posalje prva poruka
+            // Arrange
             Offer offer = anOffer(OFFER_ID, aTask(TaskStatus.PUBLISHED), aTasker(), OfferStatus.PENDING);
             when(offerRepository.findById(OFFER_ID)).thenReturn(Optional.of(offer));
             when(conversationRepository.findByOffer(offer)).thenReturn(Optional.empty());
@@ -340,10 +334,6 @@ class OfferServiceTest {
         }
     }
 
-    /**
-     * Ovo je logika koju TaskService.cancelTask delegira ovamo, pa se pravilo
-     * testira tamo gdje stvarno zivi.
-     */
     @Nested
     class RejectActiveOffers {
 
@@ -382,13 +372,11 @@ class OfferServiceTest {
             // Act
             offerService.rejectActiveOffers(task);
 
-            // Assert - povucena ponuda ostaje povucena, ne postaje odbijena
+            // Assert
             assertThat(withdrawn.getStatus()).isEqualTo(OfferStatus.WITHDRAWN);
             assertThat(alreadyRejected.getStatus()).isEqualTo(OfferStatus.REJECTED);
         }
     }
-
-    // ---------- fixtures ----------
 
     private CreateOfferRequest aRequest() {
         return new CreateOfferRequest(new BigDecimal("45.00"), "Mogu danas");

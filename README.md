@@ -467,13 +467,13 @@ scheduler runs.
 ./mvnw verify
 ```
 
-The suite contains **249 tests** and requires no manual setup — Testcontainers
+The suite contains **251 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 119 | Service business rules and the task state machine |
-| Integration | 130 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline |
+| Integration | 132 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline |
 
 GitHub Actions runs the same command on every push and pull request.
 
