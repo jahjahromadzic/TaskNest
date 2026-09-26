@@ -36,7 +36,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TaskService {
 
-    private static final int PUBLICATION_VALIDITY_DAYS = 30;
+    static final int PUBLICATION_VALIDITY_DAYS = 30;
 
     private static final Set<String> SORTABLE_FIELDS =
             Set.of("publishedAt", "createdAt", "updatedAt", "expiresAt", "budget", "title", "status");
@@ -110,6 +110,15 @@ public class TaskService {
         taskRepository.flush();
 
         offerService.rejectActiveOffers(task);
+
+        return TaskResponse.from(task);
+    }
+
+    @Transactional
+    public TaskResponse reopenTask(UUID taskId, UUID clientId) {
+        Task task = loadOwnedTask(taskId, clientId);
+
+        offerService.releaseAssignment(task);
 
         return TaskResponse.from(task);
     }

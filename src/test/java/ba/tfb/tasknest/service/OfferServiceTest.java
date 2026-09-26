@@ -17,16 +17,19 @@ import ba.tfb.tasknest.repository.ConversationRepository;
 import ba.tfb.tasknest.repository.OfferRepository;
 import ba.tfb.tasknest.repository.TaskRepository;
 import ba.tfb.tasknest.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,6 +37,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,8 +55,19 @@ class OfferServiceTest {
     @Mock private TaskRepository taskRepository;
     @Mock private UserRepository userRepository;
     @Mock private ConversationRepository conversationRepository;
+    @Mock private TaskerProfileService taskerProfileService;
+    @Mock private NotificationService notificationService;
 
-    @InjectMocks private OfferService offerService;
+    private final Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
+    private final LocalDateTime NOW = LocalDateTime.now(clock);
+
+    private OfferService offerService;
+
+    @BeforeEach
+    void setUp() {
+        offerService = new OfferService(offerRepository, taskRepository, userRepository,
+                conversationRepository, taskerProfileService, notificationService, clock);
+    }
 
     @Nested
     class SubmitOffer {
@@ -266,9 +282,9 @@ class OfferServiceTest {
         }
 
         @Test
-        void withdrawOffer_throwsBusinessRule_whenOfferIsNotPending() {
+        void withdrawOffer_throwsBusinessRule_whenOfferWasAlreadyRejected() {
             // Arrange
-            Offer offer = anOffer(OFFER_ID, aTask(TaskStatus.ASSIGNED), aTasker(), OfferStatus.ACCEPTED);
+            Offer offer = anOffer(OFFER_ID, aTask(TaskStatus.ASSIGNED), aTasker(), OfferStatus.REJECTED);
             when(offerRepository.findById(OFFER_ID)).thenReturn(Optional.of(offer));
 
             // Act + Assert
@@ -305,6 +321,120 @@ class OfferServiceTest {
 
             // Assert
             assertThat(response.status()).isEqualTo(OfferStatus.WITHDRAWN);
+        }
+    }
+
+    @Nested
+    class ReopenAssignment {
+
+        @Test
+        void withdrawOffer_reopensTheTask_whenTaskerWithdrawsAnAcceptedOffer() {
+            // Arrange
+            Task task = aTask(TaskStatus.ASSIGNED);
+            Offer accepted = anOffer(OFFER_ID, task, aTasker(), OfferStatus.ACCEPTED);
+            task.setAcceptedOffer(accepted);
+            Offer earlier = anOffer(OTHER_OFFER_ID, task, anotherTasker(), OfferStatus.REJECTED);
+            when(offerRepository.findById(OFFER_ID)).thenReturn(Optional.of(accepted));
+            when(offerRepository.findByTaskAndStatus(task, OfferStatus.REJECTED)).thenReturn(List.of(earlier));
+
+            // Act
+            offerService.withdrawOffer(OFFER_ID, TASKER_ID);
+
+            // Assert
+            assertThat(task.getStatus()).isEqualTo(TaskStatus.PUBLISHED);
+            assertThat(task.getAcceptedOffer()).isNull();
+            assertThat(task.getPublishedAt()).isEqualTo(NOW);
+            assertThat(task.getExpiresAt()).isEqualTo(NOW.plusDays(30));
+            assertThat(accepted.getStatus()).isEqualTo(OfferStatus.WITHDRAWN);
+            assertThat(earlier.getStatus()).isEqualTo(OfferStatus.PENDING);
+        }
+
+        @Test
+        void withdrawOffer_recordsTheWithdrawalAndNotifiesTheClient_whenOfferWasAccepted() {
+            // Arrange
+            Task task = aTask(TaskStatus.ASSIGNED);
+            User tasker = aTasker();
+            Offer accepted = anOffer(OFFER_ID, task, tasker, OfferStatus.ACCEPTED);
+            task.setAcceptedOffer(accepted);
+            when(offerRepository.findById(OFFER_ID)).thenReturn(Optional.of(accepted));
+
+            // Act
+            offerService.withdrawOffer(OFFER_ID, TASKER_ID);
+
+            // Assert
+            verify(taskerProfileService).recordWithdrawnJob(tasker);
+            verify(notificationService).notifyTaskerWithdrew(task);
+        }
+
+        @Test
+        void withdrawOffer_reopensEarlierConversations_andArchivesTheWithdrawnOne() {
+            // Arrange
+            Task task = aTask(TaskStatus.ASSIGNED);
+            Offer accepted = anOffer(OFFER_ID, task, aTasker(), OfferStatus.ACCEPTED);
+            task.setAcceptedOffer(accepted);
+            Offer earlier = anOffer(OTHER_OFFER_ID, task, anotherTasker(), OfferStatus.REJECTED);
+            Conversation withdrawnConversation = aConversation();
+            Conversation earlierConversation = aConversation();
+            earlierConversation.setStatus(ConversationStatus.ARCHIVED);
+            when(offerRepository.findById(OFFER_ID)).thenReturn(Optional.of(accepted));
+            when(offerRepository.findByTaskAndStatus(task, OfferStatus.REJECTED)).thenReturn(List.of(earlier));
+            when(conversationRepository.findByOffer(accepted)).thenReturn(Optional.of(withdrawnConversation));
+            when(conversationRepository.findByOffer(earlier)).thenReturn(Optional.of(earlierConversation));
+
+            // Act
+            offerService.withdrawOffer(OFFER_ID, TASKER_ID);
+
+            // Assert
+            assertThat(withdrawnConversation.getStatus()).isEqualTo(ConversationStatus.ARCHIVED);
+            assertThat(earlierConversation.getStatus()).isEqualTo(ConversationStatus.OPEN);
+        }
+
+        @Test
+        void withdrawOffer_throwsBusinessRule_whenWorkHasAlreadyStarted() {
+            // Arrange
+            Task task = aTask(TaskStatus.IN_PROGRESS);
+            Offer accepted = anOffer(OFFER_ID, task, aTasker(), OfferStatus.ACCEPTED);
+            task.setAcceptedOffer(accepted);
+            when(offerRepository.findById(OFFER_ID)).thenReturn(Optional.of(accepted));
+
+            // Act + Assert
+            assertThatThrownBy(() -> offerService.withdrawOffer(OFFER_ID, TASKER_ID))
+                    .isInstanceOf(BusinessRuleException.class)
+                    .hasMessageContaining("assigned");
+            assertThat(task.getStatus()).isEqualTo(TaskStatus.IN_PROGRESS);
+            verify(taskerProfileService, never()).recordWithdrawnJob(any());
+        }
+
+        @Test
+        void releaseAssignment_rejectsTheReleasedOffer_withoutCountingItAgainstTheTasker() {
+            // Arrange
+            Task task = aTask(TaskStatus.ASSIGNED);
+            User tasker = aTasker();
+            Offer accepted = anOffer(OFFER_ID, task, tasker, OfferStatus.ACCEPTED);
+            task.setAcceptedOffer(accepted);
+            Offer earlier = anOffer(OTHER_OFFER_ID, task, anotherTasker(), OfferStatus.REJECTED);
+            when(offerRepository.findByTaskAndStatus(task, OfferStatus.REJECTED)).thenReturn(List.of(earlier));
+
+            // Act
+            offerService.releaseAssignment(task);
+
+            // Assert
+            assertThat(task.getStatus()).isEqualTo(TaskStatus.PUBLISHED);
+            assertThat(accepted.getStatus()).isEqualTo(OfferStatus.REJECTED);
+            assertThat(earlier.getStatus()).isEqualTo(OfferStatus.PENDING);
+            verify(taskerProfileService, never()).recordWithdrawnJob(any());
+            verify(notificationService).notifyAssignmentReleased(task, tasker);
+        }
+
+        @Test
+        void releaseAssignment_throwsBusinessRule_whenTaskIsNotAssigned() {
+            // Arrange
+            Task task = aTask(TaskStatus.PUBLISHED);
+
+            // Act + Assert
+            assertThatThrownBy(() -> offerService.releaseAssignment(task))
+                    .isInstanceOf(BusinessRuleException.class)
+                    .hasMessageContaining("assigned");
         }
     }
 

@@ -17,7 +17,7 @@ public final class TaskStateMachine {
     static {
         ALLOWED.put(DRAFT,       EnumSet.of(PUBLISHED, CANCELLED));
         ALLOWED.put(PUBLISHED,   EnumSet.of(ASSIGNED, EXPIRED, CANCELLED, REMOVED));
-        ALLOWED.put(ASSIGNED,    EnumSet.of(IN_PROGRESS, CANCELLED, REMOVED));
+        ALLOWED.put(ASSIGNED,    EnumSet.of(IN_PROGRESS, PUBLISHED, CANCELLED, REMOVED));
         ALLOWED.put(IN_PROGRESS, EnumSet.of(COMPLETED, CANCELLED));
         ALLOWED.put(COMPLETED,   EnumSet.of(CLOSED));
         ALLOWED.put(CLOSED,      EnumSet.noneOf(TaskStatus.class));

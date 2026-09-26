@@ -115,6 +115,25 @@ public class NotificationService {
     }
 
     @Transactional
+    public void notifyTaskerWithdrew(Task task) {
+        save(task.getClient(), NotificationType.TASKER_WITHDREW, task,
+                "The tasker withdrew from your task: " + task.getTitle()
+                        + ". It is open again and earlier offers are active.");
+    }
+
+    @Transactional
+    public void notifyAssignmentReleased(Task task, User tasker) {
+        save(tasker, NotificationType.ASSIGNMENT_RELEASED, task,
+                "The client reopened the task: " + task.getTitle());
+    }
+
+    @Transactional
+    public void notifyOfferReactivated(Task task, User tasker) {
+        save(tasker, NotificationType.OFFER_REACTIVATED, task,
+                "Your offer is active again: " + task.getTitle());
+    }
+
+    @Transactional
     public void notifyTaskRemoved(Task task, String reason) {
         save(task.getClient(), NotificationType.TASK_REMOVED, task,
                 "Your task was removed by a moderator: " + task.getTitle() + ". Reason: " + reason);

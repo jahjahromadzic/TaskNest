@@ -35,6 +35,9 @@ public class TaskerProfile extends BaseEntity {
     @Column(name = "completed_jobs_count")
     private Integer completedJobsCount = 0;
 
+    @Column(name = "withdrawn_jobs_count", nullable = false)
+    private Integer withdrawnJobsCount = 0;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "tasker_categories",

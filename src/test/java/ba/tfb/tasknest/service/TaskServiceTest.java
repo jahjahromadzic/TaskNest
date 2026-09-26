@@ -443,6 +443,35 @@ class TaskServiceTest {
     }
 
     @Nested
+    class ReopenTask {
+
+        @Test
+        void reopenTask_releasesTheAssignment_whenCalledByTheOwner() {
+            // Arrange
+            Task task = anAssignedTask(TaskStatus.ASSIGNED);
+            when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
+
+            // Act
+            taskService.reopenTask(TASK_ID, CLIENT_ID);
+
+            // Assert
+            verify(offerService).releaseAssignment(task);
+        }
+
+        @Test
+        void reopenTask_throwsNotOwner_whenCalledByAnotherUser() {
+            // Arrange
+            Task task = anAssignedTask(TaskStatus.ASSIGNED);
+            when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
+
+            // Act + Assert
+            assertThatThrownBy(() -> taskService.reopenTask(TASK_ID, OTHER_USER_ID))
+                    .isInstanceOf(NotResourceOwnerException.class);
+            verify(offerService, never()).releaseAssignment(any());
+        }
+    }
+
+    @Nested
     class StartTask {
 
         @Test

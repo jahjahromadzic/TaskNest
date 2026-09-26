@@ -43,9 +43,16 @@ class TaskStateMachineTest {
 
     @Test
     void rejectsBackwardTransitions() {
-        assertFalse(TaskStateMachine.canTransition(ASSIGNED, PUBLISHED));
         assertFalse(TaskStateMachine.canTransition(COMPLETED, IN_PROGRESS));
         assertFalse(TaskStateMachine.canTransition(IN_PROGRESS, ASSIGNED));
+        assertFalse(TaskStateMachine.canTransition(IN_PROGRESS, PUBLISHED));
+    }
+
+    @Test
+    void allowsReopeningAnAssignedTask_butNotOneAlreadyUnderway() {
+        assertTrue(TaskStateMachine.canTransition(ASSIGNED, PUBLISHED));
+        assertFalse(TaskStateMachine.canTransition(IN_PROGRESS, PUBLISHED));
+        assertFalse(TaskStateMachine.canTransition(COMPLETED, PUBLISHED));
     }
 
     @Test

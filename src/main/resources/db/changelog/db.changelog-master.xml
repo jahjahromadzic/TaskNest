@@ -16,5 +16,6 @@
     <include file="db/changelog/changes/009-indexes.xml"/>
     <include file="db/changelog/changes/010-check-constraints.xml"/>
     <include file="db/changelog/changes/011-task-lifecycle.xml"/>
+    <include file="db/changelog/changes/012-tasker-withdrawals.xml"/>
 
 </databaseChangeLog>

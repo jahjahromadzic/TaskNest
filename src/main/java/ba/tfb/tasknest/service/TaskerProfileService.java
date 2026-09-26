@@ -98,6 +98,15 @@ public class TaskerProfileService {
     }
 
     @Transactional
+    public void recordWithdrawnJob(User tasker) {
+        TaskerProfile profile = taskerProfileRepository.findByUser(tasker)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Tasker has an accepted offer but no profile: " + tasker.getId()));
+
+        profile.setWithdrawnJobsCount(profile.getWithdrawnJobsCount() + 1);
+    }
+
+    @Transactional
     public void refreshAverageRating(User reviewee) {
         taskerProfileRepository.findWithWriteLockByUser(reviewee).ifPresent(profile -> {
             BigDecimal average = reviewRepository.findAverageRatingByReviewee(reviewee.getId())

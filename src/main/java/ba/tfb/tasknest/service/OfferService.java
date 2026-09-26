@@ -23,6 +23,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.List;
@@ -40,6 +41,9 @@ public class OfferService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ConversationRepository conversationRepository;
+    private final TaskerProfileService taskerProfileService;
+    private final NotificationService notificationService;
+    private final Clock clock;
 
     @Transactional
     public OfferResponse submitOffer(UUID taskId, UUID taskerId, CreateOfferRequest request) {
@@ -50,7 +54,7 @@ public class OfferService {
             throw new BusinessRuleException("Offers can only be submitted on published tasks");
         }
 
-        if (task.getExpiresAt() != null && task.getExpiresAt().isBefore(LocalDateTime.now())) {
+        if (task.getExpiresAt() != null && task.getExpiresAt().isBefore(LocalDateTime.now(clock))) {
             throw new BusinessRuleException("This task has expired and no longer accepts offers");
         }
 
@@ -126,8 +130,16 @@ public class OfferService {
             throw new NotResourceOwnerException("Offer does not belong to this user");
         }
 
+        if (offer.getStatus() == OfferStatus.ACCEPTED) {
+            Task task = offer.getTask();
+            reopen(task, offer, OfferStatus.WITHDRAWN);
+            taskerProfileService.recordWithdrawnJob(offer.getTasker());
+            notificationService.notifyTaskerWithdrew(task);
+            return OfferResponse.from(offer);
+        }
+
         if (offer.getStatus() != OfferStatus.PENDING) {
-            throw new BusinessRuleException("Only pending offers can be withdrawn");
+            throw new BusinessRuleException("Only pending or accepted offers can be withdrawn");
         }
 
         offer.setStatus(OfferStatus.WITHDRAWN);
@@ -181,6 +193,45 @@ public class OfferService {
             }
             other.setStatus(OfferStatus.REJECTED);
             archiveConversation(other);
+        }
+    }
+
+    @Transactional
+    public void releaseAssignment(Task task) {
+        Offer accepted = task.getAcceptedOffer();
+
+        if (task.getStatus() != TaskStatus.ASSIGNED || accepted == null) {
+            throw new BusinessRuleException("Only an assigned task can be reopened");
+        }
+
+        reopen(task, accepted, OfferStatus.REJECTED);
+        notificationService.notifyAssignmentReleased(task, accepted.getTasker());
+    }
+
+    private void reopen(Task task, Offer dropped, OfferStatus droppedStatus) {
+        if (task.getStatus() != TaskStatus.ASSIGNED) {
+            throw new BusinessRuleException("Only an assigned task can be reopened");
+        }
+
+        TaskStateMachine.validateTransition(task.getStatus(), TaskStatus.PUBLISHED);
+
+        LocalDateTime now = LocalDateTime.now(clock);
+        task.setStatus(TaskStatus.PUBLISHED);
+        task.setAcceptedOffer(null);
+        task.setPublishedAt(now);
+        task.setExpiresAt(now.plusDays(TaskService.PUBLICATION_VALIDITY_DAYS));
+        taskRepository.flush();
+
+        List<Offer> rejected = offerRepository.findByTaskAndStatus(task, OfferStatus.REJECTED);
+
+        dropped.setStatus(droppedStatus);
+        archiveConversation(dropped);
+
+        for (Offer offer : rejected) {
+            offer.setStatus(OfferStatus.PENDING);
+            conversationRepository.findByOffer(offer)
+                    .ifPresent(conversation -> conversation.setStatus(ConversationStatus.OPEN));
+            notificationService.notifyOfferReactivated(task, offer.getTasker());
         }
     }
 

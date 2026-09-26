@@ -17,6 +17,7 @@ public record TaskerProfileResponse(
         boolean verified,
         BigDecimal averageRating,
         int completedJobsCount,
+        int withdrawnJobsCount,
         List<String> categories,
         List<String> municipalities
 ) {
@@ -30,6 +31,7 @@ public record TaskerProfileResponse(
                 profile.isVerified(),
                 profile.getAverageRating(),
                 profile.getCompletedJobsCount() == null ? 0 : profile.getCompletedJobsCount(),
+                profile.getWithdrawnJobsCount() == null ? 0 : profile.getWithdrawnJobsCount(),
                 profile.getCategories().stream().map(Category::getName).sorted().toList(),
                 profile.getMunicipalities().stream().map(Municipality::getName).sorted().toList()
         );

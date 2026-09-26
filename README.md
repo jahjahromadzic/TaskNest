@@ -180,6 +180,7 @@ application is running.
 | POST | `/` | Client | Create a task as a draft |
 | POST | `/{id}/publish` | Client | Publish a draft |
 | POST | `/{id}/cancel` | Client | Cancel a task |
+| POST | `/{id}/reopen` | Client | Release the assigned tasker and reopen the task |
 | POST | `/{id}/start` | Assigned tasker | Report that work has started |
 | POST | `/{id}/complete` | Assigned tasker | Report that work is finished |
 | POST | `/{id}/close` | Client | Confirm the finished work and close the task |
@@ -212,7 +213,7 @@ Paged responses use the following shape:
 | POST | `/tasks/{taskId}/offers` | Tasker | Submit an offer |
 | GET | `/tasks/{taskId}/offers` | Task owner | List offers received on a task |
 | POST | `/offers/{offerId}/accept` | Task owner | Accept an offer and assign the task |
-| POST | `/offers/{offerId}/withdraw` | Offer owner | Withdraw a pending offer |
+| POST | `/offers/{offerId}/withdraw` | Offer owner | Withdraw a pending offer, or back out of an accepted one |
 | GET | `/offers/mine` | Tasker | Offers submitted by the caller |
 
 ### Tasker profiles — `/api/tasker-profiles`
@@ -315,7 +316,7 @@ Allowed transitions:
 |---|---|
 | `DRAFT` | `PUBLISHED`, `CANCELLED` |
 | `PUBLISHED` | `ASSIGNED`, `EXPIRED`, `CANCELLED`, `REMOVED` |
-| `ASSIGNED` | `IN_PROGRESS`, `CANCELLED`, `REMOVED` |
+| `ASSIGNED` | `IN_PROGRESS`, `PUBLISHED`, `CANCELLED`, `REMOVED` |
 | `IN_PROGRESS` | `COMPLETED`, `CANCELLED` |
 | `COMPLETED` | `CLOSED` |
 | `CLOSED`, `CANCELLED`, `EXPIRED`, `REMOVED` | terminal, no further transitions |
@@ -351,6 +352,25 @@ to the client, `TASK_CLOSED` to the tasker.
 **Known limitation:** nothing forces a client to close a completed task. A client
 who never closes leaves the tasker's count unchanged for good. Automatic closing
 after a grace period is the intended fix and is not implemented yet.
+
+### Reopening an assigned task
+
+An assigned task can go back on the market before work starts, from either side:
+the tasker backs out by withdrawing their accepted offer, or the client releases
+a tasker who did not turn up. Either way the task returns to `PUBLISHED` with a
+fresh 30-day window, since a task assigned close to its deadline would otherwise
+expire as soon as it reopened.
+
+The offers rejected when the tasker was chosen become active again and their
+conversations reopen, so the client can pick someone else straight away. This is
+not only a convenience: a tasker can make one offer per task, so without it the
+most interested taskers could never bid on the task again. The dropped tasker's
+offer ends as `WITHDRAWN` or `REJECTED` and cannot be renewed.
+
+Backing out is recorded on the tasker's profile as `withdrawnJobsCount`. A
+client's release is not, because it cannot be verified and would let an unhappy
+client penalise a tasker. Once work is `IN_PROGRESS` the task can no longer be
+reopened; cancellation remains available to the client.
 
 ## Reviews and reputation
 
@@ -392,7 +412,8 @@ Anyone else receives `403`.
 
 A conversation is archived when its offer stops being live: withdrawn by the
 tasker, rejected when another offer is accepted, or when the task is cancelled
-or closed. An archived conversation remains readable but accepts no new
+or closed. If an assigned task is reopened, the conversations of the offers that
+become active again are reopened with them. An archived conversation remains readable but accepts no new
 messages — otherwise a rejected tasker could keep writing to the client
 indefinitely.
 
@@ -442,7 +463,8 @@ then write the notification row and send the email.
 | Task expired | `task.expired` | One notification to the task owner |
 
 Work-execution and review notifications (`TASK_STARTED`, `TASK_COMPLETED`,
-`TASK_CLOSED`, `REVIEW_RECEIVED`, `NEW_MESSAGE`, `TASK_REMOVED`) are written synchronously instead: they have a
+`TASK_CLOSED`, `REVIEW_RECEIVED`, `NEW_MESSAGE`, `TASK_REMOVED`,
+`TASKER_WITHDREW`, `ASSIGNMENT_RELEASED`, `OFFER_REACTIVATED`) are written synchronously instead: they have a
 single recipient and send no email, and writing them in the same transaction as
 the state change means the notification cannot be missing while the change is
 visible.
@@ -467,13 +489,13 @@ scheduler runs.
 ./mvnw verify
 ```
 
-The suite contains **251 tests** and requires no manual setup — Testcontainers
+The suite contains **268 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
-| Unit | 119 | Service business rules and the task state machine |
-| Integration | 132 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline |
+| Unit | 128 | Service business rules and the task state machine |
+| Integration | 140 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline |
 
 GitHub Actions runs the same command on every push and pull request.
 

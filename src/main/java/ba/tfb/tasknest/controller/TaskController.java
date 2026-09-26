@@ -47,6 +47,13 @@ public class TaskController {
         return taskService.cancelTask(id, principal.getId());
     }
 
+    @PostMapping("/{id}/reopen")
+    @PreAuthorize("hasRole('CLIENT')")
+    public TaskResponse reopen(@PathVariable UUID id,
+                               @AuthenticationPrincipal UserPrincipal principal) {
+        return taskService.reopenTask(id, principal.getId());
+    }
+
     @PostMapping("/{id}/start")
     @PreAuthorize("hasRole('TASKER')")
     public TaskResponse start(@PathVariable UUID id,
