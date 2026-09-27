@@ -1,4 +1,4 @@
-<form #form="ngForm" (ngSubmit)="submit(form)" novalidate class="space-y-4 animate-fade-in">
+<form #form="ngForm" (ngSubmit)="submit(form)" novalidate class="space-y-3 animate-fade-in">
   @if (error(); as error) {
     <div role="alert" class="animate-shake flex items-start gap-2.5 p-3 rounded-btn bg-red-50 border border-red-200 text-sm text-red-700">
       <svg lucideCircleAlert class="w-4 h-4 mt-0.5 shrink-0"></svg>
@@ -108,8 +108,4 @@
       Create account
     }
   </button>
-
-  <p class="text-xs text-center text-text-sub">
-    You start as a client. You can become a tasker later from your account.
-  </p>
 </form>
