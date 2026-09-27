@@ -149,4 +149,17 @@ describe('AuthService', () => {
       expect(service.currentUser).toBeNull();
     });
   });
+
+  it('turns the client into a tasker and fetches a token with the new role', async () => {
+    service.login({ email: 'amra@test.ba', password: 'password123' }).subscribe();
+    http.expectOne('/api/auth/login').flush(response);
+
+    service.becomeTasker().subscribe();
+    http.expectOne({ method: 'POST', url: '/api/auth/activate-tasker' }).flush({ roles: ['CLIENT', 'TASKER'] });
+    http.expectOne('/api/auth/refresh').flush({ ...response, token: 'tasker-token', roles: ['CLIENT', 'TASKER'] });
+    await new Promise((resolve) => setTimeout(resolve));
+
+    expect(service.hasRole('TASKER')).toBe(true);
+    expect(service.token).toBe('tasker-token');
+  });
 });

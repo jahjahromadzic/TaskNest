@@ -106,4 +106,20 @@ describe('Route guards', () => {
 
     expect(router.url).toBe('/messages');
   });
+
+  it('sends a tasker who opens the become a tasker page to their profile instead', async () => {
+    logInAs('CLIENT', 'TASKER');
+
+    await harness.navigateByUrl('/become-a-tasker');
+
+    expect(router.url).toBe('/tasker/profile');
+  });
+
+  it('lets a client open the become a tasker page', async () => {
+    logInAs('CLIENT');
+
+    await harness.navigateByUrl('/become-a-tasker');
+
+    expect(router.url).toBe('/become-a-tasker');
+  });
 });

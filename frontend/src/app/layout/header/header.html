@@ -53,6 +53,15 @@
                    class="px-3 py-2 hover:bg-slate-50 flex items-center gap-2.5 transition-colors">
                   <svg [appIcon]="icons.Briefcase" class="w-4 h-4 text-slate-400"></svg> Tasker dashboard
                 </a>
+                <a routerLink="/tasker/profile" (click)="closeMenu()" role="menuitem"
+                   class="px-3 py-2 hover:bg-slate-50 flex items-center gap-2.5 transition-colors">
+                  <svg [appIcon]="icons.UserPen" class="w-4 h-4 text-slate-400"></svg> Tasker profile
+                </a>
+              } @else {
+                <a routerLink="/become-a-tasker" (click)="closeMenu()" role="menuitem"
+                   class="px-3 py-2 text-brand font-medium hover:bg-brand-50 flex items-center gap-2.5 transition-colors">
+                  <svg [appIcon]="icons.Briefcase" class="w-4 h-4"></svg> Become a tasker
+                </a>
               }
               @if (user.roles.includes('ADMIN')) {
                 <a routerLink="/admin" (click)="closeMenu()" role="menuitem"

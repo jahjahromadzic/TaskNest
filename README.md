@@ -216,7 +216,7 @@ frontend/src/app/
 |---|---|---|
 | 1 | Application shell, login and sign-up, session renewal, guards, public task list | Done |
 | 2 | Client flow: post tasks, review offers, accept, confirm and close, review | Done |
-| 3 | Tasker flow: profile, matching tasks, offers, work execution | Planned |
+| 3 | Tasker flow: profile, matching tasks, offers, work execution | In progress: becoming a tasker and the profile done |
 | 4 | Messages and notifications | Planned |
 | 5 | Administration | Planned |
 
@@ -642,10 +642,10 @@ starts PostgreSQL and RabbitMQ automatically.
 | Unit | 138 | Service business rules and the task state machine |
 | Integration | 165 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, demo data |
 
-The frontend has its own suite of **110 tests** (Vitest), covering the session
+The frontend has its own suite of **119 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
 header, the task list and task details, posting a task, the client's own tasks, offers
-and hiring, cancelling, reopening and closing a task, reviews, the confirmation dialog, the dropdown, the progress
+and hiring, cancelling, reopening and closing a task, reviews, becoming a tasker and editing the tasker profile, the confirmation dialog, the dropdown, the progress
 timeline, date helpers and the category icons. The server is simulated with Angular's
 `HttpTestingController`.
 

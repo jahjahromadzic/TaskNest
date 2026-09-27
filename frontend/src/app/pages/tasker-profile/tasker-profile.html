@@ -1,0 +1,174 @@
+@if (profile(); as profile) {
+  <div class="space-y-4 animate-fade-in">
+    @if (welcome) {
+      <div class="flex items-center gap-3 px-4 py-2.5 rounded-card bg-brand-50 border border-brand/20 text-sm animate-slide-in">
+        <svg [appIcon]="icons.PartyPopper" class="w-5 h-5 text-brand shrink-0"></svg>
+        <p><span class="font-semibold">You are a tasker now.</span> Choose what you do and where, and matching tasks will start showing up for you.</p>
+      </div>
+    }
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <form (ngSubmit)="save()" class="lg:col-span-2 bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-3.5">
+        <div class="flex items-center gap-4 pb-3.5 border-b border-slate-100">
+          <span class="shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-brand to-teal-500 text-white text-lg font-bold flex items-center justify-center ring-4 ring-brand-light">
+            {{ initials(profile.fullName) }}
+          </span>
+          <div class="min-w-0 flex-1">
+            <h1 class="text-xl font-bold tracking-tight flex flex-wrap items-center gap-2">
+              {{ profile.fullName }}
+              @if (profile.verified) {
+                <span class="inline-flex items-center gap-1 text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded-full">
+                  <svg [appIcon]="icons.BadgeCheck" class="w-3.5 h-3.5"></svg> Verified
+                </span>
+              }
+            </h1>
+            <p class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-text-sub mt-0.5">
+              <span class="flex items-center gap-1 font-semibold text-text-main">
+                <svg [appIcon]="icons.Star" class="w-4 h-4 text-accent fill-accent"></svg>
+                {{ profile.averageRating != null ? profile.averageRating.toFixed(1) : 'No ratings yet' }}
+              </span>
+              <span>{{ profile.completedJobsCount }} jobs done</span>
+              <span>{{ profile.withdrawnJobsCount }} withdrawn</span>
+            </p>
+          </div>
+          <div class="shrink-0 flex flex-col items-end gap-1">
+            <button type="submit" [disabled]="!dirty() || saving()" class="btn-primary">
+              @if (saving()) {
+                <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Saving...
+              } @else {
+                <svg [appIcon]="icons.Save" class="w-4 h-4"></svg> Save profile
+              }
+            </button>
+            <span class="h-4 text-xs text-amber-700" [class.invisible]="!dirty()">Unsaved changes</span>
+          </div>
+        </div>
+
+        <div>
+          <label for="profile-headline" class="form-label flex justify-between">
+            <span>Headline</span>
+            <span class="font-normal text-slate-400 tabular-nums">{{ headline().length }}/{{ headlineMax }}</span>
+          </label>
+          <input id="profile-headline" name="headline" [ngModel]="headline()" (ngModelChange)="headline.set($event)"
+                 [maxlength]="headlineMax" placeholder="e.g. Plumber with 10 years of experience" class="form-input">
+        </div>
+
+        <div>
+          <label for="profile-bio" class="form-label flex justify-between">
+            <span>About you</span>
+            <span class="font-normal text-slate-400 tabular-nums">{{ bio().length }}/{{ bioMax }}</span>
+          </label>
+          <textarea id="profile-bio" name="bio" rows="2" [ngModel]="bio()" (ngModelChange)="bio.set($event)" [maxlength]="bioMax"
+                    placeholder="What kind of jobs do you take on? Do you bring your own tools?"
+                    class="form-input resize-y field-sizing-content min-h-16 max-h-48"></textarea>
+        </div>
+
+        <fieldset>
+          <legend class="form-label">What do you do? <span class="font-normal text-text-sub">({{ categoryIds().length }} selected)</span></legend>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+            @for (category of categories(); track category.id) {
+              <button type="button" role="checkbox" [attr.aria-checked]="categoryIds().includes(category.id!)"
+                      (click)="toggle('categoryIds', category.id)"
+                      class="category-tile" [class.active]="categoryIds().includes(category.id!)">
+                <app-category-icon [slug]="category.slug" size="w-4 h-4 shrink-0" />
+                <span class="truncate flex-1">{{ category.name }}</span>
+                @if (categoryIds().includes(category.id!)) {
+                  <svg [appIcon]="icons.Check" class="w-3.5 h-3.5 shrink-0 animate-fade-in"></svg>
+                }
+              </button>
+            }
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend class="form-label">Where do you work? <span class="font-normal text-text-sub">({{ municipalityIds().length }} selected)</span></legend>
+          <div class="flex flex-wrap gap-2">
+            @for (municipality of municipalities(); track municipality.id) {
+              <button type="button" role="checkbox" [attr.aria-checked]="municipalityIds().includes(municipality.id!)"
+                      (click)="toggle('municipalityIds', municipality.id)"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm transition-all duration-200 active:scale-95"
+                      [class]="municipalityIds().includes(municipality.id!)
+                        ? 'bg-brand text-white border-brand shadow-subtle'
+                        : 'bg-white text-text-sub border-slate-300 hover:border-brand/50 hover:text-text-main'">
+                <svg [appIcon]="municipalityIds().includes(municipality.id!) ? icons.Check : icons.MapPin" class="w-3.5 h-3.5"></svg>
+                {{ municipality.name }}
+              </button>
+            }
+          </div>
+        </fieldset>
+
+      </form>
+
+      <aside class="space-y-4 lg:sticky lg:top-24">
+        <section class="bg-white p-5 rounded-card border border-surface-border shadow-subtle">
+          <div class="flex items-center gap-4">
+            <div class="relative w-16 h-16 shrink-0">
+              <svg viewBox="0 0 36 36" class="w-16 h-16 -rotate-90">
+                <circle cx="18" cy="18" r="15.5" fill="none" class="stroke-slate-100" stroke-width="3.5" />
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke-width="3.5" stroke-linecap="round"
+                        class="transition-[stroke-dasharray] duration-700 ease-out-soft"
+                        [class]="completeness() === 100 ? 'stroke-status-success' : 'stroke-brand'"
+                        [attr.stroke-dasharray]="(completeness() / 100) * 97.4 + ' 97.4'" />
+              </svg>
+              <span class="absolute inset-0 flex items-center justify-center text-sm font-bold tabular-nums">{{ completeness() }}%</span>
+            </div>
+            <div>
+              <p class="font-semibold">{{ completeness() === 100 ? 'Your profile is complete' : 'Complete your profile' }}</p>
+              <p class="text-xs text-text-sub">A complete profile gets more jobs.</p>
+            </div>
+          </div>
+          <ul class="mt-4 space-y-2 text-sm">
+            @for (item of checklist(); track item.label) {
+              <li class="flex items-center gap-2 transition-colors" [class]="item.done ? 'text-text-main' : 'text-text-sub'">
+                <svg [appIcon]="item.done ? icons.CircleCheck : icons.Circle" class="w-4 h-4"
+                     [class]="item.done ? 'text-status-success' : 'text-slate-300'"></svg>
+                {{ item.label }}
+              </li>
+            }
+          </ul>
+        </section>
+
+        <section class="space-y-2">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">How clients see you</p>
+          <div class="bg-white p-4 rounded-card border border-surface-border shadow-subtle flex items-start gap-3">
+            <span class="shrink-0 w-11 h-11 rounded-full bg-gradient-to-br from-brand to-teal-500 text-white font-semibold flex items-center justify-center">
+              {{ initials(profile.fullName) }}
+            </span>
+            <div class="min-w-0 space-y-1">
+              <p class="font-semibold">{{ profile.fullName }}</p>
+              <p class="text-xs text-text-sub line-clamp-2">{{ headline() || 'Your headline appears here' }}</p>
+              <p class="text-xs text-text-sub">
+                @if (profile.averageRating != null) {
+                  <span class="font-semibold text-text-main">★ {{ profile.averageRating.toFixed(1) }}</span> ·
+                } @else {
+                  <span class="font-medium text-brand">New on TaskNest</span> ·
+                }
+                {{ profile.completedJobsCount }} jobs done
+              </p>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+} @else if (failed()) {
+  <div role="alert" class="bg-white p-10 rounded-card border border-red-200 text-center space-y-3 max-w-lg mx-auto">
+    <h1 class="text-lg font-semibold">Your profile could not be loaded</h1>
+    <button type="button" (click)="load()" class="btn-primary py-2">Try again</button>
+  </div>
+} @else {
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" aria-hidden="true">
+    <div class="lg:col-span-2 bg-white p-6 rounded-card border border-surface-border space-y-4">
+      <div class="flex items-center gap-4">
+        <span class="skeleton w-14 h-14 rounded-full"></span>
+        <span class="skeleton h-6 w-48"></span>
+      </div>
+      <span class="skeleton block h-10 w-full"></span>
+      <span class="skeleton block h-20 w-full"></span>
+      <span class="skeleton block h-40 w-full"></span>
+    </div>
+    <div class="bg-white p-5 rounded-card border border-surface-border space-y-3">
+      <span class="skeleton block h-16 w-full"></span>
+      <span class="skeleton block h-24 w-full"></span>
+    </div>
+  </div>
+}

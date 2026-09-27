@@ -10,6 +10,7 @@ import {
   map,
   of,
   shareReplay,
+  switchMap,
   throwError,
 } from 'rxjs';
 import { AuthResponse, LoginRequest, RegisterRequest } from '../api/models';
@@ -72,6 +73,10 @@ export class AuthService {
       );
     }
     return this.refreshInFlight;
+  }
+
+  becomeTasker(): Observable<CurrentUser> {
+    return this.http.post('/api/auth/activate-tasker', null).pipe(switchMap(() => this.refresh()));
   }
 
   restoreSession(): Observable<void> {

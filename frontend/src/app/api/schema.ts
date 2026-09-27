@@ -684,6 +684,19 @@ export interface components {
             headline?: string;
             bio?: string;
         };
+        CategoryResponse: {
+            /** Format: uuid */
+            id?: string;
+            slug?: string;
+            name?: string;
+            description?: string;
+        };
+        MunicipalityResponse: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            region?: string;
+        };
         TaskerProfileResponse: {
             /** Format: uuid */
             id?: string;
@@ -698,8 +711,8 @@ export interface components {
             completedJobsCount?: number;
             /** Format: int32 */
             withdrawnJobsCount?: number;
-            categories?: string[];
-            municipalities?: string[];
+            categories?: components["schemas"]["CategoryResponse"][];
+            municipalities?: components["schemas"]["MunicipalityResponse"][];
         };
         UpdateCoverageRequest: {
             ids: string[];
@@ -939,12 +952,6 @@ export interface components {
             first?: boolean;
             last?: boolean;
         };
-        MunicipalityResponse: {
-            /** Format: uuid */
-            id?: string;
-            name?: string;
-            region?: string;
-        };
         ConversationResponse: {
             /** Format: uuid */
             id?: string;
@@ -988,13 +995,6 @@ export interface components {
             totalPages?: number;
             first?: boolean;
             last?: boolean;
-        };
-        CategoryResponse: {
-            /** Format: uuid */
-            id?: string;
-            slug?: string;
-            name?: string;
-            description?: string;
         };
         PagedResponseAdminUserResponse: {
             content?: components["schemas"]["AdminUserResponse"][];

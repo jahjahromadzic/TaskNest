@@ -1,5 +1,7 @@
 package ba.tfb.tasknest.service;
 
+import ba.tfb.tasknest.dto.reference.CategoryResponse;
+import ba.tfb.tasknest.dto.reference.MunicipalityResponse;
 import ba.tfb.tasknest.dto.taskerprofile.TaskerProfileResponse;
 import ba.tfb.tasknest.dto.taskerprofile.UpdateCoverageRequest;
 import ba.tfb.tasknest.dto.taskerprofile.UpdateTaskerProfileRequest;
@@ -158,7 +160,7 @@ class TaskerProfileServiceTest {
                     taskerProfileService.updateCategories(USER_ID, coverage(CATEGORY_A, CATEGORY_B));
 
             // Assert
-            assertThat(response.categories())
+            assertThat(response.categories()).extracting(CategoryResponse::name)
                     .containsExactly("Elektroinstalacije", "Vodoinstalacije");
             assertThat(profile.getCategories()).hasSize(2);
             assertThat(profile.getCategories())
@@ -229,7 +231,8 @@ class TaskerProfileServiceTest {
                     taskerProfileService.updateMunicipalities(USER_ID, coverage(MUNICIPALITY_A, MUNICIPALITY_B));
 
             // Assert
-            assertThat(response.municipalities()).containsExactly("Centar", "Ilidza");
+            assertThat(response.municipalities()).extracting(MunicipalityResponse::name)
+                    .containsExactly("Centar", "Ilidza");
             assertThat(profile.getMunicipalities())
                     .extracting(Municipality::getName)
                     .doesNotContain("Stara opstina");
@@ -293,7 +296,8 @@ class TaskerProfileServiceTest {
             // Assert
             assertThat(response.id()).isEqualTo(PROFILE_ID);
             assertThat(response.fullName()).isEqualTo("Mirza Tasker");
-            assertThat(response.categories()).containsExactly("Stara kategorija");
+            assertThat(response.categories()).extracting(CategoryResponse::name)
+                    .containsExactly("Stara kategorija");
         }
     }
 

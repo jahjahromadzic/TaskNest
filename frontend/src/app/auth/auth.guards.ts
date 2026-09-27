@@ -29,3 +29,11 @@ export const guestGuard: CanActivateFn = (route) => {
   }
   return inject(Router).parseUrl(safeReturnUrl(route.queryParamMap.get('returnUrl')));
 };
+
+export const notTaskerGuard: CanActivateFn = (route, state) => {
+  const loggedIn = authGuard(route, state);
+  if (loggedIn !== true) {
+    return loggedIn;
+  }
+  return !inject(AuthService).hasRole('TASKER') || inject(Router).parseUrl('/tasker/profile');
+};

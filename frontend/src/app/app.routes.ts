@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard, roleGuard } from './auth/auth.guards';
+import { authGuard, guestGuard, notTaskerGuard, roleGuard } from './auth/auth.guards';
 
 const placeholder = () => import('./pages/placeholder/placeholder').then((m) => m.Placeholder);
 
@@ -55,8 +55,13 @@ export const routes: Routes = [
     path: 'tasker/profile',
     canActivate: [roleGuard('TASKER')],
     title: 'Tasker profile · TaskNest',
-    loadComponent: placeholder,
-    data: { heading: 'Tasker profile', phase: 3 },
+    loadComponent: () => import('./pages/tasker-profile/tasker-profile').then((m) => m.TaskerProfilePage),
+  },
+  {
+    path: 'become-a-tasker',
+    canActivate: [notTaskerGuard],
+    title: 'Become a tasker · TaskNest',
+    loadComponent: () => import('./pages/become-tasker/become-tasker').then((m) => m.BecomeTasker),
   },
   {
     path: 'messages',

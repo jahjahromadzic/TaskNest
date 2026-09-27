@@ -56,6 +56,7 @@ describe('Header', () => {
     expect(text()).toContain('amra@test.ba');
     expect(text()).toContain('My tasks');
     expect(text()).not.toContain('Tasker dashboard');
+    expect(text()).toContain('Become a tasker');
     expect(text()).not.toContain('Admin');
   });
 
@@ -65,6 +66,8 @@ describe('Header', () => {
 
     await openMenu();
     expect(text()).toContain('Tasker dashboard');
+    expect(text()).toContain('Tasker profile');
+    expect(text()).not.toContain('Become a tasker');
     expect(text()).toContain('Admin');
   });
 
