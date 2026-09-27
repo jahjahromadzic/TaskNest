@@ -70,7 +70,7 @@
             }
           </section>
 
-          @if (isOwner(task, vm.user) && task.status === 'CLOSED') {
+          @if ((isOwner(task, vm.user) || isAssignedTasker(task, vm.user)) && task.status === 'CLOSED') {
             <app-task-reviews [task]="task" [viewerId]="vm.user!.id" class="block animate-fade-in [animation-delay:100ms]" />
           }
 
@@ -140,6 +140,16 @@
               <a routerLink="/login" [queryParams]="{ returnUrl: taskUrl(task) }" class="btn-primary w-full">
                 <svg [appIcon]="icons.LogIn" class="w-4 h-4"></svg>
                 Log in to make an offer
+              </a>
+            } @else if (vm.user && vm.user.roles.includes('TASKER') && task.status !== 'DRAFT') {
+              <div class="space-y-2 pt-1">
+                <app-tasker-panel [task]="task" (changed)="retry()" />
+              </div>
+            } @else if (vm.user && task.status === 'PUBLISHED') {
+              <a routerLink="/become-a-tasker"
+                 class="group flex items-center justify-between gap-2 p-3 rounded-btn bg-brand-50 border border-brand/20 text-sm hover:bg-brand-light/60 transition-colors">
+                <span><span class="font-semibold text-brand">Want to earn?</span> Become a tasker to send offers.</span>
+                <svg [appIcon]="icons.ChevronRight" class="w-4 h-4 text-brand transition-transform duration-200 group-hover:translate-x-0.5"></svg>
               </a>
             }
           </section>

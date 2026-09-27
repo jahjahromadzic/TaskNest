@@ -28,6 +28,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -148,6 +149,16 @@ public class OfferService {
         archiveConversation(offer);
 
         return OfferResponse.from(offer);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<OfferResponse> getMyOfferForTask(UUID taskId, UUID taskerId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
+        User tasker = userRepository.findById(taskerId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", taskerId));
+
+        return offerRepository.findByTaskAndTasker(task, tasker).map(OfferResponse::from);
     }
 
     @Transactional(readOnly = true)

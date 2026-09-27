@@ -1,6 +1,7 @@
 package ba.tfb.tasknest.service;
 
 import ba.tfb.tasknest.AbstractIntegrationTest;
+import ba.tfb.tasknest.dto.auth.LoginRequest;
 import ba.tfb.tasknest.dto.auth.RegisterRequest;
 import ba.tfb.tasknest.dto.offer.CreateOfferRequest;
 import ba.tfb.tasknest.dto.offer.TaskOfferResponse;
@@ -24,6 +25,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
@@ -31,9 +34,14 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@AutoConfigureMockMvc
 class TaskOffersIntegrationTest extends AbstractIntegrationTest {
 
+    @Autowired private MockMvc mockMvc;
     @Autowired private AuthService authService;
     @Autowired private TaskService taskService;
     @Autowired private OfferService offerService;
@@ -132,6 +140,33 @@ class TaskOffersIntegrationTest extends AbstractIntegrationTest {
         // Assert
         assertThat(offers).extracting(TaskOfferResponse::status)
                 .containsExactly(OfferStatus.ACCEPTED, OfferStatus.REJECTED);
+    }
+
+    @Test
+    @DisplayName("A tasker can look up their own offer on a task, and gets nothing before they send one")
+    void myOfferForTask_isEmptyUntilTheTaskerOffers() throws Exception {
+        // Arrange
+        UUID taskId = publishedTask();
+        String taskerToken = token("offers.emir@test.ba");
+
+        // Act + Assert
+        mockMvc.perform(get("/api/tasks/" + taskId + "/offers/mine").header("Authorization", "Bearer " + taskerToken))
+                .andExpect(status().isNoContent());
+
+        offerService.submitOffer(taskId, experiencedTaskerId, new CreateOfferRequest(new BigDecimal("65"), "Tomorrow"));
+
+        mockMvc.perform(get("/api/tasks/" + taskId + "/offers/mine").header("Authorization", "Bearer " + taskerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.price").value(65))
+                .andExpect(jsonPath("$.status").value("PENDING"));
+
+        mockMvc.perform(get("/api/tasks/" + taskId + "/offers/mine")
+                        .header("Authorization", "Bearer " + token("offers.client@test.ba")))
+                .andExpect(status().isForbidden());
+    }
+
+    private String token(String email) {
+        return authService.login(new LoginRequest(email, "password123")).token();
     }
 
     private void finishAndReviewAJob(UUID taskerId, int rating) {

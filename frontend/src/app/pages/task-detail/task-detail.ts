@@ -27,6 +27,7 @@ import { StatusBadge } from '../../components/status-badge/status-badge';
 import { TaskActions } from '../../components/task-actions/task-actions';
 import { TaskOffers } from '../../components/task-offers/task-offers';
 import { TaskReviews } from '../../components/task-reviews/task-reviews';
+import { TaskerPanel } from '../../components/tasker-panel/tasker-panel';
 import { TaskTimeline } from '../../components/task-timeline/task-timeline';
 import { TaskService } from '../../services/task.service';
 import { daysLeft, formatBudget, formatDate, timeAgo } from '../../shared/format/format';
@@ -56,6 +57,7 @@ const FAILED: DetailState = { loading: false, notFound: false, failed: true, tas
     TaskOffers,
     TaskReviews,
     TaskTimeline,
+    TaskerPanel,
   ],
   templateUrl: './task-detail.html',
 })
@@ -113,6 +115,10 @@ export class TaskDetailPage {
 
   isOwner(task: TaskDetail, user: CurrentUser | null): boolean {
     return user !== null && user.id === task.clientId;
+  }
+
+  isAssignedTasker(task: TaskDetail, user: CurrentUser | null): boolean {
+    return user !== null && user.id === task.assignedTaskerId;
   }
 
   initials(name: string | undefined): string {

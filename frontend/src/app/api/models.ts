@@ -18,3 +18,5 @@ export type Review = Schemas['ReviewResponse'];
 export type CreateReviewRequest = Schemas['CreateReviewRequest'];
 export type TaskerProfile = Schemas['TaskerProfileResponse'];
 export type UpdateTaskerProfileRequest = Schemas['UpdateTaskerProfileRequest'];
+export type Offer = Schemas['OfferResponse'];
+export type CreateOfferRequest = Schemas['CreateOfferRequest'];

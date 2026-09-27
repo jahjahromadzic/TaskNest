@@ -75,4 +75,12 @@ export class TaskService {
   closeTask(id: string): Observable<TaskDetail> {
     return this.http.post<TaskDetail>(`/api/tasks/${encodeURIComponent(id)}/close`, null);
   }
+
+  startTask(id: string): Observable<TaskDetail> {
+    return this.http.post<TaskDetail>(`/api/tasks/${encodeURIComponent(id)}/start`, null);
+  }
+
+  completeTask(id: string): Observable<TaskDetail> {
+    return this.http.post<TaskDetail>(`/api/tasks/${encodeURIComponent(id)}/complete`, null);
+  }
 }

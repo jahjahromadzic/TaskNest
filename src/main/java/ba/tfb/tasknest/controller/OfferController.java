@@ -8,6 +8,7 @@ import ba.tfb.tasknest.service.OfferService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +36,15 @@ public class OfferController {
     public List<TaskOfferResponse> forTask(@PathVariable UUID taskId,
                                        @AuthenticationPrincipal UserPrincipal principal) {
         return offerService.getOffersForTask(taskId, principal.getId());
+    }
+
+    @GetMapping("/tasks/{taskId}/offers/mine")
+    @PreAuthorize("hasRole('TASKER')")
+    public ResponseEntity<OfferResponse> myOfferForTask(@PathVariable UUID taskId,
+                                                        @AuthenticationPrincipal UserPrincipal principal) {
+        return offerService.getMyOfferForTask(taskId, principal.getId())
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @PostMapping("/offers/{offerId}/accept")
