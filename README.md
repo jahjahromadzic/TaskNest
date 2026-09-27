@@ -5,13 +5,15 @@
 A marketplace for local services. Clients post tasks, taskers submit offers, and
 clients accept one.
 
-This repository contains the backend REST API. An Angular frontend is planned.
+This repository contains the Spring Boot REST API and, in `frontend/`, the Angular
+single-page application that uses it.
 
 ## Table of contents
 
 - [Features](#features)
 - [Tech stack](#tech-stack)
 - [Getting started](#getting-started)
+- [Frontend](#frontend)
 - [Configuration](#configuration)
 - [API reference](#api-reference)
 - [Task lifecycle](#task-lifecycle)
@@ -68,6 +70,8 @@ This repository contains the backend REST API. An Angular frontend is planned.
 | Documentation | springdoc OpenAPI |
 | Testing | JUnit 5, Mockito, AssertJ, Testcontainers |
 | Build | Maven |
+| Frontend | Angular 22, TypeScript, RxJS, Tailwind CSS 4, Lucide icons |
+| Frontend testing | Vitest |
 | CI | GitHub Actions |
 
 ## Getting started
@@ -76,6 +80,7 @@ This repository contains the backend REST API. An Angular frontend is planned.
 
 - Java 21
 - Docker
+- Node.js 24.15 or newer, for the frontend
 
 ### Run
 
@@ -147,6 +152,70 @@ when it is enabled without a password.
 | PostgreSQL | 5432 |
 | RabbitMQ | 5672 (management 15672) |
 | Mailpit | 1025 (web 8025) |
+
+## Frontend
+
+The Angular application lives in `frontend/`. Start the backend first, then:
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+The application is available at `http://localhost:4200`. The development server
+forwards every `/api` request to `http://localhost:8080` (`proxy.conf.json`), so the
+browser sees one origin. That matters because the refresh token travels in a
+`SameSite=Strict` cookie.
+
+| Command | Purpose |
+|---|---|
+| `npm start` | Development server with live reload |
+| `npm run build` | Production build into `frontend/dist/` |
+| `npm test -- --watch=false` | Run the test suite once |
+| `npm run api:types` | Regenerate `src/app/api/schema.ts` from the running backend's OpenAPI document |
+
+### How it works
+
+- **Types from the API** — request and response types are generated from
+  `/v3/api-docs`, so a renamed backend field breaks the frontend build instead of
+  failing at runtime.
+- **Session** — the access token is kept in memory only, never in `localStorage`.
+  The refresh token is an `httpOnly` cookie the page cannot read. On startup the
+  application calls `/api/auth/refresh` before the first page renders, so a reload
+  keeps the user signed in.
+- **Interceptor** — every API call gets the bearer token. A token about to expire
+  is renewed before the call, and a `401` triggers one renewal and a retry. Calls
+  that fail together share a single renewal, because the backend treats a reused
+  refresh token as theft. Browser tabs take turns through the Web Locks API.
+- **Guards** — pages are protected by login and by role (tasker, admin). A visitor
+  is sent to the login page and returned to the requested page afterwards; the
+  return address must stay inside the application.
+- **Task list** — filters, sorting and the page number live in the URL, so a
+  filtered list can be shared, reloaded and navigated with the back button.
+
+### Structure
+
+```
+frontend/src/app/
+├── api/          Generated OpenAPI types and short aliases
+├── auth/         Session service, interceptor, guards, login and sign-up layout
+├── components/   Reusable pieces: task card, pagination, dropdown, category icon
+├── layout/       Header and mobile bottom navigation
+├── pages/        One folder per route
+├── services/     HTTP services per backend area
+└── shared/       Toasts, error parsing, formatting helpers
+```
+
+### Status
+
+| Phase | Scope | Status |
+|---|---|---|
+| 1 | Application shell, login and sign-up, session renewal, guards, public task list | Done |
+| 2 | Client flow: post tasks, review offers, accept, confirm and close | Planned |
+| 3 | Tasker flow: profile, matching tasks, offers, work execution | Planned |
+| 4 | Messages and notifications | Planned |
+| 5 | Administration | Planned |
 
 ## Configuration
 
@@ -568,13 +637,25 @@ starts PostgreSQL and RabbitMQ automatically.
 | Unit | 135 | Service business rules and the task state machine |
 | Integration | 156 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, demo data |
 
-GitHub Actions runs the same command on every push and pull request.
+The frontend has its own suite of **62 tests** (Vitest), covering the session
+service, token renewal and the interceptor, the route guards, the login form, the
+header, the task list and the dropdown component. The server is simulated with Angular's
+`HttpTestingController`.
+
+```bash
+cd frontend
+npm test -- --watch=false
+```
+
+GitHub Actions runs both suites in parallel on every push and pull request: the
+backend with `./mvnw verify`, the frontend with a clean `npm ci`, a production
+build and the tests.
 
 ## Project structure
 
 ```
 src/main/java/ba/tfb/tasknest/
-├── bootstrap/      Startup promotion of the configured administrator
+├── bootstrap/      Administrator promotion and demo data at startup
 ├── config/         Security and OpenAPI configuration
 ├── controller/     REST controllers
 ├── domain/         Task state machine
@@ -590,13 +671,15 @@ src/main/java/ba/tfb/tasknest/
 src/main/resources/
 ├── db/changelog/   Liquibase migrations
 └── application*.yml
+
+frontend/           Angular application, see Frontend
 ```
 
 ## Roadmap
 
 - [ ] Real-time message delivery over WebSocket
 - [ ] Email verification, password reset, rate limiting
-- [ ] Angular frontend
+- [ ] Angular frontend phases 2 to 5 (client and tasker flows, messaging, administration)
 - [ ] Application Dockerfile
 
 ## License

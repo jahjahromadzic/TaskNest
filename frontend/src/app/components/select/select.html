@@ -1,0 +1,28 @@
+<button type="button" [id]="inputId" (click)="toggle()" (keydown)="onButtonKeydown($event)" [disabled]="disabled()"
+        aria-haspopup="listbox" [attr.aria-expanded]="open()" [attr.aria-controls]="listId"
+        [attr.aria-activedescendant]="open() && activeIndex() >= 0 ? optionId(activeIndex()) : null"
+        class="form-input flex items-center justify-between gap-2 text-left cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+        [class]="compact ? 'py-1.5 font-medium' : 'py-2'" [class.form-input-open]="open()">
+  <span class="truncate" [class.text-slate-400]="!selectedLabel">{{ selectedLabel ?? placeholder }}</span>
+  <svg lucideChevronDown class="w-4 h-4 shrink-0 text-slate-400 transition-transform duration-200" [class.rotate-180]="open()"></svg>
+</button>
+
+@if (open()) {
+  <ul role="listbox" [id]="listId" [attr.aria-labelledby]="inputId"
+      class="absolute z-30 left-0 right-0 mt-1.5 min-w-full max-h-64 overflow-y-auto origin-top animate-scale-in
+             bg-white rounded-card border border-surface-border shadow-modal p-1.5">
+    @for (option of options; track option.value; let i = $index) {
+      <li role="option" [id]="optionId(i)" [attr.aria-selected]="option.value === value()"
+          (click)="choose(option)" (mouseenter)="activeIndex.set(i)"
+          class="flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer transition-colors duration-150"
+          [class.bg-brand-50]="i === activeIndex()"
+          [class.text-brand]="option.value === value()"
+          [class.font-semibold]="option.value === value()">
+        <span class="truncate">{{ option.label }}</span>
+        @if (option.value === value()) {
+          <svg lucideCheck class="w-4 h-4 shrink-0 animate-fade-in"></svg>
+        }
+      </li>
+    }
+  </ul>
+}

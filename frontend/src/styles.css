@@ -118,6 +118,10 @@ body {
       focus:outline-none focus:bg-white focus:border-brand focus:ring-4 focus:ring-brand/15;
   }
 
+  .form-input-open {
+    @apply bg-white border-brand ring-4 ring-brand/15 hover:border-brand;
+  }
+
   .form-input-invalid {
     @apply border-status-error/70 bg-red-50/40 hover:border-status-error focus:border-status-error focus:ring-status-error/15;
   }
@@ -145,6 +149,11 @@ body {
     @apply relative p-2 rounded-lg text-slate-600 transition-all duration-200
       hover:bg-slate-100 hover:text-text-main active:scale-95
       focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/20;
+  }
+
+  .scroll-area {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-slate-300) transparent;
   }
 
   .skeleton {
