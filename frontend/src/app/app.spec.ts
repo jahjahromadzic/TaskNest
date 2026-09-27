@@ -1,22 +1,40 @@
 import { TestBed } from '@angular/core/testing';
-import { App } from './app';
+import { of } from 'rxjs';
+import { provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { routes } from './app.routes';
+import { ReferenceService } from './services/reference.service';
 
-describe('App', () => {
+describe('App routes', () => {
+  let harness: RouterTestingHarness;
+
+  beforeAll(async () => {
+    await import('./pages/browse-tasks/browse-tasks');
+  }, 60_000);
+
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [App],
-    }).compileComponents();
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter(routes),
+        { provide: ReferenceService, useValue: { getCategories: () => of([]) } },
+      ],
+    });
+    harness = await RouterTestingHarness.create();
   });
 
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(App);
-    expect(fixture.componentInstance).toBeTruthy();
+  it('opens the task list at the root address', async () => {
+    await harness.navigateByUrl('/');
+    expect(harness.routeNativeElement?.textContent).toContain('Browse Local Tasks');
   });
 
-  it('should render the brand name', async () => {
-    const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('header')?.textContent).toContain('TaskNest');
+  it('shows the placeholder with its heading for a page not built yet', async () => {
+    await harness.navigateByUrl('/messages');
+    expect(harness.routeNativeElement?.textContent).toContain('Messages');
+    expect(harness.routeNativeElement?.textContent).toContain('phase 4');
+  });
+
+  it('shows the not found page for an unknown address', async () => {
+    await harness.navigateByUrl('/nema-ovoga');
+    expect(harness.routeNativeElement?.textContent).toContain('Page not found');
   });
 });
