@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -29,6 +30,11 @@ public class ReviewController {
                                  @Valid @RequestBody CreateReviewRequest request,
                                  @AuthenticationPrincipal UserPrincipal principal) {
         return reviewService.createReview(taskId, principal.getId(), request);
+    }
+
+    @GetMapping("/tasks/{taskId}/reviews")
+    public List<ReviewResponse> forTask(@PathVariable UUID taskId) {
+        return reviewService.getTaskReviews(taskId);
     }
 
     @GetMapping("/users/{userId}/reviews")

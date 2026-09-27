@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -62,6 +63,16 @@ public class ReviewService {
         notificationService.notifyReviewReceived(saved);
 
         return ReviewResponse.from(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReviewResponse> getTaskReviews(UUID taskId) {
+        if (!taskRepository.existsById(taskId)) {
+            throw new ResourceNotFoundException("Task", taskId);
+        }
+        return reviewRepository.findByTaskIdOrderByCreatedAtAsc(taskId).stream()
+                .map(ReviewResponse::from)
+                .toList();
     }
 
     @Transactional(readOnly = true)

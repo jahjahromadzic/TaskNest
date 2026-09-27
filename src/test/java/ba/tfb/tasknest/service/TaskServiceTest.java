@@ -298,6 +298,22 @@ class TaskServiceTest {
             assertThat(response.status()).isEqualTo(TaskStatus.PUBLISHED);
             assertThat(response.clientName()).isEqualTo("Amra Client");
             assertThat(response.clientId()).isEqualTo(CLIENT_ID);
+            assertThat(response.assignedTaskerId()).isNull();
+            assertThat(response.assignedTaskerName()).isNull();
+        }
+
+        @Test
+        void getTask_namesTheAssignedTasker_whenAnOfferWasAccepted() {
+            // Arrange
+            Task task = anAssignedTask(TaskStatus.ASSIGNED);
+            when(taskRepository.findById(TASK_ID)).thenReturn(Optional.of(task));
+
+            // Act
+            TaskResponse response = taskService.getTask(TASK_ID, null);
+
+            // Assert
+            assertThat(response.assignedTaskerId()).isEqualTo(TASKER_ID);
+            assertThat(response.assignedTaskerName()).isEqualTo("Emir Tasker");
         }
 
         @Test

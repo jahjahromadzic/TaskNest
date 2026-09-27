@@ -75,7 +75,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["forTask"];
         put?: never;
         post: operations["create_1"];
         delete?: never;
@@ -91,7 +91,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["forTask"];
+        get: operations["forTask_1"];
         put?: never;
         post: operations["submit"];
         delete?: never;
@@ -731,6 +731,9 @@ export interface components {
             /** Format: uuid */
             clientId?: string;
             clientName?: string;
+            /** Format: uuid */
+            assignedTaskerId?: string;
+            assignedTaskerName?: string;
             /** Format: date-time */
             publishedAt?: string;
             /** Format: date-time */
@@ -1155,6 +1158,28 @@ export interface operations {
             };
         };
     };
+    forTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                taskId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReviewResponse"][];
+                };
+            };
+        };
+    };
     create_1: {
         parameters: {
             query?: never;
@@ -1181,7 +1206,7 @@ export interface operations {
             };
         };
     };
-    forTask: {
+    forTask_1: {
         parameters: {
             query?: never;
             header?: never;

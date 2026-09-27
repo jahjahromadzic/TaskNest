@@ -1,0 +1,39 @@
+<section class="bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-4">
+  <h2 class="font-semibold">Reviews</h2>
+
+  @if (canReview) {
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-card bg-accent-light/50 border border-amber-200 animate-fade-in">
+      <div>
+        <p class="font-semibold text-amber-950">How did it go with {{ counterpartName }}?</p>
+        <p class="text-sm text-amber-900/80">Your review helps other people choose.</p>
+      </div>
+      <button type="button" (click)="writing.set(true)" class="btn-primary bg-accent hover:bg-amber-700 shrink-0">
+        <svg [appIcon]="icons.Star" class="w-4 h-4 fill-white"></svg> Leave a review
+      </button>
+    </div>
+  }
+
+  @for (review of reviews(); track review.id) {
+    <article class="p-4 rounded-card border border-surface-border space-y-2 animate-fade-in">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <p class="text-sm">
+          <span class="font-semibold">{{ review.reviewerId === viewerId ? 'You' : review.reviewerName }}</span>
+          <span class="text-text-sub"> · {{ timeAgo(review.createdAt) }}</span>
+        </p>
+        <app-stars [rating]="review.rating ?? 0" />
+      </div>
+      @if (review.comment) {
+        <p class="text-sm leading-relaxed">{{ review.comment }}</p>
+      }
+    </article>
+  } @empty {
+    @if (reviews() !== null && !canReview) {
+      <p class="text-sm text-text-sub">No reviews yet.</p>
+    }
+  }
+</section>
+
+@if (writing()) {
+  <app-review-dialog [taskId]="task.id!" [taskTitle]="task.title ?? ''" [revieweeName]="counterpartName"
+                     (submitted)="onSubmitted($event)" (dismissed)="writing.set(false)" />
+}

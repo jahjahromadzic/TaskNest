@@ -1,0 +1,77 @@
+import { Component, EventEmitter, HostListener, Input, Output, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { CircleAlert, LoaderCircle, Star } from 'lucide';
+import { Review } from '../../api/models';
+import { ReviewService } from '../../services/review.service';
+import { readApiError } from '../../shared/api-error';
+import { Icon } from '../icon/icon';
+
+export const RATING_LABELS = ['', 'Terrible', 'Poor', 'Okay', 'Good', 'Excellent'];
+export const COMMENT_MAX = 1000;
+
+@Component({
+  selector: 'app-review-dialog',
+  imports: [FormsModule, Icon],
+  templateUrl: './review-dialog.html',
+})
+export class ReviewDialog {
+  protected readonly icons = { CircleAlert, LoaderCircle, Star };
+
+  @Input({ required: true }) taskId!: string;
+  @Input({ required: true }) taskTitle!: string;
+  @Input({ required: true }) revieweeName!: string;
+  @Output() submitted = new EventEmitter<Review>();
+  @Output() dismissed = new EventEmitter<void>();
+
+  readonly labels = RATING_LABELS;
+  readonly commentMax = COMMENT_MAX;
+  readonly rating = signal(0);
+  readonly hovered = signal(0);
+  readonly sending = signal(false);
+  readonly error = signal<string | null>(null);
+  comment = '';
+
+  constructor(private reviewService: ReviewService) {}
+
+  get shown(): number {
+    return this.hovered() || this.rating();
+  }
+
+  onStarKeydown(event: KeyboardEvent): void {
+    if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.rating.set(Math.min(5, this.rating() + 1));
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.rating.set(Math.max(1, this.rating() - 1));
+    }
+  }
+
+  submit(): void {
+    if (this.rating() === 0 || this.sending()) {
+      this.error.set(this.rating() === 0 ? 'Choose from one to five stars.' : null);
+      return;
+    }
+    this.sending.set(true);
+    this.error.set(null);
+    this.reviewService
+      .create(this.taskId, { rating: this.rating(), comment: this.comment.trim() || undefined })
+      .subscribe({
+        next: (review) => {
+          this.sending.set(false);
+          this.submitted.emit(review);
+        },
+        error: (error) => {
+          this.sending.set(false);
+          this.error.set(readApiError(error).message);
+        },
+      });
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (!this.sending()) {
+      this.dismissed.emit();
+    }
+  }
+}

@@ -215,7 +215,7 @@ frontend/src/app/
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Application shell, login and sign-up, session renewal, guards, public task list | Done |
-| 2 | Client flow: post tasks, review offers, accept, confirm and close | In progress: task details, posting, My tasks and hiring done |
+| 2 | Client flow: post tasks, review offers, accept, confirm and close, review | Done |
 | 3 | Tasker flow: profile, matching tasks, offers, work execution | Planned |
 | 4 | Messages and notifications | Planned |
 | 5 | Administration | Planned |
@@ -296,7 +296,7 @@ API, which in development is done by the Angular dev-server proxy.
 | Method | Path | Access | Description |
 |---|---|---|---|
 | GET | `/` | Public | List published tasks. Filters: `categoryId`, `municipalityId` |
-| GET | `/{id}` | Public | Task details. Drafts are visible to the owner only |
+| GET | `/{id}` | Public | Task details, including the hired tasker. Drafts are visible to the owner only |
 | POST | `/` | Client | Create a task as a draft |
 | POST | `/{id}/publish` | Client | Publish a draft |
 | POST | `/{id}/cancel` | Client | Cancel a task |
@@ -361,6 +361,7 @@ Paged responses use the following shape:
 | Method | Path | Access | Description |
 |---|---|---|---|
 | POST | `/tasks/{taskId}/reviews` | Client or assigned tasker | Review the other party on a closed task |
+| GET | `/tasks/{taskId}/reviews` | Authenticated | Both reviews of a task, oldest first |
 | GET | `/users/{userId}/reviews` | Public | Reviews a user has received, newest first |
 
 ### Conversations — `/api/conversations`
@@ -633,18 +634,18 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **300 tests** and requires no manual setup — Testcontainers
+The suite contains **303 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
-| Unit | 137 | Service business rules and the task state machine |
-| Integration | 163 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, demo data |
+| Unit | 138 | Service business rules and the task state machine |
+| Integration | 165 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, demo data |
 
-The frontend has its own suite of **97 tests** (Vitest), covering the session
+The frontend has its own suite of **110 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
 header, the task list and task details, posting a task, the client's own tasks, offers
-and hiring, the confirmation dialog, the dropdown, the progress
+and hiring, cancelling, reopening and closing a task, reviews, the confirmation dialog, the dropdown, the progress
 timeline, date helpers and the category icons. The server is simulated with Angular's
 `HttpTestingController`.
 

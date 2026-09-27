@@ -5,6 +5,7 @@ import ba.tfb.tasknest.dto.auth.AuthResponse;
 import ba.tfb.tasknest.dto.auth.RegisterRequest;
 import ba.tfb.tasknest.dto.offer.CreateOfferRequest;
 import ba.tfb.tasknest.dto.review.CreateReviewRequest;
+import ba.tfb.tasknest.dto.review.ReviewResponse;
 import ba.tfb.tasknest.dto.task.CreateTaskRequest;
 import ba.tfb.tasknest.entity.Category;
 import ba.tfb.tasknest.entity.Municipality;
@@ -13,6 +14,7 @@ import ba.tfb.tasknest.entity.TaskerProfile;
 import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.NotificationType;
 import ba.tfb.tasknest.exception.BusinessRuleException;
+import ba.tfb.tasknest.exception.ResourceNotFoundException;
 import ba.tfb.tasknest.repository.CategoryRepository;
 import ba.tfb.tasknest.repository.ConversationRepository;
 import ba.tfb.tasknest.repository.MunicipalityRepository;
@@ -93,6 +95,29 @@ class ReviewIntegrationTest extends AbstractIntegrationTest {
         taskerProfileRepository.deleteAll();
         refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
+    }
+
+    @Test
+    @DisplayName("Both reviews of a task can be read back in the order they were written")
+    void getTaskReviews_returnsBothDirections() {
+        // Arrange
+        UUID taskId = closedTask();
+        reviewService.createReview(taskId, clientId, new CreateReviewRequest(5, "Great work"));
+        reviewService.createReview(taskId, taskerId, new CreateReviewRequest(4, "Pleasant client"));
+
+        // Act
+        List<ReviewResponse> reviews = reviewService.getTaskReviews(taskId);
+
+        // Assert
+        assertThat(reviews).extracting(ReviewResponse::reviewerId).containsExactly(clientId, taskerId);
+        assertThat(reviews).extracting(ReviewResponse::rating).containsExactly(5, 4);
+    }
+
+    @Test
+    @DisplayName("Reading the reviews of an unknown task is a not found error")
+    void getTaskReviews_throwsNotFound_forUnknownTask() {
+        assertThatThrownBy(() -> reviewService.getTaskReviews(UUID.randomUUID()))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test

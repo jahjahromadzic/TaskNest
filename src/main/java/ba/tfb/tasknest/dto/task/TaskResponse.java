@@ -1,6 +1,7 @@
 package ba.tfb.tasknest.dto.task;
 
 import ba.tfb.tasknest.entity.Task;
+import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
 
 import java.math.BigDecimal;
@@ -20,6 +21,8 @@ public record TaskResponse(
         String municipalityName,
         UUID clientId,
         String clientName,
+        UUID assignedTaskerId,
+        String assignedTaskerName,
         LocalDateTime publishedAt,
         LocalDateTime expiresAt,
         LocalDateTime assignedAt,
@@ -41,6 +44,9 @@ public record TaskResponse(
                 task.getMunicipality().getName(),
                 task.getClient().getId(),
                 task.getClient().getFirstName() + " " + task.getClient().getLastName(),
+                assignedTasker(task) == null ? null : assignedTasker(task).getId(),
+                assignedTasker(task) == null ? null
+                        : assignedTasker(task).getFirstName() + " " + assignedTasker(task).getLastName(),
                 task.getPublishedAt(),
                 task.getExpiresAt(),
                 task.getAssignedAt(),
@@ -48,5 +54,9 @@ public record TaskResponse(
                 task.getCompletedAt(),
                 task.getCreatedAt()
         );
+    }
+
+    private static User assignedTasker(Task task) {
+        return task.getAcceptedOffer() == null ? null : task.getAcceptedOffer().getTasker();
     }
 }

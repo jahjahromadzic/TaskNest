@@ -1,0 +1,61 @@
+<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+  <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-fade-in" (click)="onEscape()" aria-hidden="true"></div>
+  <form (ngSubmit)="submit()" role="dialog" aria-modal="true" aria-labelledby="review-title"
+        class="relative w-full max-w-md bg-white rounded-2xl shadow-modal border border-surface-border p-6 space-y-4 text-center animate-slide-in">
+    <div class="mx-auto w-12 h-12 rounded-full bg-accent-light text-accent flex items-center justify-center">
+      <svg [appIcon]="icons.Star" class="w-6 h-6 fill-accent"></svg>
+    </div>
+    <div>
+      <h2 id="review-title" class="text-lg font-bold">How did it go with {{ revieweeName }}?</h2>
+      <p class="text-xs text-text-sub mt-0.5 truncate">{{ taskTitle }}</p>
+    </div>
+
+    <div class="space-y-1.5">
+      <div class="flex justify-center gap-1.5" role="radiogroup" aria-label="Rating" (mouseleave)="hovered.set(0)">
+        @for (star of [1, 2, 3, 4, 5]; track star) {
+          <button type="button" role="radio" [attr.aria-checked]="rating() === star" [attr.aria-label]="star + ' stars'"
+                  [tabindex]="rating() === star || (rating() === 0 && star === 1) ? 0 : -1"
+                  (click)="rating.set(star)" (mouseenter)="hovered.set(star)" (keydown)="onStarKeydown($event)"
+                  class="p-0.5 rounded-md transition-transform duration-150 hover:scale-115 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/25">
+            <svg [appIcon]="icons.Star" class="w-9 h-9 transition-colors duration-150"
+                 [class.text-accent]="star <= shown" [class.fill-accent]="star <= shown"
+                 [class.text-slate-300]="star > shown"></svg>
+          </button>
+        }
+      </div>
+      <p class="h-5 text-sm font-semibold text-amber-700">{{ labels[shown] }}</p>
+    </div>
+
+    <div class="text-left">
+      <label for="review-comment" class="form-label flex justify-between">
+        <span>Comment <span class="font-normal text-text-sub">(optional)</span></span>
+        <span class="font-normal text-slate-400 tabular-nums">{{ comment.length }}/{{ commentMax }}</span>
+      </label>
+      <textarea id="review-comment" name="comment" rows="3" [(ngModel)]="comment" [maxlength]="commentMax"
+                placeholder="Punctuality, quality of the work, communication..."
+                class="form-input resize-none"></textarea>
+    </div>
+
+    <p class="flex items-center gap-2 text-left text-xs text-text-sub bg-slate-50 rounded-btn px-3 py-2">
+      <svg [appIcon]="icons.CircleAlert" class="w-4 h-4 shrink-0 text-slate-400"></svg>
+      Reviews cannot be edited or deleted after they are posted.
+    </p>
+
+    @if (error(); as message) {
+      <p role="alert" class="form-error justify-center animate-shake">{{ message }}</p>
+    }
+
+    <div class="flex gap-2 pt-1">
+      <button type="button" (click)="onEscape()" [disabled]="sending()" class="btn-ghost flex-1 border border-surface-border">
+        Not now
+      </button>
+      <button type="submit" [disabled]="sending()" class="btn-primary flex-1">
+        @if (sending()) {
+          <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Posting...
+        } @else {
+          Post review
+        }
+      </button>
+    </div>
+  </form>
+</div>

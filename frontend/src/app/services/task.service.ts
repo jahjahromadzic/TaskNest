@@ -63,4 +63,16 @@ export class TaskService {
   getMyTaskCounts(): Observable<Partial<Record<TaskStatus, number>>> {
     return this.http.get<Partial<Record<TaskStatus, number>>>('/api/tasks/mine/counts');
   }
+
+  cancelTask(id: string): Observable<TaskDetail> {
+    return this.http.post<TaskDetail>(`/api/tasks/${encodeURIComponent(id)}/cancel`, null);
+  }
+
+  reopenTask(id: string): Observable<TaskDetail> {
+    return this.http.post<TaskDetail>(`/api/tasks/${encodeURIComponent(id)}/reopen`, null);
+  }
+
+  closeTask(id: string): Observable<TaskDetail> {
+    return this.http.post<TaskDetail>(`/api/tasks/${encodeURIComponent(id)}/close`, null);
+  }
 }
