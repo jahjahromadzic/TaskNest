@@ -173,6 +173,7 @@ class OfferServiceTest {
             assertThat(response.price()).isEqualByComparingTo("45.00");
             assertThat(response.taskerId()).isEqualTo(TASKER_ID);
             assertThat(response.taskId()).isEqualTo(TASK_ID);
+            verify(notificationService).notifyNewOffer(any(Offer.class));
         }
     }
 
@@ -238,6 +239,7 @@ class OfferServiceTest {
             assertThat(response.status()).isEqualTo(OfferStatus.ACCEPTED);
             assertThat(task.getStatus()).isEqualTo(TaskStatus.ASSIGNED);
             assertThat(task.getAcceptedOffer()).isSameAs(offer);
+            verify(notificationService).notifyOfferAccepted(offer);
         }
 
         @Test

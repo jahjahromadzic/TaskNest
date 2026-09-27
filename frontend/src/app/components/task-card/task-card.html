@@ -12,6 +12,11 @@
         @if (showStatus) {
           <app-status-badge [status]="task.status" />
         }
+        @if (note) {
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-accent-light text-amber-800 border border-amber-200">
+            {{ note }}
+          </span>
+        }
       </div>
 
       <h2 class="text-base sm:text-lg font-semibold text-text-main group-hover:text-brand transition-colors line-clamp-2">

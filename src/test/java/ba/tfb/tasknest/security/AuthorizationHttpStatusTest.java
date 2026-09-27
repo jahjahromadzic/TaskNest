@@ -45,6 +45,7 @@ class AuthorizationHttpStatusTest extends AbstractIntegrationTest {
     @Autowired private TaskRepository taskRepository;
     @Autowired private OfferRepository offerRepository;
     @Autowired private ConversationRepository conversationRepository;
+    @Autowired private NotificationRepository notificationRepository;
     @Autowired private TaskerProfileRepository taskerProfileRepository;
     @Autowired private RefreshTokenRepository refreshTokenRepository;
 
@@ -60,6 +61,7 @@ class AuthorizationHttpStatusTest extends AbstractIntegrationTest {
 
     @AfterEach
     void tearDown() {
+        notificationRepository.deleteAll();
         conversationRepository.deleteAll();
         offerRepository.deleteAll();
         taskRepository.deleteAll();

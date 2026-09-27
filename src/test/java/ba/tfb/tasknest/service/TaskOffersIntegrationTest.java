@@ -9,6 +9,8 @@ import ba.tfb.tasknest.dto.review.CreateReviewRequest;
 import ba.tfb.tasknest.dto.task.CreateTaskRequest;
 import ba.tfb.tasknest.entity.Category;
 import ba.tfb.tasknest.entity.Municipality;
+import ba.tfb.tasknest.entity.Notification;
+import ba.tfb.tasknest.entity.enums.NotificationType;
 import ba.tfb.tasknest.entity.enums.OfferStatus;
 import ba.tfb.tasknest.repository.CategoryRepository;
 import ba.tfb.tasknest.repository.ConversationRepository;
@@ -34,6 +36,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -163,6 +166,48 @@ class TaskOffersIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/tasks/" + taskId + "/offers/mine")
                         .header("Authorization", "Bearer " + token("offers.client@test.ba")))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("A tasker profile can be opened from the user id that an offer carries")
+    void profileOfUser_isFoundByUserId_andMissingForPlainClients() throws Exception {
+        // Arrange
+        String clientToken = token("offers.client@test.ba");
+
+        // Act + Assert
+        mockMvc.perform(get("/api/tasker-profiles/users/" + experiencedTaskerId)
+                        .header("Authorization", "Bearer " + clientToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(experiencedTaskerId.toString()))
+                .andExpect(jsonPath("$.fullName").value("Emir Tasker"));
+
+        mockMvc.perform(get("/api/tasker-profiles/users/" + clientId)
+                        .header("Authorization", "Bearer " + clientToken))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("The client hears about every new offer and the tasker hears when they are hired")
+    void offers_notifyTheClientAndTheHiredTasker() {
+        // Arrange
+        UUID taskId = publishedTask();
+        UUID offerId = offerService.submitOffer(taskId, newTaskerId,
+                new CreateOfferRequest(new BigDecimal("55.50"), null)).id();
+
+        // Act
+        offerService.acceptOffer(offerId, clientId);
+
+        // Assert
+        assertThat(notificationsOf(clientId))
+                .extracting(Notification::getType, Notification::getContent, Notification::getRelatedEntityId)
+                .containsExactly(tuple(NotificationType.NEW_OFFER, "Tarik Tasker offered 55.5 KM for: Fix the tap", taskId));
+        assertThat(notificationsOf(newTaskerId))
+                .extracting(Notification::getType, Notification::getContent, Notification::getRelatedEntityId)
+                .containsExactly(tuple(NotificationType.OFFER_ACCEPTED, "You were hired for: Fix the tap", taskId));
+    }
+
+    private List<Notification> notificationsOf(UUID userId) {
+        return notificationRepository.findByRecipientOrderByCreatedAtDesc(userRepository.getReferenceById(userId));
     }
 
     private String token(String email) {

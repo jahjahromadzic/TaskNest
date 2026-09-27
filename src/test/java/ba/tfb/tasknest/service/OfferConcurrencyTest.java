@@ -45,6 +45,7 @@ class OfferConcurrencyTest extends AbstractIntegrationTest {
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private MunicipalityRepository municipalityRepository;
     @Autowired private ConversationRepository conversationRepository;
+    @Autowired private NotificationRepository notificationRepository;
 
     private User client;
     private User taskerOne;
@@ -77,6 +78,7 @@ class OfferConcurrencyTest extends AbstractIntegrationTest {
 
     @AfterEach
     void tearDown() {
+        notificationRepository.deleteAll();
         conversationRepository.deleteAll();
         taskRepository.findAll().forEach(t -> {
             t.setAcceptedOffer(null);

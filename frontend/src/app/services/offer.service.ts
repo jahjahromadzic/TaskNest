@@ -11,6 +11,10 @@ export class OfferService {
     return this.http.get<TaskOffer[]>(`/api/tasks/${encodeURIComponent(taskId)}/offers`);
   }
 
+  getMine(): Observable<Offer[]> {
+    return this.http.get<Offer[]>('/api/offers/mine');
+  }
+
   getMyOfferForTask(taskId: string): Observable<Offer | null> {
     return this.http.get<Offer | null>(`/api/tasks/${encodeURIComponent(taskId)}/offers/mine`);
   }

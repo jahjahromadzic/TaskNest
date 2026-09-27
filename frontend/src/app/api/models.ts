@@ -20,3 +20,7 @@ export type TaskerProfile = Schemas['TaskerProfileResponse'];
 export type UpdateTaskerProfileRequest = Schemas['UpdateTaskerProfileRequest'];
 export type Offer = Schemas['OfferResponse'];
 export type CreateOfferRequest = Schemas['CreateOfferRequest'];
+export type ReviewPage = Schemas['PagedResponseReviewResponse'];
+export type AppNotification = Schemas['NotificationResponse'];
+export type NotificationPage = Schemas['PagedResponseNotificationResponse'];
+export type NotificationType = NonNullable<AppNotification['type']>;

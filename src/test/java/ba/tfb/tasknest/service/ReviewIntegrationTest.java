@@ -25,6 +25,9 @@ import ba.tfb.tasknest.repository.ReviewRepository;
 import ba.tfb.tasknest.repository.TaskRepository;
 import ba.tfb.tasknest.repository.TaskerProfileRepository;
 import ba.tfb.tasknest.repository.UserRepository;
+import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -54,6 +57,7 @@ class ReviewIntegrationTest extends AbstractIntegrationTest {
     @Autowired private OfferService offerService;
     @Autowired private ReviewService reviewService;
     @Autowired private TransactionTemplate transactionTemplate;
+    @Autowired private EntityManagerFactory entityManagerFactory;
 
     @Autowired private UserRepository userRepository;
     @Autowired private TaskRepository taskRepository;
@@ -95,6 +99,24 @@ class ReviewIntegrationTest extends AbstractIntegrationTest {
         taskerProfileRepository.deleteAll();
         refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
+    }
+
+    @Test
+    @DisplayName("Reading received reviews costs the same few queries however many reviews there are")
+    void getReceivedReviews_doesNotQueryOncePerReview() {
+        // Arrange
+        for (int i = 0; i < 3; i++) {
+            reviewService.createReview(closedTask(), clientId, new CreateReviewRequest(5, "Review " + i));
+        }
+        Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.clear();
+
+        // Act
+        List<ReviewResponse> reviews = reviewService.getReceivedReviews(taskerId, PageRequest.of(0, 20)).getContent();
+
+        // Assert
+        assertThat(reviews).hasSize(3).allMatch(review -> review.taskTitle() != null && review.reviewerName() != null);
+        assertThat(statistics.getPrepareStatementCount()).isLessThanOrEqualTo(3);
     }
 
     @Test

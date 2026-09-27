@@ -130,6 +130,16 @@ public class TaskerProfileService {
         return TaskerProfileResponse.from(profile);
     }
 
+    @Transactional(readOnly = true)
+    public TaskerProfileResponse getProfileOfUser(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+
+        return taskerProfileRepository.findByUser(user)
+                .map(TaskerProfileResponse::from)
+                .orElseThrow(() -> new ResourceNotFoundException("TaskerProfile", userId));
+    }
+
     private Set<UUID> requireNonEmpty(UpdateCoverageRequest request, String what) {
         if (request == null || request.ids() == null || request.ids().isEmpty()) {
             throw new BusinessRuleException(

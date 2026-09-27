@@ -18,6 +18,7 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     List<Review> findByReviewee(User reviewee);
 
+    @EntityGraph(attributePaths = {"task", "reviewer", "reviewee"})
     Page<Review> findByRevieweeOrderByCreatedAtDesc(User reviewee, Pageable pageable);
 
     boolean existsByTaskAndReviewer(Task task, User reviewer);

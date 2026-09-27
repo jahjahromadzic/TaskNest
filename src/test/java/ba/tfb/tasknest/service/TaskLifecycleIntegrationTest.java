@@ -156,12 +156,12 @@ class TaskLifecycleIntegrationTest extends AbstractIntegrationTest {
         assertThat(notificationsFor(clientId))
                 .extracting(Notification::getType)
                 .containsExactlyInAnyOrder(
-                        NotificationType.TASK_STARTED, NotificationType.TASK_COMPLETED);
+                        NotificationType.NEW_OFFER, NotificationType.TASK_STARTED, NotificationType.TASK_COMPLETED);
 
         // Assert
         assertThat(notificationsFor(taskerId))
                 .extracting(Notification::getType)
-                .containsExactly(NotificationType.TASK_CLOSED);
+                .containsExactlyInAnyOrder(NotificationType.OFFER_ACCEPTED, NotificationType.TASK_CLOSED);
     }
 
     @Test

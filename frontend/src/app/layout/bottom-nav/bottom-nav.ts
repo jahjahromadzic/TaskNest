@@ -4,6 +4,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Bell, House, ListTodo, MessageSquare } from 'lucide';
 import { Icon } from '../../components/icon/icon';
 import { AuthService } from '../../auth/auth.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-bottom-nav',
@@ -13,5 +14,8 @@ import { AuthService } from '../../auth/auth.service';
 export class BottomNav {
   protected readonly icons = { Bell, House, ListTodo, MessageSquare };
 
-  constructor(protected authService: AuthService) {}
+  constructor(
+    protected authService: AuthService,
+    protected notificationService: NotificationService,
+  ) {}
 }

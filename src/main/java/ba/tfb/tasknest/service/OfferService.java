@@ -89,6 +89,8 @@ public class OfferService {
         conversation.setOffer(saved);
         conversationRepository.save(conversation);
 
+        notificationService.notifyNewOffer(saved);
+
         return OfferResponse.from(saved);
     }
 
@@ -120,6 +122,7 @@ public class OfferService {
 
         offer.setStatus(OfferStatus.ACCEPTED);
         rejectRemainingOffers(task, offer.getId());
+        notificationService.notifyOfferAccepted(offer);
 
         return OfferResponse.from(offer);
     }

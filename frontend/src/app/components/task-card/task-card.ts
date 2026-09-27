@@ -17,6 +17,7 @@ export class TaskCard {
 
   @Input({ required: true }) task!: TaskSummary;
   @Input() showStatus = false;
+  @Input() note: string | null = null;
 
   get budget(): string {
     return formatBudget(this.task.budget);

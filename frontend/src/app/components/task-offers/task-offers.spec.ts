@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { TaskDetail, TaskOffer } from '../../api/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
 import { TaskOffers, sortOffers } from './task-offers';
@@ -27,6 +28,7 @@ describe('Task offers', () => {
     id: 'o2',
     price: 55,
     status: 'PENDING',
+    taskerId: 'tarik',
     taskerName: 'Tarik Hasanović',
     taskerCompletedJobs: 0,
     taskerReviewCount: 0,
@@ -38,6 +40,7 @@ describe('Task offers', () => {
     confirmAnswer = true;
     TestBed.configureTestingModule({
       providers: [
+        provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ConfirmService, useValue: { ask: () => Promise.resolve(confirmAnswer) } },
@@ -78,6 +81,7 @@ describe('Task offers', () => {
     expect(cards()[1]).toContain('4.5 (2 reviews)');
     expect(cards()[1]).toContain('3 jobs done');
     expect(fixture.nativeElement.textContent).toContain('Declined and withdrawn offers (1)');
+    expect(fixture.nativeElement.querySelector('article a').getAttribute('href')).toBe('/taskers/' + tarik.taskerId);
   });
 
   it('hires the tasker after the client confirms', async () => {

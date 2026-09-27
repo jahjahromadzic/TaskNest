@@ -24,7 +24,14 @@ describe('Route guards', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ReferenceService, useValue: { getCategories: () => of([]), getMunicipalities: () => of([]) } },
-        { provide: TaskService, useValue: { browse: () => of({ content: [], page: 0, totalElements: 0, totalPages: 0 }) } },
+        {
+          provide: TaskService,
+          useValue: {
+            browse: () => of({ content: [], page: 0, totalElements: 0, totalPages: 0 }),
+            getMatching: () => of({ content: [], page: 0, totalElements: 0, totalPages: 0 }),
+            getAssigned: () => of({ content: [], page: 0, totalElements: 0, totalPages: 0 }),
+          },
+        },
       ],
     });
     router = TestBed.inject(Router);

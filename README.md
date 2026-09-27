@@ -49,6 +49,7 @@ single-page application that uses it.
   closed, and the tasker's average rating is kept on their profile.
 - **Notifications** — taskers are notified when a matching task is published and
   clients when their task expires, asynchronously over RabbitMQ and by email.
+  Clients hear about every new offer and taskers when they are hired.
 - **Scheduled expiry** — a scheduler closes published tasks once their deadline
   passes.
 - **Administration** — suspension, tasker verification and task removal, with
@@ -216,8 +217,8 @@ frontend/src/app/
 |---|---|---|
 | 1 | Application shell, login and sign-up, session renewal, guards, public task list | Done |
 | 2 | Client flow: post tasks, review offers, accept, confirm and close, review | Done |
-| 3 | Tasker flow: profile, matching tasks, offers, work execution | In progress: profile, offers and work execution done |
-| 4 | Messages and notifications | Planned |
+| 3 | Tasker flow: profile, matching tasks, offers, work execution, public profile | Done |
+| 4 | Messages and notifications | In progress: notification bell and page done |
 | 5 | Administration | Planned |
 
 ## Configuration
@@ -349,6 +350,7 @@ Paged responses use the following shape:
 | PUT | `/me/categories` | Tasker | Replace the covered categories |
 | PUT | `/me/municipalities` | Tasker | Replace the covered municipalities |
 | GET | `/{id}` | Authenticated | Public view of a tasker profile |
+| GET | `/users/{userId}` | Authenticated | The same view, looked up by the tasker's user id as offers carry it |
 
 ### Reference data — `/api`
 
@@ -363,7 +365,7 @@ Paged responses use the following shape:
 |---|---|---|---|
 | POST | `/tasks/{taskId}/reviews` | Client or assigned tasker | Review the other party on a closed task |
 | GET | `/tasks/{taskId}/reviews` | Authenticated | Both reviews of a task, oldest first |
-| GET | `/users/{userId}/reviews` | Public | Reviews a user has received, newest first |
+| GET | `/users/{userId}/reviews` | Public | Reviews a user has received, newest first. The task and reviewer are fetched with the page, so the query count does not grow with the number of reviews |
 
 ### Conversations — `/api/conversations`
 
@@ -395,6 +397,7 @@ All endpoints require the `ADMIN` role.
 | GET | `/` | Authenticated | The caller's notifications, newest first |
 | GET | `/unread-count` | Authenticated | Number of unread notifications: `{ "count": 3 }` |
 | POST | `/{id}/read` | Authenticated | Mark one notification as read |
+| POST | `/read-all` | Authenticated | Mark all of the caller's notifications as read: `{ "marked": 3 }` |
 
 Notifications belong to their recipient: reading someone else's returns `403`.
 Marking an already-read notification again succeeds and changes nothing.
@@ -587,7 +590,7 @@ then write the notification row and send the email.
 | Task published | `task.published` | One notification per tasker covering the task's category and municipality |
 | Task expired | `task.expired` | One notification to the task owner |
 
-Work-execution and review notifications (`TASK_STARTED`, `TASK_COMPLETED`,
+Offer, work-execution and review notifications (`NEW_OFFER`, `OFFER_ACCEPTED`, `TASK_STARTED`, `TASK_COMPLETED`,
 `TASK_CLOSED`, `REVIEW_RECEIVED`, `NEW_MESSAGE`, `TASK_REMOVED`,
 `TASKER_WITHDREW`, `ASSIGNMENT_RELEASED`, `OFFER_REACTIVATED`,
 `ASSIGNMENT_EXPIRED`, `TASK_AUTO_CLOSED`) are written synchronously instead: they have a
@@ -635,19 +638,19 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **304 tests** and requires no manual setup — Testcontainers
+The suite contains **308 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 138 | Service business rules and the task state machine |
-| Integration | 166 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, demo data |
+| Integration | 170 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, demo data |
 
-The frontend has its own suite of **127 tests** (Vitest), covering the session
+The frontend has its own suite of **158 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
 header, the task list and task details, posting a task, the client's own tasks, offers
 and hiring, cancelling, reopening and closing a task, reviews, becoming a tasker and editing the tasker profile, sending and withdrawing offers,
-starting and finishing a job, the confirmation dialog, the dropdown, the progress
+starting and finishing a job, the tasker dashboard, the public tasker profile, the notification bell and page, the confirmation dialog, the dropdown, the progress
 timeline, date helpers and the category icons. The server is simulated with Angular's
 `HttpTestingController`.
 

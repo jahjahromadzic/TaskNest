@@ -3,6 +3,7 @@ package ba.tfb.tasknest.service;
 import ba.tfb.tasknest.dto.notification.NotificationResponse;
 import ba.tfb.tasknest.entity.Conversation;
 import ba.tfb.tasknest.entity.Notification;
+import ba.tfb.tasknest.entity.Offer;
 import ba.tfb.tasknest.entity.Review;
 import ba.tfb.tasknest.entity.Task;
 import ba.tfb.tasknest.entity.User;
@@ -64,6 +65,21 @@ public class NotificationService {
 
         notificationRepository.save(notification);
         log.info("Stored expiry notification for task {}", event.taskId());
+    }
+
+    @Transactional
+    public void notifyNewOffer(Offer offer) {
+        Task task = offer.getTask();
+        User tasker = offer.getTasker();
+        save(task.getClient(), NotificationType.NEW_OFFER, task,
+                tasker.getFirstName() + " " + tasker.getLastName() + " offered "
+                        + offer.getPrice().stripTrailingZeros().toPlainString() + " KM for: " + task.getTitle());
+    }
+
+    @Transactional
+    public void notifyOfferAccepted(Offer offer) {
+        save(offer.getTasker(), NotificationType.OFFER_ACCEPTED, offer.getTask(),
+                "You were hired for: " + offer.getTask().getTitle());
     }
 
     @Transactional
@@ -190,6 +206,11 @@ public class NotificationService {
         notification.setRead(true);
 
         return NotificationResponse.from(notification);
+    }
+
+    @Transactional
+    public int markAllAsRead(UUID userId) {
+        return notificationRepository.markAllReadFor(userId);
     }
 
     private Notification buildNotification(TaskerNotificationTarget target, TaskPublishedEvent event) {

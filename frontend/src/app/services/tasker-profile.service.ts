@@ -11,6 +11,10 @@ export class TaskerProfileService {
     return this.http.get<TaskerProfile>('/api/tasker-profiles/me');
   }
 
+  getOfUser(userId: string): Observable<TaskerProfile> {
+    return this.http.get<TaskerProfile>(`/api/tasker-profiles/users/${encodeURIComponent(userId)}`);
+  }
+
   updateAbout(request: UpdateTaskerProfileRequest): Observable<TaskerProfile> {
     return this.http.put<TaskerProfile>('/api/tasker-profiles/me', request);
   }

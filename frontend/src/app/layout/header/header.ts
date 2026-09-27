@@ -1,11 +1,12 @@
-import { Component, ElementRef, HostListener, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { Bell, Briefcase, ChevronDown, ListTodo, LogOut, MessageSquare, Plus, Shield, SquareCheck, UserPen } from 'lucide';
+import { Briefcase, ChevronDown, ListTodo, LogOut, MessageSquare, Plus, Shield, SquareCheck, UserPen } from 'lucide';
 import { Icon } from '../../components/icon/icon';
 import { AuthService } from '../../auth/auth.service';
 import { CurrentUser } from '../../auth/current-user';
 import { ToastService } from '../../shared/toast/toast.service';
+import { NotificationBell } from '../notification-bell/notification-bell';
 
 @Component({
   selector: 'app-header',
@@ -14,19 +15,21 @@ import { ToastService } from '../../shared/toast/toast.service';
     AsyncPipe,
     RouterLink,
     RouterLinkActive,
+    NotificationBell,
   ],
   templateUrl: './header.html',
 })
 export class Header {
-  protected readonly icons = { Bell, Briefcase, ChevronDown, ListTodo, LogOut, MessageSquare, Plus, Shield, SquareCheck, UserPen };
+  protected readonly icons = { Briefcase, ChevronDown, ListTodo, LogOut, MessageSquare, Plus, Shield, SquareCheck, UserPen };
 
   readonly menuOpen = signal(false);
+
+  @ViewChild('menuRoot') private menuRoot?: ElementRef<HTMLElement>;
 
   constructor(
     protected authService: AuthService,
     private toastService: ToastService,
     private router: Router,
-    private host: ElementRef<HTMLElement>,
   ) {}
 
   initials(user: CurrentUser): string {
@@ -55,7 +58,7 @@ export class Header {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (this.menuOpen() && !this.host.nativeElement.contains(event.target as Node)) {
+    if (this.menuOpen() && !this.menuRoot?.nativeElement.contains(event.target as Node)) {
       this.closeMenu();
     }
   }

@@ -83,4 +83,14 @@ export class TaskService {
   completeTask(id: string): Observable<TaskDetail> {
     return this.http.post<TaskDetail>(`/api/tasks/${encodeURIComponent(id)}/complete`, null);
   }
+
+  getMatching(page: number, size = TASKS_PER_PAGE): Observable<TaskPage> {
+    const params = new HttpParams().set('page', page).set('size', size).set('sort', 'publishedAt,desc');
+    return this.http.get<TaskPage>('/api/tasks/matching', { params });
+  }
+
+  getAssigned(page: number, size = TASKS_PER_PAGE): Observable<TaskPage> {
+    const params = new HttpParams().set('page', page).set('size', size).set('sort', 'publishedAt,desc');
+    return this.http.get<TaskPage>('/api/tasks/assigned', { params });
+  }
 }

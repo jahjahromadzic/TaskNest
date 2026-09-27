@@ -1,0 +1,161 @@
+@if (profile(); as profile) {
+  <div class="flex flex-col gap-4 lg:h-[calc(100dvh-7rem)] animate-fade-in">
+    <button type="button" (click)="back()" class="shrink-0 group self-start inline-flex items-center gap-1 text-sm text-text-sub hover:text-brand transition-colors">
+      <svg [appIcon]="icons.ArrowLeft" class="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5"></svg> Back
+    </button>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-[minmax(0,1fr)] gap-6 lg:flex-1 lg:min-h-0">
+      <aside class="lg:h-full lg:overflow-y-auto scroll-area lg:-mx-1 lg:px-1 lg:-mt-1 lg:pt-1">
+        <section class="bg-white rounded-card border border-surface-border shadow-subtle overflow-hidden">
+          <div class="h-20 bg-gradient-to-br from-brand to-teal-500 relative" aria-hidden="true">
+            <div class="absolute -right-8 -top-10 w-32 h-32 rounded-full bg-white/10 blur-xl"></div>
+          </div>
+          <div class="px-5 pb-5 -mt-10 space-y-4">
+            <span class="relative w-20 h-20 rounded-full bg-white p-1 shadow-card flex">
+              <span class="w-full h-full rounded-full bg-gradient-to-br from-brand to-teal-500 text-white text-2xl font-bold flex items-center justify-center">
+                {{ initials(profile.fullName) }}
+              </span>
+            </span>
+            <div>
+              <h1 class="text-xl font-bold tracking-tight flex flex-wrap items-center gap-2">
+                {{ profile.fullName }}
+                @if (profile.verified) {
+                  <span class="inline-flex items-center gap-1 text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded-full">
+                    <svg [appIcon]="icons.BadgeCheck" class="w-3.5 h-3.5"></svg> Verified
+                  </span>
+                }
+              </h1>
+              @if (profile.headline) {
+                <p class="text-sm font-medium text-brand mt-0.5">{{ profile.headline }}</p>
+              }
+            </div>
+
+            <dl class="grid grid-cols-3 gap-2 text-center">
+              <div class="p-2.5 rounded-btn bg-slate-50">
+                <dt class="text-[11px] uppercase tracking-wide text-slate-400">Rating</dt>
+                <dd class="font-bold flex items-center justify-center gap-1">
+                  <svg [appIcon]="icons.Star" class="w-4 h-4 text-accent fill-accent"></svg>
+                  {{ profile.averageRating != null ? profile.averageRating.toFixed(1) : '–' }}
+                </dd>
+              </div>
+              <div class="p-2.5 rounded-btn bg-slate-50">
+                <dt class="text-[11px] uppercase tracking-wide text-slate-400">Jobs done</dt>
+                <dd class="font-bold">{{ profile.completedJobsCount }}</dd>
+              </div>
+              <div class="p-2.5 rounded-btn bg-slate-50">
+                <dt class="text-[11px] uppercase tracking-wide text-slate-400">Backed out</dt>
+                <dd class="font-bold">{{ profile.withdrawnJobsCount }}</dd>
+              </div>
+            </dl>
+
+            @if (profile.bio) {
+              <p class="text-sm leading-relaxed whitespace-pre-line">{{ profile.bio }}</p>
+            }
+
+            @if ((profile.categories ?? []).length > 0) {
+              <div class="space-y-1.5">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Services</p>
+                <div class="flex flex-wrap gap-1.5">
+                  @for (category of profile.categories; track category.id) {
+                    <span class="inline-flex items-center gap-1.5 bg-brand-50 text-brand border border-brand/20 px-2.5 py-1 rounded-full text-xs font-medium">
+                      <app-category-icon [slug]="category.slug" size="w-3.5 h-3.5" /> {{ category.name }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+
+            @if ((profile.municipalities ?? []).length > 0) {
+              <div class="space-y-1.5">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Works in</p>
+                <div class="flex flex-wrap gap-1.5">
+                  @for (municipality of profile.municipalities; track municipality.id) {
+                    <span class="inline-flex items-center gap-1 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs">
+                      <svg [appIcon]="icons.MapPin" class="w-3 h-3"></svg> {{ municipality.name }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      </aside>
+
+      <section class="lg:col-span-2 lg:h-full flex flex-col gap-4 lg:min-h-0">
+        <div class="shrink-0 bg-white px-5 py-4 rounded-card border border-surface-border shadow-subtle flex flex-wrap items-center justify-between gap-3">
+          <h2 class="font-semibold">Reviews from clients</h2>
+          @if (profile.averageRating != null) {
+            <span class="flex items-center gap-2 text-sm">
+              <app-stars [rating]="profile.averageRating" size="w-4 h-4" />
+              <span class="font-semibold">{{ profile.averageRating.toFixed(1) }}</span>
+              <span class="text-text-sub">· {{ totalReviews() }} {{ totalReviews() === 1 ? 'review' : 'reviews' }}</span>
+            </span>
+          }
+        </div>
+
+        <div class="space-y-3 lg:flex-1 lg:min-h-0 lg:overflow-y-auto scroll-area lg:-mx-1 lg:px-1 lg:-mt-1 lg:pt-1 lg:pb-2">
+          @for (review of reviews(); track review.id; let i = $index) {
+            <article class="bg-white p-4 sm:p-5 rounded-card border border-surface-border shadow-subtle space-y-2 animate-fade-in"
+                     [style.animation-delay.ms]="(i % 10) * 40">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <p class="text-sm">
+                  <span class="font-semibold">{{ review.reviewerName }}</span>
+                  <span class="text-text-sub"> · {{ timeAgo(review.createdAt) }}</span>
+                </p>
+                <app-stars [rating]="review.rating ?? 0" />
+              </div>
+              @if (review.comment) {
+                <p class="text-sm leading-relaxed">{{ review.comment }}</p>
+              }
+              <p class="text-xs text-text-sub truncate">For: {{ review.taskTitle }}</p>
+            </article>
+          } @empty {
+            <div class="bg-white p-10 rounded-card border border-dashed border-slate-300 text-center space-y-3">
+              <div class="mx-auto w-14 h-14 rounded-full bg-brand-50 text-brand flex items-center justify-center">
+                <svg [appIcon]="icons.MessageSquareQuote" class="w-7 h-7"></svg>
+              </div>
+              <h3 class="text-lg font-semibold">No reviews yet</h3>
+              <p class="text-sm text-text-sub">{{ profile.fullName }} has not finished a job on TaskNest yet.</p>
+            </div>
+          }
+          @if (hasMore) {
+            <button type="button" (click)="showMore()" [disabled]="loadingMore()" class="btn-ghost w-full border border-surface-border bg-white">
+              @if (loadingMore()) {
+                <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Loading...
+              } @else {
+                Show more reviews
+              }
+            </button>
+          }
+        </div>
+      </section>
+    </div>
+  </div>
+} @else if (notFound()) {
+  <div class="bg-white p-10 rounded-card border border-surface-border shadow-subtle text-center space-y-3 max-w-lg mx-auto animate-slide-in">
+    <div class="mx-auto w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+      <svg [appIcon]="icons.SearchX" class="w-7 h-7"></svg>
+    </div>
+    <h1 class="text-xl font-semibold">This tasker could not be found</h1>
+    <p class="text-sm text-text-sub">The link may be wrong, or the person is not a tasker.</p>
+    <button type="button" (click)="back()" class="btn-primary py-2">Go back</button>
+  </div>
+} @else if (failed()) {
+  <div role="alert" class="bg-white p-10 rounded-card border border-red-200 text-center space-y-3 max-w-lg mx-auto">
+    <h1 class="text-lg font-semibold">The profile could not be loaded</h1>
+    <button type="button" (click)="load()" class="btn-primary py-2">Try again</button>
+  </div>
+} @else {
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" aria-hidden="true">
+    <div class="bg-white rounded-card border border-surface-border p-5 space-y-3">
+      <span class="skeleton block w-20 h-20 rounded-full"></span>
+      <span class="skeleton block h-6 w-40"></span>
+      <span class="skeleton block h-16 w-full"></span>
+    </div>
+    <div class="lg:col-span-2 space-y-3">
+      <span class="skeleton block h-14 w-full rounded-card"></span>
+      <span class="skeleton block h-24 w-full rounded-card"></span>
+      <span class="skeleton block h-24 w-full rounded-card"></span>
+    </div>
+  </div>
+}

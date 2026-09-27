@@ -14,7 +14,16 @@
       Messages
     </a>
     <a routerLink="/notifications" routerLinkActive="active" class="bottom-nav-item group">
-      <svg [appIcon]="icons.Bell" class="w-5 h-5"></svg>
+      <span class="relative">
+        <svg [appIcon]="icons.Bell" class="w-5 h-5"></svg>
+        @for (count of [notificationService.unreadCount()]; track count) {
+          @if (count > 0) {
+            <span class="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-status-error text-white text-[10px] font-bold flex items-center justify-center border-2 border-white animate-pop tabular-nums">
+              {{ count > 9 ? '9+' : count }}
+            </span>
+          }
+        }
+      </span>
       Alerts
     </a>
   </nav>

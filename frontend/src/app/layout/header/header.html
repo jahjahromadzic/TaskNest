@@ -18,11 +18,9 @@
         <a routerLink="/messages" routerLinkActive="!text-brand bg-brand-50" class="icon-btn hidden sm:inline-flex" title="Messages">
           <svg [appIcon]="icons.MessageSquare" class="w-5 h-5"></svg>
         </a>
-        <a routerLink="/notifications" routerLinkActive="!text-brand bg-brand-50" class="icon-btn hidden sm:inline-flex" title="Notifications">
-          <svg [appIcon]="icons.Bell" class="w-5 h-5"></svg>
-        </a>
+        <app-notification-bell class="hidden sm:block" />
 
-        <div class="relative sm:pl-2 sm:ml-1 sm:border-l border-slate-200">
+        <div #menuRoot class="relative sm:pl-2 sm:ml-1 sm:border-l border-slate-200">
           <button type="button" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()" aria-haspopup="menu"
                   class="group flex items-center gap-2 rounded-full sm:rounded-lg sm:pr-1.5 p-0.5 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/20">
             <span class="w-9 h-9 rounded-full bg-brand-light border-2 border-brand text-brand font-semibold flex items-center justify-center text-sm transition-shadow group-hover:ring-4 ring-brand/15">

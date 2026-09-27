@@ -24,3 +24,12 @@ export const LIFECYCLE: TaskStatus[] = ['PUBLISHED', 'ASSIGNED', 'IN_PROGRESS', 
 export function isStopped(status: TaskStatus | undefined): boolean {
   return status === 'CANCELLED' || status === 'EXPIRED' || status === 'REMOVED';
 }
+
+export type OfferStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN';
+
+export const OFFER_STATUS: Record<OfferStatus, StatusStyle> = {
+  PENDING: { label: 'Waiting for the client', badge: 'bg-sky-50 text-sky-800 border-sky-200' },
+  ACCEPTED: { label: 'Hired', badge: 'bg-green-50 text-green-800 border-green-200' },
+  REJECTED: { label: 'Not chosen', badge: 'bg-slate-100 text-slate-600 border-slate-200' },
+  WITHDRAWN: { label: 'Withdrawn', badge: 'bg-slate-100 text-slate-600 border-slate-200' },
+};

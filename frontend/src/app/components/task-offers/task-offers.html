@@ -44,7 +44,9 @@
             </span>
             <div class="min-w-0 space-y-1">
               <p class="font-semibold flex flex-wrap items-center gap-1.5">
-                {{ offer.taskerName }}
+                <a [routerLink]="['/taskers', offer.taskerId]" class="hover:text-brand hover:underline underline-offset-2 transition-colors">
+                  {{ offer.taskerName }}
+                </a>
                 @if (offer.taskerVerified) {
                   <svg [appIcon]="icons.BadgeCheck" class="w-4 h-4 text-status-info" aria-label="Verified tasker"></svg>
                 }

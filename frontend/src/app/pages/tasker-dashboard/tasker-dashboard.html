@@ -1,0 +1,128 @@
+@if (
+  { query: query$ | async, profile: profile$ | async, offers: offers$ | async, counts: counts$ | async, state: state$ | async };
+  as vm
+) {
+  <div class="flex flex-col gap-5 animate-fade-in lg:h-[calc(100dvh-7rem)]">
+    <div class="relative shrink-0 overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle">
+      <div class="absolute -right-16 -top-20 w-64 h-64 rounded-full bg-accent-light/60 blur-3xl pointer-events-none" aria-hidden="true"></div>
+      <div class="relative">
+        <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">Tasker dashboard</h1>
+        <p class="text-text-sub text-sm mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+          @if (vm.profile; as profile) {
+            <span class="flex items-center gap-1 font-semibold text-text-main">
+              <svg [appIcon]="icons.Star" class="w-4 h-4 text-accent fill-accent"></svg>
+              {{ profile.averageRating != null ? profile.averageRating.toFixed(1) : 'No ratings yet' }}
+            </span>
+            <span>{{ profile.completedJobsCount }} jobs done</span>
+          } @else {
+            Find jobs, follow your offers and finish your work
+          }
+        </p>
+      </div>
+      <a routerLink="/tasker/profile" class="btn-ghost relative self-start md:self-auto border border-surface-border bg-white">
+        <svg [appIcon]="icons.UserPen" class="w-4 h-4"></svg> Edit profile
+      </a>
+    </div>
+
+    @if (profileIncomplete(vm.profile)) {
+      <a routerLink="/tasker/profile"
+         class="shrink-0 group flex items-center justify-between gap-3 p-3.5 rounded-card bg-accent-light/60 border border-amber-300 text-sm text-amber-950 hover:bg-accent-light transition-colors">
+        <span class="flex items-center gap-2">
+          <svg [appIcon]="icons.TriangleAlert" class="w-4 h-4 shrink-0"></svg>
+          Choose at least one category and one municipality, or no tasks will match you.
+        </span>
+        <svg [appIcon]="icons.ArrowRight" class="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"></svg>
+      </a>
+    }
+
+    <div role="tablist" aria-label="Dashboard sections"
+         class="shrink-0 flex gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto [scrollbar-width:none] w-full sm:w-fit">
+      @for (tab of tabs; track tab.key) {
+        <button type="button" role="tab" (click)="selectTab(tab.key)" [attr.aria-selected]="tab.key === vm.query?.tab"
+                class="shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
+                [class]="tab.key === vm.query?.tab ? 'bg-white text-text-main shadow-subtle' : 'text-slate-500 hover:text-text-main'">
+          {{ tab.label }}
+          @if (count(vm.counts, tab.key); as value) {
+            <span class="min-w-5 h-5 px-1.5 rounded-full text-[11px] flex items-center justify-center tabular-nums"
+                  [class]="tab.key === vm.query?.tab ? 'bg-brand text-white' : 'bg-slate-200 text-slate-600'">
+              {{ value }}
+            </span>
+          }
+        </button>
+      }
+    </div>
+
+    <div #list class="space-y-4 lg:flex-1 lg:min-h-0 lg:overflow-y-auto scroll-area lg:-mx-1 lg:px-1 lg:-mt-1 lg:pt-1 lg:pb-2">
+      @if (vm.state?.page; as page) {
+        @for (task of page.content; track task.id; let i = $index) {
+          <app-task-card [task]="task" [showStatus]="vm.query?.tab === 'jobs'"
+                         [note]="vm.query?.tab === 'matching' ? offerNote(task.id, vm.offers) : null"
+                         class="block animate-fade-in" [style.animation-delay.ms]="i * 40" />
+        } @empty {
+          <div class="bg-white p-10 rounded-card border border-dashed border-slate-300 text-center space-y-3 animate-fade-in">
+            <div class="mx-auto w-14 h-14 rounded-full bg-brand-50 text-brand flex items-center justify-center">
+              <svg [appIcon]="vm.query?.tab === 'jobs' ? icons.Briefcase : icons.Search" class="w-7 h-7"></svg>
+            </div>
+            @if (vm.query?.tab === 'jobs') {
+              <h2 class="text-lg font-semibold">No jobs yet</h2>
+              <p class="text-sm text-text-sub">When a client hires you, the job shows up here.</p>
+            } @else {
+              <h2 class="text-lg font-semibold">No matching tasks right now</h2>
+              <p class="text-sm text-text-sub">New tasks in your categories and municipalities appear here. You can also cover more areas.</p>
+              <a routerLink="/tasker/profile" class="btn-primary py-2">Edit what I cover</a>
+            }
+          </div>
+        }
+        <app-pagination [page]="page.page ?? 0" [totalPages]="page.totalPages ?? 0" (pageChange)="goToPage($event)" />
+      } @else if (vm.state?.offers; as offers) {
+        @for (offer of offers; track offer.id; let i = $index) {
+          <a [routerLink]="['/tasks', offer.taskId]"
+             class="group block bg-white p-4 sm:p-5 rounded-card border shadow-subtle transition-all duration-200 hover:shadow-card hover:-translate-y-0.5 animate-fade-in"
+             [class]="offer.status === 'ACCEPTED' ? 'border-status-success/40 ring-4 ring-status-success/10' : 'border-surface-border hover:border-brand/40'"
+             [style.animation-delay.ms]="i * 40">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="min-w-0 space-y-1.5">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full border text-xs font-semibold" [class]="offerStyle(offer.status).badge">
+                  {{ offerStyle(offer.status).label }}
+                </span>
+                <h2 class="font-semibold group-hover:text-brand transition-colors truncate">{{ offer.taskTitle }}</h2>
+                <p class="text-xs text-text-sub">
+                  Sent {{ timeAgo(offer.createdAt) }}@if (offer.message) {<span> · "{{ offer.message }}"</span>}
+                </p>
+              </div>
+              <span class="shrink-0 text-xl font-bold text-brand">{{ formatBudget(offer.price) }}</span>
+            </div>
+          </a>
+        } @empty {
+          <div class="bg-white p-10 rounded-card border border-dashed border-slate-300 text-center space-y-3 animate-fade-in">
+            <div class="mx-auto w-14 h-14 rounded-full bg-brand-50 text-brand flex items-center justify-center">
+              <svg [appIcon]="icons.Inbox" class="w-7 h-7"></svg>
+            </div>
+            <h2 class="text-lg font-semibold">You have not sent any offers yet</h2>
+            <p class="text-sm text-text-sub">Open a task that fits you and send your price.</p>
+            <button type="button" (click)="selectTab('matching')" class="btn-primary py-2">See tasks for me</button>
+          </div>
+        }
+      } @else if (vm.state?.failed) {
+        <div role="alert" class="bg-white p-10 rounded-card border border-red-200 text-center space-y-3 animate-fade-in">
+          <div class="mx-auto w-14 h-14 rounded-full bg-red-50 text-status-error flex items-center justify-center">
+            <svg [appIcon]="icons.CircleAlert" class="w-7 h-7"></svg>
+          </div>
+          <h2 class="text-lg font-semibold">Something went wrong</h2>
+          <p class="text-sm text-text-sub">This list could not be loaded. Check your connection and try again.</p>
+          <button type="button" (click)="retry()" class="btn-primary py-2">
+            <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> Try again
+          </button>
+        </div>
+      } @else {
+        @for (card of skeletonCards; track card) {
+          <div class="bg-white p-5 rounded-card border border-surface-border shadow-subtle space-y-3" aria-hidden="true">
+            <span class="skeleton block h-5 w-28 rounded-full"></span>
+            <span class="skeleton block h-5 w-2/3"></span>
+            <span class="skeleton block h-4 w-1/3"></span>
+          </div>
+        }
+      }
+    </div>
+  </div>
+}

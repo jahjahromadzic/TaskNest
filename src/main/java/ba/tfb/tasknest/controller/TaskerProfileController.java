@@ -50,6 +50,11 @@ public class TaskerProfileController {
         return taskerProfileService.updateMunicipalities(principal.getId(), request);
     }
 
+    @GetMapping("/users/{userId}")
+    public TaskerProfileResponse getProfileOfUser(@PathVariable UUID userId) {
+        return taskerProfileService.getProfileOfUser(userId);
+    }
+
     @GetMapping("/{id}")
     public TaskerProfileResponse getProfile(@PathVariable UUID id) {
         return taskerProfileService.getProfile(id);

@@ -139,6 +139,22 @@ class NotificationEndpointTest extends AbstractIntegrationTest {
     }
 
     @Test
+    @DisplayName("Marking all as read touches only the caller's notifications")
+    void markAllAsRead_marksOnlyOwnNotifications() throws Exception {
+        persistNotification(owner.userId(), "Prva");
+        persistNotification(owner.userId(), "Druga");
+        UUID foreign = persistNotification(stranger.userId(), "Tudja");
+
+        mockMvc.perform(post("/api/notifications/read-all").header("Authorization", bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.marked").value(2));
+
+        mockMvc.perform(get("/api/notifications/unread-count").header("Authorization", bearer(owner)))
+                .andExpect(jsonPath("$.count").value(0));
+        assertThat(notificationRepository.findById(foreign).orElseThrow().isRead()).isFalse();
+    }
+
+    @Test
     @DisplayName("Marking a notification that does not exist is 404")
     void markAsRead_isNotFound_whenNotificationDoesNotExist() throws Exception {
         mockMvc.perform(post("/api/notifications/" + UUID.randomUUID() + "/read")

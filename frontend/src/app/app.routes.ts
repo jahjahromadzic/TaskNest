@@ -48,8 +48,7 @@ export const routes: Routes = [
     path: 'tasker',
     canActivate: [roleGuard('TASKER')],
     title: 'Tasker dashboard · TaskNest',
-    loadComponent: placeholder,
-    data: { heading: 'Tasker dashboard', phase: 3 },
+    loadComponent: () => import('./pages/tasker-dashboard/tasker-dashboard').then((m) => m.TaskerDashboard),
   },
   {
     path: 'tasker/profile',
@@ -64,6 +63,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/become-tasker/become-tasker').then((m) => m.BecomeTasker),
   },
   {
+    path: 'taskers/:userId',
+    canActivate: [authGuard],
+    title: 'Tasker · TaskNest',
+    loadComponent: () => import('./pages/tasker-public/tasker-public').then((m) => m.TaskerPublic),
+  },
+  {
     path: 'messages',
     canActivate: [authGuard],
     title: 'Messages · TaskNest',
@@ -74,8 +79,7 @@ export const routes: Routes = [
     path: 'notifications',
     canActivate: [authGuard],
     title: 'Notifications · TaskNest',
-    loadComponent: placeholder,
-    data: { heading: 'Notifications', phase: 4 },
+    loadComponent: () => import('./pages/notifications/notifications').then((m) => m.Notifications),
   },
   {
     path: 'admin',

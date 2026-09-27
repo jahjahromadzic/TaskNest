@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { BadgeCheck, ChevronDown, Handshake, Inbox, LoaderCircle, RotateCcw, Star, TrendingDown } from 'lucide';
 import { TaskDetail, TaskOffer } from '../../api/models';
 import { OfferService } from '../../services/offer.service';
@@ -27,7 +28,7 @@ export function sortOffers(offers: TaskOffer[], sort: OfferSort): TaskOffer[] {
 
 @Component({
   selector: 'app-task-offers',
-  imports: [FormsModule, Icon, Select],
+  imports: [FormsModule, RouterLink, Icon, Select],
   templateUrl: './task-offers.html',
 })
 export class TaskOffers implements OnChanges {

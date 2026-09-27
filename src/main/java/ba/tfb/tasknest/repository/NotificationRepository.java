@@ -35,4 +35,12 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     int markReadFor(@Param("recipientId") UUID recipientId,
                     @Param("type") NotificationType type,
                     @Param("relatedEntityId") UUID relatedEntityId);
+
+    @Modifying
+    @Query("""
+            update Notification n set n.read = true
+            where n.recipient.id = :recipientId
+              and n.read = false
+            """)
+    int markAllReadFor(@Param("recipientId") UUID recipientId);
 }

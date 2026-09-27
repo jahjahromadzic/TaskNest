@@ -39,4 +39,9 @@ public class NotificationController {
                                            @AuthenticationPrincipal UserPrincipal principal) {
         return notificationService.markAsRead(id, principal.getId());
     }
+
+    @PostMapping("/read-all")
+    public Map<String, Integer> markAllAsRead(@AuthenticationPrincipal UserPrincipal principal) {
+        return Map.of("marked", notificationService.markAllAsRead(principal.getId()));
+    }
 }
