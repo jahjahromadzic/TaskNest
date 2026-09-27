@@ -3,6 +3,7 @@ package ba.tfb.tasknest.service;
 import ba.tfb.tasknest.domain.TaskStateMachine;
 import ba.tfb.tasknest.dto.offer.CreateOfferRequest;
 import ba.tfb.tasknest.dto.offer.OfferResponse;
+import ba.tfb.tasknest.dto.offer.TaskOfferResponse;
 import ba.tfb.tasknest.entity.Conversation;
 import ba.tfb.tasknest.entity.Offer;
 import ba.tfb.tasknest.entity.Task;
@@ -150,7 +151,7 @@ public class OfferService {
     }
 
     @Transactional(readOnly = true)
-    public List<OfferResponse> getOffersForTask(UUID taskId, UUID clientId) {
+    public List<TaskOfferResponse> getOffersForTask(UUID taskId, UUID clientId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
 
@@ -158,9 +159,7 @@ public class OfferService {
             throw new NotResourceOwnerException("Task does not belong to this user");
         }
 
-        return offerRepository.findByTask(task).stream()
-                .map(OfferResponse::from)
-                .toList();
+        return offerRepository.findWithTaskerByTaskId(taskId);
     }
 
     @Transactional(readOnly = true)

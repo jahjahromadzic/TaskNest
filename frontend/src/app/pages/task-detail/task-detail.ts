@@ -3,7 +3,7 @@ import { AsyncPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { BehaviorSubject, Observable, catchError, combineLatest, map, of, startWith, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, map, of, startWith, switchMap, tap } from 'rxjs';
 import {
   ArrowLeft,
   CalendarClock,
@@ -26,6 +26,7 @@ import { AuthService } from '../../auth/auth.service';
 import { CurrentUser } from '../../auth/current-user';
 import { CategoryIcon } from '../../components/category-icon/category-icon';
 import { StatusBadge } from '../../components/status-badge/status-badge';
+import { TaskOffers } from '../../components/task-offers/task-offers';
 import { TaskTimeline } from '../../components/task-timeline/task-timeline';
 import { TaskService } from '../../services/task.service';
 import { readApiError } from '../../shared/api-error';
@@ -52,6 +53,7 @@ const FAILED: DetailState = { loading: false, notFound: false, failed: true, tas
     RouterLink,
     CategoryIcon,
     StatusBadge,
+    TaskOffers,
     TaskTimeline,
   ],
   templateUrl: './task-detail.html',
@@ -95,13 +97,18 @@ export class TaskDetailPage {
     private title: Title,
   ) {
     this.user$ = this.authService.user$;
-    this.state$ = combineLatest([this.route.paramMap.pipe(map((params) => params.get('id') ?? '')), this.retry$]).pipe(
-      switchMap(([id]) =>
-        this.taskService.getTask(id).pipe(
-          tap((task) => this.title.setTitle(`${task.title} · TaskNest`)),
-          map((task): DetailState => ({ loading: false, notFound: false, failed: false, task })),
-          startWith(LOADING),
-          catchError((error) => of(isMissing(error) ? NOT_FOUND : FAILED)),
+    this.state$ = this.route.paramMap.pipe(
+      map((params) => params.get('id') ?? ''),
+      switchMap((id) =>
+        this.retry$.pipe(
+          switchMap((_, attempt) => {
+            const request$ = this.taskService.getTask(id).pipe(
+              tap((task) => this.title.setTitle(`${task.title} · TaskNest`)),
+              map((task): DetailState => ({ loading: false, notFound: false, failed: false, task })),
+              catchError((error) => of(isMissing(error) ? NOT_FOUND : FAILED)),
+            );
+            return attempt === 0 ? request$.pipe(startWith(LOADING)) : request$;
+          }),
         ),
       ),
     );

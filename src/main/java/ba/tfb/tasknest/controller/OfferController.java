@@ -2,6 +2,7 @@ package ba.tfb.tasknest.controller;
 
 import ba.tfb.tasknest.dto.offer.CreateOfferRequest;
 import ba.tfb.tasknest.dto.offer.OfferResponse;
+import ba.tfb.tasknest.dto.offer.TaskOfferResponse;
 import ba.tfb.tasknest.security.UserPrincipal;
 import ba.tfb.tasknest.service.OfferService;
 import jakarta.validation.Valid;
@@ -31,7 +32,7 @@ public class OfferController {
     }
 
     @GetMapping("/tasks/{taskId}/offers")
-    public List<OfferResponse> forTask(@PathVariable UUID taskId,
+    public List<TaskOfferResponse> forTask(@PathVariable UUID taskId,
                                        @AuthenticationPrincipal UserPrincipal principal) {
         return offerService.getOffersForTask(taskId, principal.getId());
     }

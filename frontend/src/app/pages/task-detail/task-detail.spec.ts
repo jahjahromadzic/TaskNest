@@ -87,13 +87,22 @@ describe('Task details page', () => {
     expect(decodeURIComponent(login.getAttribute('href')!)).toBe('/login?returnUrl=/tasks/t1');
   });
 
-  it('tells the owner that the task is theirs instead of asking them to log in', async () => {
+  it('tells the owner that the task is theirs and shows them the offers', async () => {
     logInAs('owner-1');
 
     await open(task);
+    http.expectOne('/api/tasks/t1/offers').flush([{ id: 'o1', price: 70, status: 'PENDING', taskerName: 'Emir K' }]);
+    await harness.fixture.whenStable();
 
     expect(text()).toContain('You posted this task');
     expect(text()).not.toContain('Log in to make an offer');
+    expect(text()).toContain('Emir K');
+  });
+
+  it('does not ask for the offers when someone else looks at the task', async () => {
+    await open(task);
+
+    http.expectNone('/api/tasks/t1/offers');
   });
 
   it('does not treat another logged in user as the owner', async () => {

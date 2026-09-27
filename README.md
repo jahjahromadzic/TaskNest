@@ -215,7 +215,7 @@ frontend/src/app/
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Application shell, login and sign-up, session renewal, guards, public task list | Done |
-| 2 | Client flow: post tasks, review offers, accept, confirm and close | In progress: task details, posting and My tasks done |
+| 2 | Client flow: post tasks, review offers, accept, confirm and close | In progress: task details, posting, My tasks and hiring done |
 | 3 | Tasker flow: profile, matching tasks, offers, work execution | Planned |
 | 4 | Messages and notifications | Planned |
 | 5 | Administration | Planned |
@@ -334,7 +334,7 @@ Paged responses use the following shape:
 | Method | Path | Access | Description |
 |---|---|---|---|
 | POST | `/tasks/{taskId}/offers` | Tasker | Submit an offer |
-| GET | `/tasks/{taskId}/offers` | Task owner | List offers received on a task |
+| GET | `/tasks/{taskId}/offers` | Task owner | List offers received on a task, each with the tasker's rating, review count, completed jobs and verification, from a single query |
 | POST | `/offers/{offerId}/accept` | Task owner | Accept an offer and assign the task |
 | POST | `/offers/{offerId}/withdraw` | Offer owner | Withdraw a pending offer, or back out of an accepted one |
 | GET | `/offers/mine` | Tasker | Offers submitted by the caller |
@@ -633,17 +633,18 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **298 tests** and requires no manual setup — Testcontainers
+The suite contains **300 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 137 | Service business rules and the task state machine |
-| Integration | 161 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, demo data |
+| Integration | 163 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, demo data |
 
-The frontend has its own suite of **86 tests** (Vitest), covering the session
+The frontend has its own suite of **97 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
-header, the task list and task details, posting a task, the client's own tasks, the dropdown, the progress
+header, the task list and task details, posting a task, the client's own tasks, offers
+and hiring, the confirmation dialog, the dropdown, the progress
 timeline, date helpers and the category icons. The server is simulated with Angular's
 `HttpTestingController`.
 

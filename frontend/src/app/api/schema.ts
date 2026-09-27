@@ -903,6 +903,26 @@ export interface components {
             /** Format: date-time */
             expiresAt?: string;
         };
+        TaskOfferResponse: {
+            /** Format: uuid */
+            id?: string;
+            price?: number;
+            message?: string;
+            /** @enum {string} */
+            status?: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN";
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: uuid */
+            taskerId?: string;
+            taskerName?: string;
+            taskerHeadline?: string;
+            taskerVerified?: boolean;
+            taskerRating?: number;
+            /** Format: int32 */
+            taskerCompletedJobs?: number;
+            /** Format: int64 */
+            taskerReviewCount?: number;
+        };
         PagedResponseNotificationResponse: {
             content?: components["schemas"]["NotificationResponse"][];
             /** Format: int32 */
@@ -1178,7 +1198,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["OfferResponse"][];
+                    "*/*": components["schemas"]["TaskOfferResponse"][];
                 };
             };
         };

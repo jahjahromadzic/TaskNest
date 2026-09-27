@@ -1,6 +1,6 @@
 @if ({ state: state$ | async, user: user$ | async }; as vm) {
-  <div class="space-y-5">
-    <nav aria-label="Breadcrumb" class="flex items-center gap-1.5 text-sm text-text-sub min-w-0">
+  <div class="flex flex-col gap-4 lg:h-[calc(100dvh-7rem)]">
+    <nav aria-label="Breadcrumb" class="shrink-0 flex items-center gap-1.5 text-sm text-text-sub min-w-0">
       <a routerLink="/tasks" class="group inline-flex items-center gap-1 hover:text-brand transition-colors shrink-0">
         <svg [appIcon]="icons.ArrowLeft" class="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5"></svg>
         Browse tasks
@@ -12,8 +12,8 @@
     </nav>
 
     @if (vm.state?.task; as task) {
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <div class="lg:col-span-2 space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-[minmax(0,1fr)] gap-6 lg:flex-1 lg:min-h-0">
+        <div class="lg:col-span-2 space-y-5 lg:h-full lg:overflow-y-auto scroll-area lg:-mx-1 lg:px-1 lg:-mt-1 lg:pt-1 lg:pb-2">
           <section class="bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-5 animate-fade-in">
             <div class="space-y-3">
               <div class="flex flex-wrap items-center gap-2">
@@ -69,9 +69,13 @@
               <p class="text-sm text-text-sub italic">The client did not add a description.</p>
             }
           </section>
+
+          @if (isOwner(task, vm.user) && task.status !== 'DRAFT') {
+            <app-task-offers [task]="task" (accepted)="retry()" class="block animate-fade-in [animation-delay:120ms]" />
+          }
         </div>
 
-        <aside class="space-y-4 lg:sticky lg:top-24 animate-fade-in [animation-delay:120ms]">
+        <aside class="space-y-4 lg:h-full lg:overflow-y-auto scroll-area lg:-mx-1 lg:px-1 lg:-mt-1 lg:pt-1 animate-fade-in [animation-delay:120ms]">
           <section class="bg-white p-5 rounded-card border border-surface-border shadow-card space-y-4">
             <div>
               <span class="text-xs uppercase tracking-wide text-slate-400">Budget</span>
