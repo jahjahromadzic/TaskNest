@@ -16,16 +16,20 @@ export const routes: Routes = [
     data: { heading: 'Task details', phase: 2 },
   },
   {
-    path: 'login',
-    title: 'Log in · TaskNest',
-    loadComponent: placeholder,
-    data: { heading: 'Log in', phase: 1 },
-  },
-  {
-    path: 'register',
-    title: 'Sign up · TaskNest',
-    loadComponent: placeholder,
-    data: { heading: 'Sign up', phase: 1 },
+    path: '',
+    loadComponent: () => import('./auth/auth-layout/auth-layout').then((m) => m.AuthLayout),
+    children: [
+      {
+        path: 'login',
+        title: 'Log in · TaskNest',
+        loadComponent: () => import('./pages/login/login').then((m) => m.Login),
+      },
+      {
+        path: 'register',
+        title: 'Sign up · TaskNest',
+        loadComponent: () => import('./pages/register/register').then((m) => m.Register),
+      },
+    ],
   },
   {
     path: 'my-tasks',

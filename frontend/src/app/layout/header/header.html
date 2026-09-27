@@ -1,7 +1,7 @@
-<header class="bg-white border-b border-surface-border sticky top-0 z-40 px-4 py-3">
+<header class="bg-white/80 backdrop-blur-md border-b border-surface-border sticky top-0 z-40 px-4 py-3">
   <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
-    <a routerLink="/tasks" class="flex items-center gap-3">
-      <span class="bg-brand text-white p-2 rounded-lg">
+    <a routerLink="/tasks" class="group flex items-center gap-3">
+      <span class="bg-gradient-to-br from-brand to-teal-500 text-white p-2 rounded-lg shadow-subtle transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105">
         <svg lucideSquareCheck class="w-5 h-5"></svg>
       </span>
       <span class="text-xl font-bold tracking-tight flex items-center gap-1.5">
@@ -10,15 +10,66 @@
       </span>
     </a>
 
-    <nav class="flex items-center gap-2">
-      <a routerLink="/login"
-         class="px-3 py-2 rounded-btn text-sm font-semibold text-text-main hover:bg-slate-100 transition-colors">
-        Log in
-      </a>
-      <a routerLink="/register"
-         class="bg-brand hover:bg-brand-hover text-white px-4 py-2 rounded-btn text-sm font-semibold transition-colors">
-        Sign up
-      </a>
-    </nav>
+    @if (authService.user$ | async; as user) {
+      <div class="flex items-center gap-1 sm:gap-2">
+        <a routerLink="/messages" routerLinkActive="!text-brand bg-brand-50" class="icon-btn hidden sm:inline-flex" title="Messages">
+          <svg lucideMessageSquare class="w-5 h-5"></svg>
+        </a>
+        <a routerLink="/notifications" routerLinkActive="!text-brand bg-brand-50" class="icon-btn hidden sm:inline-flex" title="Notifications">
+          <svg lucideBell class="w-5 h-5"></svg>
+        </a>
+
+        <div class="relative sm:pl-2 sm:ml-1 sm:border-l border-slate-200">
+          <button type="button" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()" aria-haspopup="menu"
+                  class="group flex items-center gap-2 rounded-full sm:rounded-lg sm:pr-1.5 p-0.5 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/20">
+            <span class="w-9 h-9 rounded-full bg-brand-light border-2 border-brand text-brand font-semibold flex items-center justify-center text-sm transition-shadow group-hover:ring-4 ring-brand/15">
+              {{ initials(user) }}
+            </span>
+            <span class="hidden lg:block text-left">
+              <span class="block text-xs font-semibold leading-tight">{{ user.fullName }}</span>
+              <span class="block text-[11px] text-text-sub leading-tight">
+                {{ user.roles.includes('TASKER') ? 'Client & tasker' : 'Client' }}
+              </span>
+            </span>
+            <svg lucideChevronDown class="hidden sm:block w-4 h-4 text-slate-400 transition-transform duration-200" [class.rotate-180]="menuOpen()"></svg>
+          </button>
+
+          @if (menuOpen()) {
+            <div role="menu"
+                 class="absolute right-0 top-12 w-60 origin-top-right animate-scale-in bg-white rounded-card shadow-modal border border-surface-border z-50 py-2 text-sm">
+              <div class="px-3 pb-2 mb-1 border-b border-slate-100">
+                <p class="font-semibold truncate">{{ user.fullName }}</p>
+                <p class="text-text-sub text-xs truncate">{{ user.email }}</p>
+              </div>
+              <a routerLink="/my-tasks" (click)="closeMenu()" role="menuitem"
+                 class="px-3 py-2 hover:bg-slate-50 flex items-center gap-2.5 transition-colors">
+                <svg lucideListTodo class="w-4 h-4 text-slate-400"></svg> My tasks
+              </a>
+              @if (user.roles.includes('TASKER')) {
+                <a routerLink="/tasker" (click)="closeMenu()" role="menuitem"
+                   class="px-3 py-2 hover:bg-slate-50 flex items-center gap-2.5 transition-colors">
+                  <svg lucideBriefcase class="w-4 h-4 text-slate-400"></svg> Tasker dashboard
+                </a>
+              }
+              @if (user.roles.includes('ADMIN')) {
+                <a routerLink="/admin" (click)="closeMenu()" role="menuitem"
+                   class="px-3 py-2 text-brand font-medium hover:bg-brand-50 flex items-center gap-2.5 transition-colors border-t border-slate-100 mt-1">
+                  <svg lucideShield class="w-4 h-4"></svg> Admin
+                </a>
+              }
+              <button type="button" (click)="logout()" role="menuitem"
+                      class="w-full px-3 py-2 text-status-error hover:bg-red-50 flex items-center gap-2.5 transition-colors border-t border-slate-100 mt-1">
+                <svg lucideLogOut class="w-4 h-4"></svg> Log out
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    } @else {
+      <nav class="flex items-center gap-2">
+        <a routerLink="/login" class="btn-ghost">Log in</a>
+        <a routerLink="/register" class="btn-primary py-2">Sign up</a>
+      </nav>
+    }
   </div>
 </header>

@@ -1,0 +1,18 @@
+<div class="fixed z-50 bottom-20 sm:bottom-6 inset-x-4 sm:inset-x-auto sm:right-6 flex flex-col gap-2 items-stretch sm:items-end pointer-events-none"
+     aria-live="polite">
+  @for (toast of toastService.toasts(); track toast.id) {
+    <div class="pointer-events-auto animate-slide-in bg-slate-900/95 backdrop-blur text-white pl-4 pr-2 py-3 rounded-card shadow-modal
+                flex items-center gap-3 text-sm border border-slate-700 sm:min-w-72 sm:max-w-sm">
+      @switch (toast.kind) {
+        @case ('success') { <svg lucideCircleCheck class="w-5 h-5 text-emerald-400 shrink-0"></svg> }
+        @case ('error') { <svg lucideCircleAlert class="w-5 h-5 text-red-400 shrink-0"></svg> }
+        @default { <svg lucideInfo class="w-5 h-5 text-sky-400 shrink-0"></svg> }
+      }
+      <span class="flex-1">{{ toast.text }}</span>
+      <button type="button" (click)="toastService.dismiss(toast.id)" aria-label="Dismiss"
+              class="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+        <svg lucideX class="w-4 h-4"></svg>
+      </button>
+    </div>
+  }
+</div>

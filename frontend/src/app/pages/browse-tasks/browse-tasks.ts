@@ -10,6 +10,7 @@ import { ReferenceService } from '../../services/reference.service';
 })
 export class BrowseTasks {
   readonly categories$;
+  readonly skeletonWidths = [96, 72, 120, 84, 104, 68, 112, 90];
 
   constructor(private referenceService: ReferenceService) {
     this.categories$ = this.referenceService.getCategories();
