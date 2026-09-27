@@ -705,8 +705,14 @@ export interface components {
             budget?: number;
             /** @enum {string} */
             status?: "DRAFT" | "PUBLISHED" | "ASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CLOSED" | "CANCELLED" | "EXPIRED" | "REMOVED";
+            /** Format: uuid */
+            categoryId?: string;
             categoryName?: string;
+            /** Format: uuid */
+            municipalityId?: string;
             municipalityName?: string;
+            /** Format: uuid */
+            clientId?: string;
             clientName?: string;
             /** Format: date-time */
             publishedAt?: string;

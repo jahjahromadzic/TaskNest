@@ -62,7 +62,7 @@ single-page application that uses it.
 | Language | Java 21 |
 | Framework | Spring Boot 4.1.1 |
 | Database | PostgreSQL 17 |
-| Migrations | Liquibase (32 changesets, 16 tables) |
+| Migrations | Liquibase (37 changesets, 16 tables) |
 | Persistence | Spring Data JPA, Hibernate 7 (`ddl-auto: validate`) |
 | Security | Spring Security, JWT (jjwt 0.12.6) |
 | Messaging | RabbitMQ |
@@ -104,7 +104,7 @@ seeds reference data on first run.
 ### Demo data
 
 In the `dev` profile the application also fills an empty database with demo data
-on startup: eight accounts, eighteen open tasks with offers, and a few tasks further
+on startup: eight accounts, twenty-four open tasks with offers, and a few tasks further
 along the lifecycle (assigned with a conversation, in progress, closed with reviews,
 and a draft). Dates are relative to the moment of seeding, so the tasks are fresh
 and none of them is picked up by the expiry or deadline schedulers.
@@ -117,10 +117,10 @@ Every demo account uses the password `demo12345` (`DEMO_DATA_PASSWORD`).
 | `emina@demo.tasknest.ba` | client | Open tasks and two closed, reviewed jobs |
 | `haris@demo.tasknest.ba` | client | Open tasks and one closed, reviewed job |
 | `lejla@demo.tasknest.ba` | client, admin | Administration |
-| `emir@demo.tasknest.ba` | client, tasker | Plumbing and electrical, verified, rating 4.00 |
-| `selma@demo.tasknest.ba` | client, tasker | Cleaning and painting, verified, rating 5.00 |
-| `adnan@demo.tasknest.ba` | client, tasker | Moving and furniture assembly, rating 4.50 |
-| `tarik@demo.tasknest.ba` | client, tasker | Electrical and painting, no jobs yet |
+| `emir@demo.tasknest.ba` | client, tasker | Plumbing, electrical, heating and appliances, verified, rating 4.00 |
+| `selma@demo.tasknest.ba` | client, tasker | Cleaning, painting and gardening, verified, rating 5.00 |
+| `adnan@demo.tasknest.ba` | client, tasker | Moving, furniture assembly, carpentry and locks, rating 4.50 |
+| `tarik@demo.tasknest.ba` | client, tasker | Electrical, painting, air conditioning and computers, no jobs yet |
 
 The seeder runs only once: it does nothing when `amra@demo.tasknest.ba` already
 exists. To start again from a clean database, remove the Docker volume:
@@ -193,6 +193,8 @@ browser sees one origin. That matters because the refresh token travels in a
   return address must stay inside the application.
 - **Task list** — filters, sorting and the page number live in the URL, so a
   filtered list can be shared, reloaded and navigated with the back button.
+- **Icons** — Lucide icon data is drawn by one small component, so an icon costs a
+  few hundred bytes and loads only with the page that uses it.
 
 ### Structure
 
@@ -637,9 +639,10 @@ starts PostgreSQL and RabbitMQ automatically.
 | Unit | 135 | Service business rules and the task state machine |
 | Integration | 156 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, demo data |
 
-The frontend has its own suite of **62 tests** (Vitest), covering the session
+The frontend has its own suite of **73 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
-header, the task list and the dropdown component. The server is simulated with Angular's
+header, the task list and task details, the dropdown, the progress timeline and the
+category icons. The server is simulated with Angular's
 `HttpTestingController`.
 
 ```bash

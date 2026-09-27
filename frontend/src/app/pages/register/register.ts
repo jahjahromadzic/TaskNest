@@ -1,16 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-  LucideCheck,
-  LucideCircleAlert,
-  LucideEye,
-  LucideEyeOff,
-  LucideLoaderCircle,
-  LucideLock,
-  LucideMail,
-  LucidePhone,
-} from '@lucide/angular';
+import { Check, CircleAlert, Eye, EyeOff, LoaderCircle, Lock, Mail, Phone } from 'lucide';
+import { Icon } from '../../components/icon/icon';
 import { AuthService } from '../../auth/auth.service';
 import { safeReturnUrl } from '../../auth/return-url';
 import { ApiError, readApiError } from '../../shared/api-error';
@@ -19,19 +11,14 @@ import { ToastService } from '../../shared/toast/toast.service';
 @Component({
   selector: 'app-register',
   imports: [
+    Icon,
     FormsModule,
-    LucideCheck,
-    LucideCircleAlert,
-    LucideEye,
-    LucideEyeOff,
-    LucideLoaderCircle,
-    LucideLock,
-    LucideMail,
-    LucidePhone,
   ],
   templateUrl: './register.html',
 })
 export class Register {
+  protected readonly icons = { Check, CircleAlert, Eye, EyeOff, LoaderCircle, Lock, Mail, Phone };
+
   readonly minPasswordLength = 8;
 
   firstName = '';

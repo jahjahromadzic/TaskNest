@@ -83,7 +83,7 @@ class DemoDataSeederTest extends AbstractIntegrationTest {
     void seed_fillsThePublicListing() {
         long open = taskService.browseTasks(null, null, PageRequest.of(0, 50)).getTotalElements();
 
-        assertThat(open).isEqualTo(18);
+        assertThat(open).isEqualTo(24);
     }
 
     @Test

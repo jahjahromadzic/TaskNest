@@ -1,10 +1,13 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { LucideShieldAlert } from '@lucide/angular';
+import { ShieldAlert } from 'lucide';
+import { Icon } from '../../components/icon/icon';
 
 @Component({
   selector: 'app-forbidden',
-  imports: [RouterLink, LucideShieldAlert],
+  imports: [Icon, RouterLink],
   templateUrl: './forbidden.html',
 })
-export class Forbidden {}
+export class Forbidden {
+  protected readonly icons = { ShieldAlert };
+}

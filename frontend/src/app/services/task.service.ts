@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { TaskPage } from '../api/models';
+import { TaskDetail, TaskPage } from '../api/models';
 
 export const TASK_SORTS = {
   newest: { label: 'Newest first', value: 'publishedAt,desc' },
@@ -37,5 +37,9 @@ export class TaskService {
       params = params.set('municipalityId', filters.municipalityId);
     }
     return this.http.get<TaskPage>('/api/tasks', { params });
+  }
+
+  getTask(id: string): Observable<TaskDetail> {
+    return this.http.get<TaskDetail>(`/api/tasks/${encodeURIComponent(id)}`);
   }
 }

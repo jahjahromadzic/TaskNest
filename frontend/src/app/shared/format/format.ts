@@ -27,3 +27,9 @@ export function daysLeft(date: string | undefined, now = new Date()): number | n
   }
   return Math.max(0, Math.ceil((new Date(date).getTime() - now.getTime()) / DAY_MS));
 }
+
+const dateFormat = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+export function formatDate(date: string | undefined): string {
+  return date ? dateFormat.format(new Date(date)) : '';
+}

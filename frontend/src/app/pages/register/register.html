@@ -1,7 +1,7 @@
 <form #form="ngForm" (ngSubmit)="submit(form)" novalidate class="space-y-3 animate-fade-in">
   @if (error(); as error) {
     <div role="alert" class="animate-shake flex items-start gap-2.5 p-3 rounded-btn bg-red-50 border border-red-200 text-sm text-red-700">
-      <svg lucideCircleAlert class="w-4 h-4 mt-0.5 shrink-0"></svg>
+      <svg [appIcon]="icons.CircleAlert" class="w-4 h-4 mt-0.5 shrink-0"></svg>
       <span>{{ error.message }}</span>
     </div>
   }
@@ -36,7 +36,7 @@
   <div>
     <label for="register-email" class="form-label">Email address</label>
     <div class="relative">
-      <svg lucideMail class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
+      <svg [appIcon]="icons.Mail" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
       <input id="register-email" name="email" type="email" autocomplete="email" placeholder="name@domain.ba" maxlength="255"
              [(ngModel)]="email" (ngModelChange)="clearServerError('email')" #emailField="ngModel" required email
              class="form-input pl-9"
@@ -54,7 +54,7 @@
       Phone number <span class="font-normal text-text-sub">(optional)</span>
     </label>
     <div class="relative">
-      <svg lucidePhone class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
+      <svg [appIcon]="icons.Phone" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
       <input id="register-phone" name="phone" type="tel" autocomplete="tel" placeholder="+387 61 123 456" maxlength="30"
              [(ngModel)]="phone" (ngModelChange)="clearServerError('phone')"
              class="form-input pl-9" [class.form-input-invalid]="serverError('phone')">
@@ -67,7 +67,7 @@
   <div>
     <label for="register-password" class="form-label">Password</label>
     <div class="relative">
-      <svg lucideLock class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
+      <svg [appIcon]="icons.Lock" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
       <input id="register-password" name="password" [type]="showPassword() ? 'text' : 'password'" autocomplete="new-password"
              placeholder="Choose a password" maxlength="100"
              [(ngModel)]="password" (ngModelChange)="clearServerError('password')" #passwordField="ngModel"
@@ -78,9 +78,9 @@
               [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
               class="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-slate-400 hover:text-text-main hover:bg-slate-100 transition-colors">
         @if (showPassword()) {
-          <svg lucideEyeOff class="w-4 h-4"></svg>
+          <svg [appIcon]="icons.EyeOff" class="w-4 h-4"></svg>
         } @else {
-          <svg lucideEye class="w-4 h-4"></svg>
+          <svg [appIcon]="icons.Eye" class="w-4 h-4"></svg>
         }
       </button>
     </div>
@@ -93,7 +93,7 @@
          [class.text-text-sub]="password.length < minPasswordLength && !(passwordField.touched || form.submitted)">
         <span class="w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300"
               [class]="password.length >= minPasswordLength ? 'bg-status-success text-white scale-100' : 'bg-slate-200 text-transparent scale-90'">
-          <svg lucideCheck class="w-3 h-3"></svg>
+          <svg [appIcon]="icons.Check" class="w-3 h-3"></svg>
         </span>
         At least {{ minPasswordLength }} characters
       </p>
@@ -102,7 +102,7 @@
 
   <button type="submit" class="btn-primary w-full py-3" [disabled]="submitting()">
     @if (submitting()) {
-      <svg lucideLoaderCircle class="w-4 h-4 animate-spin"></svg>
+      <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg>
       Creating account...
     } @else {
       Create account

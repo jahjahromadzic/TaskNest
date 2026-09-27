@@ -13,8 +13,7 @@ export const routes: Routes = [
   {
     path: 'tasks/:id',
     title: 'Task · TaskNest',
-    loadComponent: placeholder,
-    data: { heading: 'Task details', phase: 2 },
+    loadComponent: () => import('./pages/task-detail/task-detail').then((m) => m.TaskDetailPage),
   },
   {
     path: '',

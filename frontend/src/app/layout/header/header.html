@@ -2,7 +2,7 @@
   <div class="w-full max-w-7xl mx-auto flex items-center justify-between gap-4">
     <a routerLink="/tasks" class="group flex items-center gap-3">
       <span class="bg-gradient-to-br from-brand to-teal-500 text-white p-2 rounded-lg shadow-subtle transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105">
-        <svg lucideSquareCheck class="w-5 h-5"></svg>
+        <svg [appIcon]="icons.SquareCheck" class="w-5 h-5"></svg>
       </span>
       <span class="text-xl font-bold tracking-tight flex items-center gap-1.5">
         TaskNest
@@ -13,10 +13,10 @@
     @if (authService.user$ | async; as user) {
       <div class="flex items-center gap-1 sm:gap-2">
         <a routerLink="/messages" routerLinkActive="!text-brand bg-brand-50" class="icon-btn hidden sm:inline-flex" title="Messages">
-          <svg lucideMessageSquare class="w-5 h-5"></svg>
+          <svg [appIcon]="icons.MessageSquare" class="w-5 h-5"></svg>
         </a>
         <a routerLink="/notifications" routerLinkActive="!text-brand bg-brand-50" class="icon-btn hidden sm:inline-flex" title="Notifications">
-          <svg lucideBell class="w-5 h-5"></svg>
+          <svg [appIcon]="icons.Bell" class="w-5 h-5"></svg>
         </a>
 
         <div class="relative sm:pl-2 sm:ml-1 sm:border-l border-slate-200">
@@ -31,7 +31,7 @@
                 {{ user.roles.includes('TASKER') ? 'Client & tasker' : 'Client' }}
               </span>
             </span>
-            <svg lucideChevronDown class="hidden sm:block w-4 h-4 text-slate-400 transition-transform duration-200" [class.rotate-180]="menuOpen()"></svg>
+            <svg [appIcon]="icons.ChevronDown" class="hidden sm:block w-4 h-4 text-slate-400 transition-transform duration-200" [class.rotate-180]="menuOpen()"></svg>
           </button>
 
           @if (menuOpen()) {
@@ -43,23 +43,23 @@
               </div>
               <a routerLink="/my-tasks" (click)="closeMenu()" role="menuitem"
                  class="px-3 py-2 hover:bg-slate-50 flex items-center gap-2.5 transition-colors">
-                <svg lucideListTodo class="w-4 h-4 text-slate-400"></svg> My tasks
+                <svg [appIcon]="icons.ListTodo" class="w-4 h-4 text-slate-400"></svg> My tasks
               </a>
               @if (user.roles.includes('TASKER')) {
                 <a routerLink="/tasker" (click)="closeMenu()" role="menuitem"
                    class="px-3 py-2 hover:bg-slate-50 flex items-center gap-2.5 transition-colors">
-                  <svg lucideBriefcase class="w-4 h-4 text-slate-400"></svg> Tasker dashboard
+                  <svg [appIcon]="icons.Briefcase" class="w-4 h-4 text-slate-400"></svg> Tasker dashboard
                 </a>
               }
               @if (user.roles.includes('ADMIN')) {
                 <a routerLink="/admin" (click)="closeMenu()" role="menuitem"
                    class="px-3 py-2 text-brand font-medium hover:bg-brand-50 flex items-center gap-2.5 transition-colors border-t border-slate-100 mt-1">
-                  <svg lucideShield class="w-4 h-4"></svg> Admin
+                  <svg [appIcon]="icons.Shield" class="w-4 h-4"></svg> Admin
                 </a>
               }
               <button type="button" (click)="logout()" role="menuitem"
                       class="w-full px-3 py-2 text-status-error hover:bg-red-50 flex items-center gap-2.5 transition-colors border-t border-slate-100 mt-1">
-                <svg lucideLogOut class="w-4 h-4"></svg> Log out
+                <svg [appIcon]="icons.LogOut" class="w-4 h-4"></svg> Log out
               </button>
             </div>
           }

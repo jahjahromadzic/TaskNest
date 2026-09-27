@@ -2,16 +2,19 @@ import { Component, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
-import { LucideSquareCheck } from '@lucide/angular';
+import { SquareCheck } from 'lucide';
+import { Icon } from '../../components/icon/icon';
 
 type AuthMode = 'login' | 'register';
 
 @Component({
   selector: 'app-auth-layout',
-  imports: [RouterLink, RouterOutlet, LucideSquareCheck],
+  imports: [Icon, RouterLink, RouterOutlet],
   templateUrl: './auth-layout.html',
 })
 export class AuthLayout {
+  protected readonly icons = { SquareCheck };
+
   readonly mode: Signal<AuthMode>;
 
   constructor(

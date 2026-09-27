@@ -19,5 +19,6 @@
     <include file="db/changelog/changes/012-tasker-withdrawals.xml"/>
     <include file="db/changelog/changes/013-task-assigned-at.xml"/>
     <include file="db/changelog/changes/014-refresh-token-hash.xml"/>
+    <include file="db/changelog/changes/015-more-categories.xml"/>
 
 </databaseChangeLog>

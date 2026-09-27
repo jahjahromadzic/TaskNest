@@ -293,6 +293,7 @@ class TaskServiceTest {
             assertThat(response.id()).isEqualTo(TASK_ID);
             assertThat(response.status()).isEqualTo(TaskStatus.PUBLISHED);
             assertThat(response.clientName()).isEqualTo("Amra Client");
+            assertThat(response.clientId()).isEqualTo(CLIENT_ID);
         }
 
         @Test

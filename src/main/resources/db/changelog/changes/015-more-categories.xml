@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="037-seed-more-categories" author="jahja">
+        <insert tableName="categories">
+            <column name="id" value="a1000000-0000-0000-0000-000000000007"/>
+            <column name="name" value="Keramicarski radovi"/>
+            <column name="description" value="Postavljanje i popravka plocica"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+        <insert tableName="categories">
+            <column name="id" value="a1000000-0000-0000-0000-000000000008"/>
+            <column name="name" value="Stolarski radovi"/>
+            <column name="description" value="Popravka vrata, prozora i drvenog namjestaja"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+        <insert tableName="categories">
+            <column name="id" value="a1000000-0000-0000-0000-000000000009"/>
+            <column name="name" value="Klima uredjaji"/>
+            <column name="description" value="Ugradnja, servis i ciscenje klima uredjaja"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+        <insert tableName="categories">
+            <column name="id" value="a1000000-0000-0000-0000-00000000000a"/>
+            <column name="name" value="Grijanje"/>
+            <column name="description" value="Radijatori, kotlovi i podno grijanje"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+        <insert tableName="categories">
+            <column name="id" value="a1000000-0000-0000-0000-00000000000b"/>
+            <column name="name" value="Popravka kucanskih aparata"/>
+            <column name="description" value="Ves masine, frizideri, sporeti i sudomasine"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+        <insert tableName="categories">
+            <column name="id" value="a1000000-0000-0000-0000-00000000000c"/>
+            <column name="name" value="Bravarski radovi"/>
+            <column name="description" value="Brave, cilindri i otvaranje zakljucanih vrata"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+        <insert tableName="categories">
+            <column name="id" value="a1000000-0000-0000-0000-00000000000d"/>
+            <column name="name" value="Vrtlarstvo"/>
+            <column name="description" value="Kosenje trave, orezivanje i uredjenje dvorista"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+        <insert tableName="categories">
+            <column name="id" value="a1000000-0000-0000-0000-00000000000e"/>
+            <column name="name" value="Racunarska pomoc"/>
+            <column name="description" value="Podesavanje racunara, interneta i pametnih uredjaja"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

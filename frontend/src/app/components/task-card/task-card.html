@@ -15,15 +15,15 @@
 
       <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500">
         <span class="flex items-center gap-1 font-medium text-text-main">
-          <svg lucideMapPin class="w-3.5 h-3.5 text-brand"></svg> {{ task.municipalityName }}
+          <svg [appIcon]="icons.MapPin" class="w-3.5 h-3.5 text-brand"></svg> {{ task.municipalityName }}
         </span>
         <span class="flex items-center gap-1">
-          <svg lucideClock class="w-3.5 h-3.5 text-slate-400"></svg> Posted {{ postedAgo }}
+          <svg [appIcon]="icons.Clock" class="w-3.5 h-3.5 text-slate-400"></svg> Posted {{ postedAgo }}
         </span>
         @if (daysLeft !== null) {
           <span class="flex items-center gap-1 px-2 py-0.5 rounded"
                 [class]="daysLeft <= 3 ? 'text-red-700 bg-red-50' : 'text-amber-700 bg-amber-50'">
-            <svg lucideHourglass class="w-3.5 h-3.5"></svg>
+            <svg [appIcon]="icons.Hourglass" class="w-3.5 h-3.5"></svg>
             {{ daysLeft === 0 ? 'Ends today' : daysLeft === 1 ? '1 day left' : daysLeft + ' days left' }}
           </span>
         }
@@ -38,7 +38,7 @@
       <span class="inline-flex items-center gap-1 text-xs font-semibold text-brand bg-brand-light/60 px-3 py-1.5 rounded-btn
                    transition-all duration-200 group-hover:bg-brand group-hover:text-white">
         View details
-        <svg lucideArrowRight class="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"></svg>
+        <svg [appIcon]="icons.ArrowRight" class="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"></svg>
       </span>
     </div>
   </div>

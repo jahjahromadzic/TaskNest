@@ -60,6 +60,14 @@ public class DemoDataSeeder {
     private static final UUID FURNITURE = UUID.fromString("a1000000-0000-0000-0000-000000000004");
     private static final UUID CLEANING = UUID.fromString("a1000000-0000-0000-0000-000000000005");
     private static final UUID PAINTING = UUID.fromString("a1000000-0000-0000-0000-000000000006");
+    private static final UUID TILING = UUID.fromString("a1000000-0000-0000-0000-000000000007");
+    private static final UUID CARPENTRY = UUID.fromString("a1000000-0000-0000-0000-000000000008");
+    private static final UUID AIR_CONDITIONING = UUID.fromString("a1000000-0000-0000-0000-000000000009");
+    private static final UUID HEATING = UUID.fromString("a1000000-0000-0000-0000-00000000000a");
+    private static final UUID APPLIANCES = UUID.fromString("a1000000-0000-0000-0000-00000000000b");
+    private static final UUID LOCKSMITH = UUID.fromString("a1000000-0000-0000-0000-00000000000c");
+    private static final UUID GARDENING = UUID.fromString("a1000000-0000-0000-0000-00000000000d");
+    private static final UUID COMPUTERS = UUID.fromString("a1000000-0000-0000-0000-00000000000e");
 
     private static final UUID CENTAR = UUID.fromString("b2000000-0000-0000-0000-000000000001");
     private static final UUID NOVO_SARAJEVO = UUID.fromString("b2000000-0000-0000-0000-000000000002");
@@ -146,21 +154,21 @@ public class DemoDataSeeder {
                 "Vodoinstalater i električar, 12 godina iskustva",
                 "Radim kvarove na vodi i struji po cijelom Sarajevu. Dolazim s alatom i rezervnim dijelovima, "
                         + "a na svaki posao dajem garanciju od šest mjeseci.",
-                List.of(PLUMBING, ELECTRICAL), List.of(CENTAR, STARI_GRAD, NOVO_SARAJEVO), true);
+                List.of(PLUMBING, ELECTRICAL, HEATING, APPLIANCES), List.of(CENTAR, STARI_GRAD, NOVO_SARAJEVO), true);
         User selma = tasker("selma", "Selma", "Karić",
                 "Čišćenje i krečenje bez stresa",
                 "Stan ostavljam čišći nego što sam ga zatekla. Za krečenje donosim folije i sve pokrivam, "
                         + "pa poslije nema mrlja po podu i namještaju.",
-                List.of(CLEANING, PAINTING), List.of(NOVI_GRAD, ILIDZA, NOVO_SARAJEVO, CENTAR), true);
+                List.of(CLEANING, PAINTING, GARDENING), List.of(NOVI_GRAD, ILIDZA, NOVO_SARAJEVO, CENTAR), true);
         User adnan = tasker("adnan", "Adnan", "Delić",
                 "Selidbe i montaža namještaja, imam kombi",
                 "Selim stanove i kancelarije, sklapam IKEA i drugi namještaj. Kombi od 12 m³ i pomoćnik "
                         + "za teže stvari su uključeni u cijenu.",
-                List.of(MOVING, FURNITURE), List.of(CENTAR, NOVO_SARAJEVO, NOVI_GRAD, STARI_GRAD, ILIDZA, VOGOSCA), false);
+                List.of(MOVING, FURNITURE, CARPENTRY, LOCKSMITH), List.of(CENTAR, NOVO_SARAJEVO, NOVI_GRAD, STARI_GRAD, ILIDZA, VOGOSCA), false);
         User tarik = tasker("tarik", "Tarik", "Hasanović",
                 "Mladi električar i moler",
                 "Završio sam elektrotehničku školu i radim sitne elektro i molerske poslove. Brz sam i povoljan.",
-                List.of(ELECTRICAL, PAINTING), List.of(VOGOSCA, NOVI_GRAD, CENTAR), false);
+                List.of(ELECTRICAL, PAINTING, AIR_CONDITIONING, COMPUTERS), List.of(VOGOSCA, NOVI_GRAD, CENTAR), false);
 
         seedOpenTasks(amra, emina, haris, emir, selma, adnan, tarik);
         seedAmraStory(amra, emir, selma, adnan);
@@ -250,6 +258,28 @@ public class DemoDataSeeder {
 
         published(amra, MOVING, VOGOSCA, "Iznošenje starog namještaja",
                 "Stari kauč, dva ormara i krevet treba iznijeti iz kuće i odvesti na deponiju.", null, 11 * 24);
+
+        published(haris, TILING, NOVO_SARAJEVO, "Postavljanje pločica u kupatilu",
+                "Kupatilo od 5 m², pločice i ljepilo su kupljeni. Treba skinuti stare pločice sa zida iznad kade.",
+                450, 30);
+
+        Task airConditioner = published(emina, AIR_CONDITIONING, CENTAR, "Servis i čišćenje klime prije ljeta",
+                "Dvije inverter klime, jedna u dnevnom boravku i jedna u spavaćoj sobi. Nisu servisirane dvije godine.",
+                60, 2 * 24);
+        offer(airConditioner, tarik, 55, "Čistim unutrašnju i vanjsku jedinicu i provjeravam plin.", OfferStatus.PENDING, 30);
+
+        Task washingMachine = published(haris, APPLIANCES, NOVI_GRAD, "Veš mašina ne izbacuje vodu",
+                "Poslije pranja voda ostaje u bubnju, na ekranu piše E21. Mašina je stara pet godina.", null, 26);
+        offer(washingMachine, emir, 50, "Najčešće je začepljena pumpa ili filter, popravak je isti dan.", OfferStatus.PENDING, 20);
+
+        published(emina, GARDENING, ILIDZA, "Košenje trave i orezivanje žive ograde",
+                "Dvorište od oko 300 m² i živa ograda dužine 20 metara. Otpad treba odvesti.", 80, 4 * 24);
+
+        published(amra, LOCKSMITH, STARI_GRAD, "Zamjena cilindra na ulaznim vratima",
+                "Ključ se teško okreće, želim novi sigurnosni cilindar s pet ključeva.", 50, 9);
+
+        published(haris, COMPUTERS, VOGOSCA, "Podešavanje WiFi rutera i printera",
+                "Novi ruter od operatera, signal ne dopire do spavaće sobe. Printer treba spojiti na mrežu.", 40, 6 * 24);
     }
 
     private void seedAmraStory(User amra, User emir, User selma, User adnan) {

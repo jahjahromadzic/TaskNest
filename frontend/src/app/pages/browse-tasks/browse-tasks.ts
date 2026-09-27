@@ -4,15 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { BehaviorSubject, Observable, catchError, combineLatest, map, of, shareReplay, startWith, switchMap } from 'rxjs';
 import {
-  LucideArrowUpDown,
-  LucideCircleAlert,
-  LucideLayoutGrid,
-  LucideMapPin,
-  LucidePlus,
-  LucideRotateCcw,
-  LucideSearchX,
-  LucideSlidersHorizontal,
-} from '@lucide/angular';
+  ArrowUpDown,
+  CircleAlert,
+  LayoutGrid,
+  MapPin,
+  Plus,
+  RotateCcw,
+  SearchX,
+  SlidersHorizontal,
+} from 'lucide';
+import { Icon } from '../../components/icon/icon';
 import { Category, Municipality, TaskPage } from '../../api/models';
 import { CategoryIcon } from '../../components/category-icon/category-icon';
 import { Pagination } from '../../components/pagination/pagination';
@@ -44,6 +45,7 @@ export function readFilters(params: ParamMap): TaskFilters {
 @Component({
   selector: 'app-browse-tasks',
   imports: [
+    Icon,
     AsyncPipe,
     FormsModule,
     RouterLink,
@@ -51,18 +53,21 @@ export function readFilters(params: ParamMap): TaskFilters {
     Pagination,
     Select,
     TaskCard,
-    LucideArrowUpDown,
-    LucideCircleAlert,
-    LucideLayoutGrid,
-    LucideMapPin,
-    LucidePlus,
-    LucideRotateCcw,
-    LucideSearchX,
-    LucideSlidersHorizontal,
   ],
   templateUrl: './browse-tasks.html',
 })
 export class BrowseTasks {
+  protected readonly icons = {
+    ArrowUpDown,
+    CircleAlert,
+    LayoutGrid,
+    MapPin,
+    Plus,
+    RotateCcw,
+    SearchX,
+    SlidersHorizontal,
+  };
+
   readonly sortOptions: SelectOption[] = Object.entries(TASK_SORTS).map(([value, sort]) => ({ value, label: sort.label }));
   readonly skeletonCards = [1, 2, 3];
 

@@ -1,6 +1,7 @@
 import { Component, ElementRef, HostListener, Input, forwardRef, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { LucideCheck, LucideChevronDown } from '@lucide/angular';
+import { Check, ChevronDown } from 'lucide';
+import { Icon } from '../icon/icon';
 
 export interface SelectOption {
   value: string;
@@ -11,12 +12,14 @@ let nextId = 0;
 
 @Component({
   selector: 'app-select',
-  imports: [LucideCheck, LucideChevronDown],
+  imports: [Icon],
   templateUrl: './select.html',
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => Select), multi: true }],
   host: { class: 'relative block' },
 })
 export class Select implements ControlValueAccessor {
+  protected readonly icons = { Check, ChevronDown };
+
   @Input() options: SelectOption[] = [];
   @Input() placeholder = 'Select';
   @Input() inputId = `app-select-${nextId++}`;

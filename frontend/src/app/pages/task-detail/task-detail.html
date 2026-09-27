@@ -1,0 +1,188 @@
+@if ({ state: state$ | async, user: user$ | async }; as vm) {
+  <div class="space-y-5">
+    <nav aria-label="Breadcrumb" class="flex items-center gap-1.5 text-sm text-text-sub min-w-0">
+      <a routerLink="/tasks" class="group inline-flex items-center gap-1 hover:text-brand transition-colors shrink-0">
+        <svg [appIcon]="icons.ArrowLeft" class="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5"></svg>
+        Browse tasks
+      </a>
+      @if (vm.state?.task; as task) {
+        <svg [appIcon]="icons.ChevronRight" class="w-4 h-4 text-slate-300 shrink-0"></svg>
+        <span class="text-text-main font-medium truncate">{{ task.title }}</span>
+      }
+    </nav>
+
+    @if (vm.state?.task; as task) {
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div class="lg:col-span-2 space-y-5">
+          <section class="bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-5 animate-fade-in">
+            <div class="space-y-3">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 bg-brand-50 text-brand border border-brand/20 px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  <app-category-icon [name]="task.categoryName" size="w-3 h-3" />
+                  {{ task.categoryName }}
+                </span>
+                <app-status-badge [status]="task.status" />
+              </div>
+              <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-balance">{{ task.title }}</h1>
+              <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-sub">
+                <span class="flex items-center gap-1 font-medium text-text-main">
+                  <svg [appIcon]="icons.MapPin" class="w-4 h-4 text-brand"></svg> {{ task.municipalityName }}
+                </span>
+                @if (task.publishedAt) {
+                  <span>Posted {{ timeAgo(task.publishedAt) }} by {{ task.clientName }}</span>
+                } @else {
+                  <span>Created {{ timeAgo(task.createdAt) }}</span>
+                }
+              </p>
+            </div>
+
+            <div class="pt-5 border-t border-slate-100">
+              @if (task.status === 'DRAFT') {
+                <div class="flex items-start gap-3 p-3.5 rounded-btn bg-slate-50 border border-slate-200 text-sm">
+                  <svg [appIcon]="icons.FileText" class="w-5 h-5 text-slate-500 shrink-0"></svg>
+                  <p><span class="font-semibold">This is a draft.</span> Only you can see it. Publish it to start receiving offers.</p>
+                </div>
+              } @else if (isStopped(task.status)) {
+                <div class="flex items-start gap-3 p-3.5 rounded-btn border text-sm"
+                     [class]="task.status === 'REMOVED' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-slate-50 border-slate-200 text-slate-700'">
+                  <svg [appIcon]="icons.Info" class="w-5 h-5 shrink-0"></svg>
+                  <p>
+                    @switch (task.status) {
+                      @case ('CANCELLED') { <span class="font-semibold">This task was cancelled</span> by the client and no longer takes offers. }
+                      @case ('EXPIRED') { <span class="font-semibold">This task expired</span> before anyone was chosen. }
+                      @default { <span class="font-semibold">This task was removed</span> because it broke the community rules. }
+                    }
+                  </p>
+                </div>
+              } @else {
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">Progress</p>
+                <app-task-timeline [task]="task" />
+              }
+            </div>
+          </section>
+
+          <section class="bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-3 animate-fade-in [animation-delay:80ms]">
+            <h2 class="font-semibold">About the job</h2>
+            @if (task.description) {
+              <p class="text-sm leading-relaxed text-text-main whitespace-pre-line">{{ task.description }}</p>
+            } @else {
+              <p class="text-sm text-text-sub italic">The client did not add a description.</p>
+            }
+          </section>
+        </div>
+
+        <aside class="space-y-4 lg:sticky lg:top-24 animate-fade-in [animation-delay:120ms]">
+          <section class="bg-white p-5 rounded-card border border-surface-border shadow-card space-y-4">
+            <div>
+              <span class="text-xs uppercase tracking-wide text-slate-400">Budget</span>
+              <p class="font-bold" [class]="task.budget == null ? 'text-xl text-slate-500' : 'text-3xl text-brand'">
+                {{ formatBudget(task.budget) }}
+              </p>
+              @if (task.budget == null) {
+                <p class="text-xs text-text-sub mt-0.5">The client is waiting for price offers.</p>
+              }
+            </div>
+
+            <dl class="divide-y divide-slate-100 text-sm border-t border-slate-100">
+              <div class="flex items-center justify-between gap-3 py-2.5">
+                <dt class="text-text-sub">Client</dt>
+                <dd class="flex items-center gap-2 font-medium">
+                  <span class="w-7 h-7 rounded-full bg-brand-light text-brand text-xs font-semibold flex items-center justify-center">
+                    {{ initials(task.clientName) }}
+                  </span>
+                  {{ task.clientName }}
+                  @if (isOwner(task, vm.user)) {
+                    <span class="text-[10px] font-semibold uppercase bg-brand text-white px-1.5 py-0.5 rounded">You</span>
+                  }
+                </dd>
+              </div>
+              @if (task.publishedAt) {
+                <div class="flex items-center justify-between gap-3 py-2.5">
+                  <dt class="text-text-sub">Published</dt>
+                  <dd class="font-medium">{{ formatDate(task.publishedAt) }}</dd>
+                </div>
+              }
+              @if (task.status === 'PUBLISHED' && daysLeft(task.expiresAt) !== null) {
+                <div class="flex items-center justify-between gap-3 py-2.5">
+                  <dt class="text-text-sub flex items-center gap-1.5">
+                    <svg [appIcon]="icons.CalendarClock" class="w-4 h-4"></svg> Offers close
+                  </dt>
+                  <dd class="font-semibold" [class]="daysLeft(task.expiresAt)! <= 3 ? 'text-status-error' : 'text-amber-700'">
+                    @switch (daysLeft(task.expiresAt)) {
+                      @case (0) { today }
+                      @case (1) { in 1 day }
+                      @default { in {{ daysLeft(task.expiresAt) }} days }
+                    }
+                  </dd>
+                </div>
+              }
+            </dl>
+
+            @if (isOwner(task, vm.user)) {
+              <div class="flex items-start gap-2.5 p-3 rounded-btn bg-brand-50 border border-brand/20 text-sm">
+                <svg [appIcon]="icons.UserRound" class="w-4 h-4 text-brand mt-0.5 shrink-0"></svg>
+                <p>You posted this task. Manage it from <a routerLink="/my-tasks" class="font-semibold text-brand hover:underline">My tasks</a>.</p>
+              </div>
+            } @else if (!vm.user && task.status === 'PUBLISHED') {
+              <a routerLink="/login" [queryParams]="{ returnUrl: taskUrl(task) }" class="btn-primary w-full">
+                <svg [appIcon]="icons.LogIn" class="w-4 h-4"></svg>
+                Log in to make an offer
+              </a>
+            }
+          </section>
+
+          <div class="grid grid-cols-2 gap-3">
+            <button type="button" (click)="share()" class="btn-ghost bg-white border border-surface-border shadow-subtle">
+              <svg [appIcon]="icons.Link" class="w-4 h-4"></svg> Copy link
+            </button>
+            <a routerLink="/tasks" [queryParams]="{ category: task.categoryId }"
+               class="btn-ghost bg-white border border-surface-border shadow-subtle">
+              <app-category-icon [name]="task.categoryName" size="w-4 h-4" /> Similar
+            </a>
+          </div>
+        </aside>
+      </div>
+    } @else if (vm.state?.notFound) {
+      <div class="bg-white p-10 rounded-card border border-surface-border shadow-subtle text-center space-y-3 max-w-lg mx-auto animate-slide-in">
+        <div class="mx-auto w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+          <svg [appIcon]="icons.SearchX" class="w-7 h-7"></svg>
+        </div>
+        <h1 class="text-xl font-semibold">This task is not available</h1>
+        <p class="text-sm text-text-sub">The link may be wrong, or the task is a draft that only its owner can see.</p>
+        <a routerLink="/tasks" class="btn-primary py-2">Browse other tasks</a>
+      </div>
+    } @else if (vm.state?.failed) {
+      <div role="alert" class="bg-white p-10 rounded-card border border-red-200 text-center space-y-3 max-w-lg mx-auto animate-fade-in">
+        <div class="mx-auto w-14 h-14 rounded-full bg-red-50 text-status-error flex items-center justify-center">
+          <svg [appIcon]="icons.CircleAlert" class="w-7 h-7"></svg>
+        </div>
+        <h1 class="text-xl font-semibold">Something went wrong</h1>
+        <p class="text-sm text-text-sub">We could not load this task. Check your connection and try again.</p>
+        <button type="button" (click)="retry()" class="btn-primary py-2">
+          <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> Try again
+        </button>
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" aria-hidden="true">
+        <div class="lg:col-span-2 space-y-5">
+          <div class="bg-white p-6 rounded-card border border-surface-border space-y-4">
+            <span class="skeleton block h-5 w-40 rounded-full"></span>
+            <span class="skeleton block h-8 w-3/4"></span>
+            <span class="skeleton block h-4 w-1/2"></span>
+            <span class="skeleton block h-16 w-full mt-6"></span>
+          </div>
+          <div class="bg-white p-6 rounded-card border border-surface-border space-y-3">
+            <span class="skeleton block h-5 w-32"></span>
+            <span class="skeleton block h-4 w-full"></span>
+            <span class="skeleton block h-4 w-5/6"></span>
+          </div>
+        </div>
+        <div class="bg-white p-5 rounded-card border border-surface-border space-y-3">
+          <span class="skeleton block h-3 w-16"></span>
+          <span class="skeleton block h-9 w-32"></span>
+          <span class="skeleton block h-24 w-full"></span>
+        </div>
+      </div>
+    }
+  </div>
+}

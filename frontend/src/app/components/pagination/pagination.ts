@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { LucideChevronLeft, LucideChevronRight } from '@lucide/angular';
+import { ChevronLeft, ChevronRight } from 'lucide';
+import { Icon } from '../icon/icon';
 
 export function visiblePages(current: number, total: number): (number | null)[] {
   const pages: (number | null)[] = [];
@@ -16,10 +17,12 @@ export function visiblePages(current: number, total: number): (number | null)[] 
 
 @Component({
   selector: 'app-pagination',
-  imports: [LucideChevronLeft, LucideChevronRight],
+  imports: [Icon],
   templateUrl: './pagination.html',
 })
 export class Pagination {
+  protected readonly icons = { ChevronLeft, ChevronRight };
+
   @Input({ required: true }) page = 0;
   @Input({ required: true }) totalPages = 0;
   @Output() pageChange = new EventEmitter<number>();

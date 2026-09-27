@@ -1,13 +1,16 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { LucideConstruction } from '@lucide/angular';
+import { Construction } from 'lucide';
+import { Icon } from '../../components/icon/icon';
 
 @Component({
   selector: 'app-placeholder',
-  imports: [LucideConstruction],
+  imports: [Icon],
   templateUrl: './placeholder.html',
 })
 export class Placeholder {
+  protected readonly icons = { Construction };
+
   readonly title: string;
   readonly phase: number;
 

@@ -1,7 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { LucideCircleAlert, LucideEye, LucideEyeOff, LucideLoaderCircle, LucideLock, LucideMail } from '@lucide/angular';
+import { CircleAlert, Eye, EyeOff, LoaderCircle, Lock, Mail } from 'lucide';
+import { Icon } from '../../components/icon/icon';
 import { AuthService } from '../../auth/auth.service';
 import { safeReturnUrl } from '../../auth/return-url';
 import { ApiError, readApiError } from '../../shared/api-error';
@@ -9,10 +10,12 @@ import { ToastService } from '../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, LucideCircleAlert, LucideEye, LucideEyeOff, LucideLoaderCircle, LucideLock, LucideMail],
+  imports: [Icon, FormsModule],
   templateUrl: './login.html',
 })
 export class Login {
+  protected readonly icons = { CircleAlert, Eye, EyeOff, LoaderCircle, Lock, Mail };
+
   email = '';
   password = '';
 

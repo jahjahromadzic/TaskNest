@@ -1,16 +1,8 @@
 import { Component, ElementRef, HostListener, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import {
-  LucideBell,
-  LucideBriefcase,
-  LucideChevronDown,
-  LucideListTodo,
-  LucideLogOut,
-  LucideMessageSquare,
-  LucideShield,
-  LucideSquareCheck,
-} from '@lucide/angular';
+import { Bell, Briefcase, ChevronDown, ListTodo, LogOut, MessageSquare, Shield, SquareCheck } from 'lucide';
+import { Icon } from '../../components/icon/icon';
 import { AuthService } from '../../auth/auth.service';
 import { CurrentUser } from '../../auth/current-user';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -18,21 +10,16 @@ import { ToastService } from '../../shared/toast/toast.service';
 @Component({
   selector: 'app-header',
   imports: [
+    Icon,
     AsyncPipe,
     RouterLink,
     RouterLinkActive,
-    LucideBell,
-    LucideBriefcase,
-    LucideChevronDown,
-    LucideListTodo,
-    LucideLogOut,
-    LucideMessageSquare,
-    LucideShield,
-    LucideSquareCheck,
   ],
   templateUrl: './header.html',
 })
 export class Header {
+  protected readonly icons = { Bell, Briefcase, ChevronDown, ListTodo, LogOut, MessageSquare, Shield, SquareCheck };
+
   readonly menuOpen = signal(false);
 
   constructor(

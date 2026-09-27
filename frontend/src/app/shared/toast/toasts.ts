@@ -1,12 +1,15 @@
 import { Component } from '@angular/core';
-import { LucideCircleCheck, LucideCircleAlert, LucideInfo, LucideX } from '@lucide/angular';
+import { CircleCheck, CircleAlert, Info, X } from 'lucide';
+import { Icon } from '../../components/icon/icon';
 import { ToastService } from './toast.service';
 
 @Component({
   selector: 'app-toasts',
-  imports: [LucideCircleCheck, LucideCircleAlert, LucideInfo, LucideX],
+  imports: [Icon],
   templateUrl: './toasts.html',
 })
 export class Toasts {
+  protected readonly icons = { CircleCheck, CircleAlert, Info, X };
+
   constructor(protected toastService: ToastService) {}
 }

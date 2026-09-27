@@ -1,10 +1,13 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { LucideMapPinOff } from '@lucide/angular';
+import { MapPinOff } from 'lucide';
+import { Icon } from '../../components/icon/icon';
 
 @Component({
   selector: 'app-not-found',
-  imports: [RouterLink, LucideMapPinOff],
+  imports: [Icon, RouterLink],
   templateUrl: './not-found.html',
 })
-export class NotFound {}
+export class NotFound {
+  protected readonly icons = { MapPinOff };
+}

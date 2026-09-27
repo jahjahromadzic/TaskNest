@@ -4,7 +4,7 @@
         class="form-input flex items-center justify-between gap-2 text-left cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
         [class]="compact ? 'py-1.5 font-medium' : 'py-2'" [class.form-input-open]="open()">
   <span class="truncate" [class.text-slate-400]="!selectedLabel">{{ selectedLabel ?? placeholder }}</span>
-  <svg lucideChevronDown class="w-4 h-4 shrink-0 text-slate-400 transition-transform duration-200" [class.rotate-180]="open()"></svg>
+  <svg [appIcon]="icons.ChevronDown" class="w-4 h-4 shrink-0 text-slate-400 transition-transform duration-200" [class.rotate-180]="open()"></svg>
 </button>
 
 @if (open()) {
@@ -20,7 +20,7 @@
           [class.font-semibold]="option.value === value()">
         <span class="truncate">{{ option.label }}</span>
         @if (option.value === value()) {
-          <svg lucideCheck class="w-4 h-4 shrink-0 animate-fade-in"></svg>
+          <svg [appIcon]="icons.Check" class="w-4 h-4 shrink-0 animate-fade-in"></svg>
         }
       </li>
     }

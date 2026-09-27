@@ -2,7 +2,7 @@
   <nav aria-label="Pages" class="flex items-center justify-center gap-1.5 pt-2">
     <button type="button" (click)="go(page - 1)" [disabled]="page === 0" aria-label="Previous page"
             class="icon-btn border border-surface-border bg-white disabled:opacity-40 disabled:pointer-events-none">
-      <svg lucideChevronLeft class="w-4 h-4"></svg>
+      <svg [appIcon]="icons.ChevronLeft" class="w-4 h-4"></svg>
     </button>
 
     @for (item of pages; track $index) {
@@ -21,7 +21,7 @@
 
     <button type="button" (click)="go(page + 1)" [disabled]="page >= totalPages - 1" aria-label="Next page"
             class="icon-btn border border-surface-border bg-white disabled:opacity-40 disabled:pointer-events-none">
-      <svg lucideChevronRight class="w-4 h-4"></svg>
+      <svg [appIcon]="icons.ChevronRight" class="w-4 h-4"></svg>
     </button>
   </nav>
 }
