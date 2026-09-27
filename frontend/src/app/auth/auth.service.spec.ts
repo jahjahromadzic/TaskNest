@@ -83,4 +83,70 @@ describe('AuthService', () => {
     http.expectOne('/api/auth/logout').flush(null, { status: 500, statusText: 'Server Error' });
     expect(completed).toBe(true);
   });
+
+  describe('refresh', () => {
+    const settle = () => new Promise((resolve) => setTimeout(resolve));
+
+    it('starts a session from the refresh cookie without sending a body', async () => {
+      service.refresh().subscribe();
+
+      const request = http.expectOne('/api/auth/refresh');
+      expect(request.request.method).toBe('POST');
+      expect(request.request.body).toBeNull();
+      request.flush(response);
+      await settle();
+
+      expect(service.currentUser?.email).toBe('amra@test.ba');
+      expect(service.token).toBe('access-token');
+    });
+
+    it('sends only one request when several callers refresh at the same time', async () => {
+      const results: string[] = [];
+      service.refresh().subscribe((user) => results.push(user.email));
+      service.refresh().subscribe((user) => results.push(user.email));
+
+      http.expectOne('/api/auth/refresh').flush(response);
+      await settle();
+
+      expect(results).toEqual(['amra@test.ba', 'amra@test.ba']);
+    });
+
+    it('ends the session when the server rejects the refresh cookie', async () => {
+      service.login({ email: 'amra@test.ba', password: 'password123' }).subscribe();
+      http.expectOne('/api/auth/login').flush(response);
+
+      service.refresh().subscribe({ error: () => undefined });
+      http
+        .expectOne('/api/auth/refresh')
+        .flush({ detail: 'Refresh token has already been used' }, { status: 401, statusText: 'Unauthorized' });
+      await settle();
+
+      expect(service.currentUser).toBeNull();
+      expect(service.token).toBeNull();
+    });
+
+    it('keeps the session when the server cannot be reached', async () => {
+      service.login({ email: 'amra@test.ba', password: 'password123' }).subscribe();
+      http.expectOne('/api/auth/login').flush(response);
+
+      service.refresh().subscribe({ error: () => undefined });
+      http.expectOne('/api/auth/refresh').error(new ProgressEvent('error'), { status: 0 });
+      await settle();
+
+      expect(service.currentUser?.email).toBe('amra@test.ba');
+    });
+
+    it('lets the app start as a visitor when there is no session to restore', async () => {
+      let done = false;
+      service.restoreSession().subscribe({ complete: () => (done = true) });
+
+      http
+        .expectOne('/api/auth/refresh')
+        .flush({ detail: 'Refresh token is missing' }, { status: 401, statusText: 'Unauthorized' });
+      await settle();
+
+      expect(done).toBe(true);
+      expect(service.currentUser).toBeNull();
+    });
+  });
 });

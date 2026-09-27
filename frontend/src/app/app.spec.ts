@@ -28,9 +28,9 @@ describe('App routes', () => {
   });
 
   it('shows the placeholder with its heading for a page not built yet', async () => {
-    await harness.navigateByUrl('/messages');
-    expect(harness.routeNativeElement?.textContent).toContain('Messages');
-    expect(harness.routeNativeElement?.textContent).toContain('phase 4');
+    await harness.navigateByUrl('/tasks/123');
+    expect(harness.routeNativeElement?.textContent).toContain('Task details');
+    expect(harness.routeNativeElement?.textContent).toContain('phase 2');
   });
 
   it('shows the not found page for an unknown address', async () => {
