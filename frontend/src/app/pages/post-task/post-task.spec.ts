@@ -36,7 +36,7 @@ describe('Post a task page', () => {
 
     harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/tasks/new');
-    http.expectOne('/api/categories').flush([{ id: 'c1', name: 'Vodoinstalacije' }]);
+    http.expectOne('/api/categories').flush([{ id: 'c1', name: 'Plumbing' }]);
     http.expectOne('/api/municipalities').flush([{ id: 'm1', name: 'Centar Sarajevo' }]);
     await harness.fixture.whenStable();
   });
@@ -84,7 +84,7 @@ describe('Post a task page', () => {
 
     const preview = page().querySelector('aside app-task-card')!.textContent;
     expect(preview).toContain('Fix the sink');
-    expect(preview).toContain('Vodoinstalacije');
+    expect(preview).toContain('Plumbing');
     expect(preview).toContain('60 KM');
   });
 

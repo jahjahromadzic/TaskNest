@@ -63,12 +63,14 @@ export class PostTask {
   }
 
   preview(categories: Category[] | null, municipalities: Municipality[] | null): TaskSummary {
+    const category = categories?.find((candidate) => candidate.id === this.categoryId);
     return {
       id: 'preview',
       title: this.title.trim() || 'Your task title',
       budget: this.budget ?? undefined,
       status: 'PUBLISHED',
-      categoryName: categories?.find((category) => category.id === this.categoryId)?.name ?? 'Category',
+      categorySlug: category?.slug,
+      categoryName: category?.name ?? 'Category',
       municipalityName: municipalities?.find((item) => item.id === this.municipalityId)?.name ?? 'Municipality',
       publishedAt: this.previewPublished,
       expiresAt: this.previewExpiry,

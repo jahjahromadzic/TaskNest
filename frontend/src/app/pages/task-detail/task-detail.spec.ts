@@ -19,7 +19,7 @@ describe('Task details page', () => {
     budget: 80,
     status: 'PUBLISHED',
     categoryId: 'c1',
-    categoryName: 'Vodoinstalacije',
+    categoryName: 'Plumbing',
     municipalityName: 'Centar Sarajevo',
     clientId: 'owner-1',
     clientName: 'Amra Hodžić',

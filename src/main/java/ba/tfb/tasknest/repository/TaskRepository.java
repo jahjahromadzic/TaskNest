@@ -36,7 +36,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("""
         select new ba.tfb.tasknest.dto.task.TaskSummaryResponse(
             t.id, t.title, t.budget, t.status,
-            c.name, m.name, t.publishedAt, t.expiresAt)
+            c.slug, c.name, m.name, t.publishedAt, t.expiresAt)
         from Task t
         join t.category c
         join t.municipality m
@@ -54,7 +54,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("""
         select new ba.tfb.tasknest.dto.task.TaskSummaryResponse(
             t.id, t.title, t.budget, t.status,
-            c.name, m.name, t.publishedAt, t.expiresAt)
+            c.slug, c.name, m.name, t.publishedAt, t.expiresAt)
         from Task t
         join t.category c
         join t.municipality m
@@ -78,7 +78,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("""
         select new ba.tfb.tasknest.dto.task.TaskSummaryResponse(
             t.id, t.title, t.budget, t.status,
-            c.name, m.name, t.publishedAt, t.expiresAt)
+            c.slug, c.name, m.name, t.publishedAt, t.expiresAt)
         from Task t
         join t.category c
         join t.municipality m
@@ -100,7 +100,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("""
         select new ba.tfb.tasknest.dto.task.TaskSummaryResponse(
             t.id, t.title, t.budget, t.status,
-            c.name, m.name, t.publishedAt, t.expiresAt)
+            c.slug, c.name, m.name, t.publishedAt, t.expiresAt)
         from Task t
         join t.category c
         join t.municipality m

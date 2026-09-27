@@ -1,38 +1,39 @@
 import { TestBed } from '@angular/core/testing';
+import { Tag } from 'lucide';
 import { CategoryIcon } from './category-icon';
 
 describe('CategoryIcon', () => {
-  const seededNames = [
-    'Vodoinstalacije',
-    'Elektroinstalacije',
-    'Selidbe',
-    'Montaza namjestaja',
-    'Ciscenje',
-    'Molerski radovi',
-    'Keramicarski radovi',
-    'Stolarski radovi',
-    'Klima uredjaji',
-    'Grijanje',
-    'Popravka kucanskih aparata',
-    'Bravarski radovi',
-    'Vrtlarstvo',
-    'Racunarska pomoc',
+  const seededSlugs = [
+    'plumbing',
+    'electrical',
+    'moving',
+    'furniture-assembly',
+    'cleaning',
+    'painting',
+    'tiling',
+    'carpentry',
+    'air-conditioning',
+    'heating',
+    'appliance-repair',
+    'locksmith',
+    'gardening',
+    'computer-help',
   ];
 
-  function keyFor(name: string): string {
+  function iconFor(slug: string) {
     const icon = TestBed.createComponent(CategoryIcon);
-    icon.componentRef.setInput('name', name);
-    return icon.componentInstance.key;
+    icon.componentRef.setInput('slug', slug);
+    return icon.componentInstance.icon;
   }
 
   it('gives every seeded category its own icon', () => {
-    const keys = seededNames.map(keyFor);
+    const icons = seededSlugs.map(iconFor);
 
-    expect(keys).not.toContain('other');
-    expect(new Set(keys).size).toBe(seededNames.length);
+    expect(icons).not.toContain(Tag);
+    expect(new Set(icons).size).toBe(seededSlugs.length);
   });
 
   it('falls back to a tag for a category it does not know', () => {
-    expect(keyFor('Nesto novo')).toBe('other');
+    expect(iconFor('something-new')).toBe(Tag);
   });
 });

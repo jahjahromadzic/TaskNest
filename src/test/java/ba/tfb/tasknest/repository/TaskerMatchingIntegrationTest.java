@@ -37,6 +37,7 @@ class TaskerMatchingIntegrationTest extends AbstractIntegrationTest {
     void setUp() {
         category = new Category();
         category.setName("Test kategorija " + UUID.randomUUID());
+        category.setSlug("test-" + UUID.randomUUID());
         category.setActive(true);
         category = categoryRepository.saveAndFlush(category);
 
@@ -88,6 +89,7 @@ class TaskerMatchingIntegrationTest extends AbstractIntegrationTest {
         // Arrange
         Category otherCategory = new Category();
         otherCategory.setName("Druga " + UUID.randomUUID());
+        otherCategory.setSlug("other-" + UUID.randomUUID());
         otherCategory.setActive(true);
         otherCategory = categoryRepository.saveAndFlush(otherCategory);
 

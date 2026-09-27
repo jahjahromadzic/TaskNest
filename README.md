@@ -53,7 +53,8 @@ single-page application that uses it.
   passes.
 - **Administration** — suspension, tasker verification and task removal, with
   the first administrator promoted from configuration.
-- **Reference data** — categories and municipalities exposed as public endpoints.
+- **Reference data** — fourteen categories, each with a stable `slug`, and the
+  municipalities under their local names, exposed as public endpoints.
 
 ## Tech stack
 
@@ -62,7 +63,7 @@ single-page application that uses it.
 | Language | Java 21 |
 | Framework | Spring Boot 4.1.1 |
 | Database | PostgreSQL 17 |
-| Migrations | Liquibase (37 changesets, 16 tables) |
+| Migrations | Liquibase (41 changesets, 16 tables) |
 | Persistence | Spring Data JPA, Hibernate 7 (`ddl-auto: validate`) |
 | Security | Spring Security, JWT (jjwt 0.12.6) |
 | Messaging | RabbitMQ |
@@ -632,13 +633,13 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **296 tests** and requires no manual setup — Testcontainers
+The suite contains **298 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 137 | Service business rules and the task state machine |
-| Integration | 159 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, demo data |
+| Integration | 161 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, demo data |
 
 The frontend has its own suite of **86 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the

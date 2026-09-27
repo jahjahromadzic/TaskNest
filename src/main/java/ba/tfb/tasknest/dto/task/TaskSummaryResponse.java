@@ -11,6 +11,7 @@ public record TaskSummaryResponse(
         String title,
         BigDecimal budget,
         TaskStatus status,
+        String categorySlug,
         String categoryName,
         String municipalityName,
         LocalDateTime publishedAt,

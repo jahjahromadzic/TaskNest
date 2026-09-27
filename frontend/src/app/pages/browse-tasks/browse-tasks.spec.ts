@@ -17,7 +17,7 @@ describe('Browse tasks page', () => {
     title: 'Fix the kitchen sink',
     budget: 80,
     status: 'PUBLISHED',
-    categoryName: 'Vodoinstalacije',
+    categoryName: 'Plumbing',
     municipalityName: 'Centar Sarajevo',
     publishedAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 5 * 86_400_000).toISOString(),
@@ -38,7 +38,7 @@ describe('Browse tasks page', () => {
 
   async function open(url: string): Promise<void> {
     await harness.navigateByUrl(url);
-    http.expectOne('/api/categories').flush([{ id: 'c1', name: 'Vodoinstalacije' }]);
+    http.expectOne('/api/categories').flush([{ id: 'c1', name: 'Plumbing' }]);
     http.expectOne('/api/municipalities').flush([{ id: 'm1', name: 'Centar Sarajevo' }]);
     await harness.fixture.whenStable();
   }
@@ -82,7 +82,7 @@ describe('Browse tasks page', () => {
     await harness.fixture.whenStable();
 
     const button = Array.from<HTMLButtonElement>(harness.routeNativeElement!.querySelectorAll('.category-option'))
-      .find((option) => option.textContent?.includes('Vodoinstalacije'))!;
+      .find((option) => option.textContent?.includes('Plumbing'))!;
     button.click();
     await harness.fixture.whenStable();
 

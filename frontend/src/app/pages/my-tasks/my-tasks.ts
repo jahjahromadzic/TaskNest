@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { BehaviorSubject, Observable, catchError, combineLatest, map, of, shareReplay, startWith, switchMap } from 'rxjs';
@@ -81,6 +81,8 @@ export class MyTasks {
 
   private readonly retry$ = new BehaviorSubject<void>(undefined);
 
+  @ViewChild('list') private list?: ElementRef<HTMLElement>;
+
   constructor(
     private taskService: TaskService,
     private route: ActivatedRoute,
@@ -104,6 +106,7 @@ export class MyTasks {
 
   selectTab(tab: MyTasksTab): void {
     this.router.navigate([], { relativeTo: this.route, queryParams: { tab: tab.key === 'all' ? null : tab.key } });
+    this.scrollListToTop();
   }
 
   goToPage(page: number): void {
@@ -112,10 +115,17 @@ export class MyTasks {
       queryParams: { page: page > 0 ? page + 1 : null },
       queryParamsHandling: 'merge',
     });
-    window.scrollTo?.({ top: 0, behavior: 'smooth' });
+    this.scrollListToTop();
   }
 
   retry(): void {
     this.retry$.next();
+  }
+
+  private scrollListToTop(): void {
+    this.list?.nativeElement.scrollTo?.({ top: 0, behavior: 'smooth' });
+    if (window.scrollY > 0) {
+      window.scrollTo?.({ top: 0, behavior: 'smooth' });
+    }
   }
 }

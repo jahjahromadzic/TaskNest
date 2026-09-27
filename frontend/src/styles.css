@@ -177,7 +177,7 @@ body {
   }
 
   .category-tile {
-    @apply flex items-center gap-2 min-w-0 px-3 py-2.5 rounded-btn border border-slate-200 bg-slate-50
+    @apply flex items-center gap-2 min-w-0 px-3 py-2 rounded-btn border border-slate-200 bg-slate-50
       text-sm text-text-sub text-left transition-all duration-200
       hover:border-brand/40 hover:bg-white hover:text-text-main active:scale-[0.98]
       focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/20;

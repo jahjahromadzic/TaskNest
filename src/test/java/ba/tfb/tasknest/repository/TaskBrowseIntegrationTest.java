@@ -37,6 +37,7 @@ class TaskBrowseIntegrationTest extends AbstractIntegrationTest {
     void setUp() {
         category = new Category();
         category.setName("Browse kategorija " + UUID.randomUUID());
+        category.setSlug("browse-" + UUID.randomUUID());
         category.setActive(true);
         category = categoryRepository.saveAndFlush(category);
 

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="038-categories-add-slug" author="jahja">
+        <addColumn tableName="categories">
+            <column name="slug" type="VARCHAR(50)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="039-categories-in-english" author="jahja">
+        <update tableName="categories">
+            <column name="slug" value="plumbing"/>
+            <column name="name" value="Plumbing"/>
+            <column name="description" value="Leaking pipes, taps and water heaters"/>
+            <where>id = 'a1000000-0000-0000-0000-000000000001'</where>
+        </update>
+        <update tableName="categories">
+            <column name="slug" value="electrical"/>
+            <column name="name" value="Electrical work"/>
+            <column name="description" value="Sockets, switches, lighting and wiring"/>
+            <where>id = 'a1000000-0000-0000-0000-000000000002'</where>
+        </update>
+        <update tableName="categories">
+            <column name="slug" value="moving"/>
+            <column name="name" value="Moving"/>
+            <column name="description" value="Help with moving house and transport"/>
+            <where>id = 'a1000000-0000-0000-0000-000000000003'</where>
+        </update>
+        <update tableName="categories">
+            <column name="slug" value="furniture-assembly"/>
+            <column name="name" value="Furniture assembly"/>
+            <column name="description" value="Assembling and mounting furniture"/>
+            <where>id = 'a1000000-0000-0000-0000-000000000004'</where>
+        </update>
+        <update tableName="categories">
+            <column name="slug" value="cleaning"/>
+            <column name="name" value="Cleaning"/>
+            <column name="description" value="Cleaning homes and offices"/>
+            <where>id = 'a1000000-0000-0000-0000-000000000005'</where>
+        </update>
+        <update tableName="categories">
+            <column name="slug" value="painting"/>
+            <column name="name" value="Painting"/>
+            <column name="description" value="Painting walls and plastering"/>
+            <where>id = 'a1000000-0000-0000-0000-000000000006'</where>
+        </update>
+        <update tableName="categories">
+            <column name="slug" value="tiling"/>
+            <column name="name" value="Tiling"/>
+            <column name="description" value="Laying and repairing tiles"/>
+            <where>id = 'a1000000-0000-0000-0000-000000000007'</where>
+        </update>
+        <update tableName="categories">
+            <column name="slug" value="carpentry"/>
+            <column name="name" value="Carpentry"/>
+            <column name="description" value="Repairing doors, windows and wooden furniture"/>
+            <where>id = 'a1000000-0000-0000-0000-000000000008'</where>
+        </update>
+        <update tableName="categories">
+            <column name="slug" value="air-conditioning"/>
+            <column name="name" value="Air conditioning"/>
+            <column name="description" value="Installing, servicing and cleaning air conditioners"/>
+            <where>id = 'a1000000-0000-0000-0000-000000000009'</where>
+        </update>
+        <update tableName="categories">
+            <column name="slug" value="heating"/>
+            <column name="name" value="Heating"/>
+            <column name="description" value="Radiators, boilers and underfloor heating"/>
+            <where>id = 'a1000000-0000-0000-0000-00000000000a'</where>
+        </update>
+        <update tableName="categories">
+            <column name="slug" value="appliance-repair"/>
+            <column name="name" value="Appliance repair"/>
+            <column name="description" value="Washing machines, fridges, cookers and dishwashers"/>
+            <where>id = 'a1000000-0000-0000-0000-00000000000b'</where>
+        </update>
+        <update tableName="categories">
+            <column name="slug" value="locksmith"/>
+            <column name="name" value="Locksmith"/>
+            <column name="description" value="Locks, cylinders and opening locked doors"/>
+            <where>id = 'a1000000-0000-0000-0000-00000000000c'</where>
+        </update>
+        <update tableName="categories">
+            <column name="slug" value="gardening"/>
+            <column name="name" value="Gardening"/>
+            <column name="description" value="Mowing, pruning and tidying gardens"/>
+            <where>id = 'a1000000-0000-0000-0000-00000000000d'</where>
+        </update>
+        <update tableName="categories">
+            <column name="slug" value="computer-help"/>
+            <column name="name" value="Computer help"/>
+            <column name="description" value="Setting up computers, internet and smart devices"/>
+            <where>id = 'a1000000-0000-0000-0000-00000000000e'</where>
+        </update>
+    </changeSet>
+
+    <changeSet id="040-categories-slug-required" author="jahja">
+        <addNotNullConstraint tableName="categories" columnName="slug" columnDataType="VARCHAR(50)"/>
+        <addUniqueConstraint tableName="categories" columnNames="slug" constraintName="uq_categories_slug"/>
+    </changeSet>
+
+    <changeSet id="041-municipality-names" author="jahja">
+        <update tableName="municipalities">
+            <column name="name" value="Novi Grad Sarajevo"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000003'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="name" value="Ilidža"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000005'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="name" value="Vogošća"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000006'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="region" value="Sarajevo Canton"/>
+            <where>region = 'Kanton Sarajevo'</where>
+        </update>
+    </changeSet>
+
+</databaseChangeLog>

@@ -20,5 +20,6 @@
     <include file="db/changelog/changes/013-task-assigned-at.xml"/>
     <include file="db/changelog/changes/014-refresh-token-hash.xml"/>
     <include file="db/changelog/changes/015-more-categories.xml"/>
+    <include file="db/changelog/changes/016-english-reference-data.xml"/>
 
 </databaseChangeLog>

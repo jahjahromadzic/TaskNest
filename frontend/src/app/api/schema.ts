@@ -723,6 +723,7 @@ export interface components {
             status?: "DRAFT" | "PUBLISHED" | "ASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CLOSED" | "CANCELLED" | "EXPIRED" | "REMOVED";
             /** Format: uuid */
             categoryId?: string;
+            categorySlug?: string;
             categoryName?: string;
             /** Format: uuid */
             municipalityId?: string;
@@ -894,6 +895,7 @@ export interface components {
             budget?: number;
             /** @enum {string} */
             status?: "DRAFT" | "PUBLISHED" | "ASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CLOSED" | "CANCELLED" | "EXPIRED" | "REMOVED";
+            categorySlug?: string;
             categoryName?: string;
             municipalityName?: string;
             /** Format: date-time */
@@ -967,6 +969,7 @@ export interface components {
         CategoryResponse: {
             /** Format: uuid */
             id?: string;
+            slug?: string;
             name?: string;
             description?: string;
         };

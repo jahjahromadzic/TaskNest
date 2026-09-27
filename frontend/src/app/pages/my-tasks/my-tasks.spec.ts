@@ -12,7 +12,7 @@ describe('My tasks page', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
 
-  const draft: TaskSummary = { id: 't1', title: 'Lay the laminate', status: 'DRAFT', categoryName: 'Montaza' };
+  const draft: TaskSummary = { id: 't1', title: 'Lay the laminate', status: 'DRAFT', categoryName: 'Furniture assembly' };
 
   beforeAll(async () => {
     await import('./my-tasks');

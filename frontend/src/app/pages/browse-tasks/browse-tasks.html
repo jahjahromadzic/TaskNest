@@ -60,7 +60,7 @@
               @for (category of vm.categories; track category.id) {
                 <button type="button" (click)="setCategory(category.id ?? null)"
                         class="category-option" [class.active]="category.id === vm.filters?.categoryId">
-                  <app-category-icon [name]="category.name" size="w-4 h-4" />
+                  <app-category-icon [slug]="category.slug" size="w-4 h-4" />
                   {{ category.name }}
                 </button>
               }

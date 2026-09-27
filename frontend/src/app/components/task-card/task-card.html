@@ -6,7 +6,7 @@
     <div class="space-y-2 flex-1 min-w-0">
       <div class="flex flex-wrap items-center gap-2">
         <span class="inline-flex items-center gap-1.5 bg-brand-50 text-brand border border-brand/20 px-2.5 py-0.5 rounded-full text-xs font-medium">
-          <app-category-icon [name]="task.categoryName" size="w-3 h-3" />
+          <app-category-icon [slug]="task.categorySlug" size="w-3 h-3" />
           {{ task.categoryName }}
         </span>
         @if (showStatus) {

@@ -25,6 +25,9 @@ public class Category {
     @UuidGenerator(style = UuidGenerator.Style.TIME)
     private UUID id;
 
+    @Column(name = "slug", nullable = false, unique = true, length = 50)
+    private String slug;
+
     @Column(name = "name", nullable = false, unique = true, length = 100)
     private String name;
 

@@ -1,6 +1,6 @@
 @if ({ query: query$ | async, counts: counts$ | async, state: state$ | async }; as vm) {
-  <div class="space-y-5 animate-fade-in">
-    <div class="relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle">
+  <div class="flex flex-col gap-5 animate-fade-in lg:h-[calc(100dvh-7rem)]">
+    <div class="relative shrink-0 overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle">
       <div class="absolute -right-16 -top-20 w-64 h-64 rounded-full bg-brand-light/50 blur-3xl pointer-events-none" aria-hidden="true"></div>
       <div class="relative">
         <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">My tasks</h1>
@@ -13,7 +13,7 @@
     </div>
 
     <div role="tablist" aria-label="Task groups"
-         class="flex gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto [scrollbar-width:none] w-full sm:w-fit">
+         class="shrink-0 flex gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto [scrollbar-width:none] w-full sm:w-fit">
       @for (tab of tabs; track tab.key) {
         <button type="button" role="tab" (click)="selectTab(tab)" [attr.aria-selected]="tab.key === vm.query?.tab?.key"
                 class="relative shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
@@ -33,48 +33,50 @@
       }
     </div>
 
-    @if (vm.state?.result; as result) {
-      <div class="space-y-4">
-        @for (task of result.content; track task.id; let i = $index) {
-          <app-task-card [task]="task" [showStatus]="true" class="block animate-fade-in" [style.animation-delay.ms]="i * 40" />
-        } @empty {
-          <div class="bg-white p-10 rounded-card border border-dashed border-slate-300 text-center space-y-3 animate-fade-in">
-            <div class="mx-auto w-14 h-14 rounded-full bg-brand-50 text-brand flex items-center justify-center">
-              <svg [appIcon]="icons.ClipboardList" class="w-7 h-7"></svg>
+    <div #list class="space-y-4 lg:flex-1 lg:min-h-0 lg:overflow-y-auto scroll-area lg:-mx-1 lg:px-1 lg:-mt-1 lg:pt-1 lg:pb-2">
+      @if (vm.state?.result; as result) {
+        <div class="space-y-4">
+          @for (task of result.content; track task.id; let i = $index) {
+            <app-task-card [task]="task" [showStatus]="true" class="block animate-fade-in" [style.animation-delay.ms]="i * 40" />
+          } @empty {
+            <div class="bg-white p-10 rounded-card border border-dashed border-slate-300 text-center space-y-3 animate-fade-in">
+              <div class="mx-auto w-14 h-14 rounded-full bg-brand-50 text-brand flex items-center justify-center">
+                <svg [appIcon]="icons.ClipboardList" class="w-7 h-7"></svg>
+              </div>
+              <h2 class="text-lg font-semibold">Nothing here</h2>
+              <p class="text-sm text-text-sub">{{ vm.query?.tab?.empty }}</p>
+              <a routerLink="/tasks/new" class="btn-primary py-2">
+                <svg [appIcon]="icons.Plus" class="w-4 h-4"></svg> Post a task
+              </a>
             </div>
-            <h2 class="text-lg font-semibold">Nothing here</h2>
-            <p class="text-sm text-text-sub">{{ vm.query?.tab?.empty }}</p>
-            <a routerLink="/tasks/new" class="btn-primary py-2">
-              <svg [appIcon]="icons.Plus" class="w-4 h-4"></svg> Post a task
-            </a>
-          </div>
-        }
-        <app-pagination [page]="result.page ?? 0" [totalPages]="result.totalPages ?? 0" (pageChange)="goToPage($event)" />
-      </div>
-    } @else if (vm.state?.failed) {
-      <div role="alert" class="bg-white p-10 rounded-card border border-red-200 text-center space-y-3 animate-fade-in">
-        <div class="mx-auto w-14 h-14 rounded-full bg-red-50 text-status-error flex items-center justify-center">
-          <svg [appIcon]="icons.CircleAlert" class="w-7 h-7"></svg>
+          }
+          <app-pagination [page]="result.page ?? 0" [totalPages]="result.totalPages ?? 0" (pageChange)="goToPage($event)" />
         </div>
-        <h2 class="text-lg font-semibold">Something went wrong</h2>
-        <p class="text-sm text-text-sub">We could not load your tasks. Check your connection and try again.</p>
-        <button type="button" (click)="retry()" class="btn-primary py-2">
-          <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> Try again
-        </button>
-      </div>
-    } @else {
-      <div class="space-y-4" aria-hidden="true">
-        @for (card of skeletonCards; track card) {
-          <div class="bg-white p-5 rounded-card border border-surface-border shadow-subtle space-y-3">
-            <div class="flex gap-2">
-              <span class="skeleton block h-5 w-28 rounded-full"></span>
-              <span class="skeleton block h-5 w-24 rounded-full"></span>
-            </div>
-            <span class="skeleton block h-5 w-2/3"></span>
-            <span class="skeleton block h-4 w-1/3"></span>
+      } @else if (vm.state?.failed) {
+        <div role="alert" class="bg-white p-10 rounded-card border border-red-200 text-center space-y-3 animate-fade-in">
+          <div class="mx-auto w-14 h-14 rounded-full bg-red-50 text-status-error flex items-center justify-center">
+            <svg [appIcon]="icons.CircleAlert" class="w-7 h-7"></svg>
           </div>
-        }
-      </div>
-    }
+          <h2 class="text-lg font-semibold">Something went wrong</h2>
+          <p class="text-sm text-text-sub">We could not load your tasks. Check your connection and try again.</p>
+          <button type="button" (click)="retry()" class="btn-primary py-2">
+            <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> Try again
+          </button>
+        </div>
+      } @else {
+        <div class="space-y-4" aria-hidden="true">
+          @for (card of skeletonCards; track card) {
+            <div class="bg-white p-5 rounded-card border border-surface-border shadow-subtle space-y-3">
+              <div class="flex gap-2">
+                <span class="skeleton block h-5 w-28 rounded-full"></span>
+                <span class="skeleton block h-5 w-24 rounded-full"></span>
+              </div>
+              <span class="skeleton block h-5 w-2/3"></span>
+              <span class="skeleton block h-4 w-1/3"></span>
+            </div>
+          }
+        </div>
+      }
+    </div>
   </div>
 }
