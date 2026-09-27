@@ -41,4 +41,14 @@ public interface ConversationRepository extends JpaRepository<Conversation, UUID
             where c.id = :id
             """)
     Optional<Conversation> findWithParticipantsById(@Param("id") UUID id);
+
+    @Query("""
+            select c from Conversation c
+            join fetch c.offer o
+            join fetch o.task t
+            join fetch t.client
+            join fetch o.tasker
+            where o.id = :offerId
+            """)
+    Optional<Conversation> findWithParticipantsByOfferId(@Param("offerId") UUID offerId);
 }

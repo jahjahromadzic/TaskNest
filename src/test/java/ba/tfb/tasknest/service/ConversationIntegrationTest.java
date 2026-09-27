@@ -13,8 +13,10 @@ import ba.tfb.tasknest.entity.Notification;
 import ba.tfb.tasknest.entity.Offer;
 import ba.tfb.tasknest.entity.enums.ConversationStatus;
 import ba.tfb.tasknest.entity.enums.NotificationType;
+import ba.tfb.tasknest.entity.enums.TaskStatus;
 import ba.tfb.tasknest.exception.BusinessRuleException;
 import ba.tfb.tasknest.exception.NotResourceOwnerException;
+import ba.tfb.tasknest.exception.ResourceNotFoundException;
 import ba.tfb.tasknest.repository.CategoryRepository;
 import ba.tfb.tasknest.repository.ConversationRepository;
 import ba.tfb.tasknest.repository.MessageRepository;
@@ -26,6 +28,9 @@ import ba.tfb.tasknest.repository.ReviewRepository;
 import ba.tfb.tasknest.repository.TaskRepository;
 import ba.tfb.tasknest.repository.TaskerProfileRepository;
 import ba.tfb.tasknest.repository.UserRepository;
+import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -61,6 +66,7 @@ class ConversationIntegrationTest extends AbstractIntegrationTest {
     @Autowired private ConversationRepository conversationRepository;
     @Autowired private RefreshTokenRepository refreshTokenRepository;
     @Autowired private NotificationRepository notificationRepository;
+    @Autowired private EntityManagerFactory entityManagerFactory;
 
     private Category category;
     private Municipality municipality;
@@ -325,6 +331,98 @@ class ConversationIntegrationTest extends AbstractIntegrationTest {
 
             // Assert
             assertThat(order).containsExactly(newer, older, quiet);
+        }
+    }
+
+    @Nested
+    class Reading {
+
+        @Test
+        @DisplayName("The first page holds the newest messages, and every page reads top to bottom")
+        void getMessages_pagesFromTheNewest_inChronologicalOrder() {
+            // Arrange
+            UUID conversationId = conversationOf(submitOffer(publishedTask(), taskerId));
+            conversationService.sendMessage(conversationId, clientId, text("First"));
+            conversationService.sendMessage(conversationId, taskerId, text("Second"));
+            conversationService.sendMessage(conversationId, clientId, text("Third"));
+
+            // Act
+            var newest = conversationService.getMessages(conversationId, clientId, PageRequest.of(0, 2));
+            var older = conversationService.getMessages(conversationId, clientId, PageRequest.of(1, 2));
+
+            // Assert
+            assertThat(newest.getContent()).extracting(m -> m.content()).containsExactly("Second", "Third");
+            assertThat(older.getContent()).extracting(m -> m.content()).containsExactly("First");
+            assertThat(newest.getTotalElements()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("The conversation list shows the offer and a preview of the last message")
+        void getMyConversations_includesTheOfferAndTheLastMessage() {
+            // Arrange
+            UUID conversationId = conversationOf(submitOffer(publishedTask(), taskerId));
+            conversationService.sendMessage(conversationId, clientId, text("When can you come?"));
+            conversationService.sendMessage(conversationId, taskerId, text("Tomorrow at 10."));
+
+            // Act
+            ConversationResponse forClient = onlyConversationOf(clientId);
+
+            // Assert
+            assertThat(forClient.lastMessage()).isEqualTo("Tomorrow at 10.");
+            assertThat(forClient.lastMessageSenderId()).isEqualTo(taskerId);
+            assertThat(forClient.offerPrice()).isEqualByComparingTo("75.00");
+            assertThat(forClient.offerMessage()).isEqualTo("Mogu danas");
+            assertThat(forClient.taskStatus()).isEqualTo(TaskStatus.PUBLISHED);
+            assertThat(forClient.unreadCount()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("A silent conversation has no preview")
+        void getMyConversations_hasNoPreview_whenNobodyWroteYet() {
+            // Arrange
+            submitOffer(publishedTask(), taskerId);
+
+            // Act
+            ConversationResponse conversation = onlyConversationOf(taskerId);
+
+            // Assert
+            assertThat(conversation.lastMessage()).isNull();
+            assertThat(conversation.lastMessageSenderId()).isNull();
+        }
+
+        @Test
+        @DisplayName("Listing conversations costs the same number of queries however many there are")
+        void getMyConversations_usesAFixedNumberOfQueries() {
+            // Arrange
+            for (int i = 0; i < 4; i++) {
+                UUID conversationId = conversationOf(submitOffer(publishedTask(), taskerId));
+                conversationService.sendMessage(conversationId, clientId, text("Message " + i));
+            }
+            Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+            statistics.clear();
+
+            // Act
+            List<ConversationResponse> conversations = conversationService
+                    .getMyConversations(taskerId, PageRequest.of(0, 20)).getContent();
+
+            // Assert
+            assertThat(conversations).hasSize(4).allMatch(conversation -> conversation.lastMessage() != null);
+            assertThat(statistics.getPrepareStatementCount()).isLessThanOrEqualTo(5);
+        }
+
+        @Test
+        @DisplayName("Both parties find the conversation of an offer, nobody else does")
+        void getForOffer_isOpenOnlyToTheParticipants() {
+            // Arrange
+            UUID offerId = submitOffer(publishedTask(), taskerId);
+
+            // Act + Assert
+            assertThat(conversationService.getForOffer(offerId, clientId).id()).isEqualTo(conversationOf(offerId));
+            assertThat(conversationService.getForOffer(offerId, taskerId).otherPartyId()).isEqualTo(clientId);
+            assertThatThrownBy(() -> conversationService.getForOffer(offerId, otherTaskerId))
+                    .isInstanceOf(NotResourceOwnerException.class);
+            assertThatThrownBy(() -> conversationService.getForOffer(UUID.randomUUID(), clientId))
+                    .isInstanceOf(ResourceNotFoundException.class);
         }
     }
 

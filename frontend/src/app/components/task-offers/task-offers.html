@@ -81,6 +81,11 @@
 
           <div class="flex sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0">
             <span class="text-2xl font-bold text-brand">{{ formatBudget(offer.price) }}</span>
+            <a routerLink="/messages" [queryParams]="{ offer: offer.id }"
+               class="btn-ghost py-1.5 text-xs text-brand border border-surface-border bg-white"
+               [attr.aria-label]="'Message ' + offer.taskerName">
+              <svg [appIcon]="icons.MessageSquare" class="w-3.5 h-3.5"></svg> Message
+            </a>
             @if (offer.status === 'PENDING' && canAccept) {
               <button type="button" (click)="accept(offer)" [disabled]="accepting() !== null" class="btn-primary py-2">
                 @if (accepting() === offer.id) {

@@ -5,6 +5,7 @@ import { Bell, House, ListTodo, MessageSquare } from 'lucide';
 import { Icon } from '../../components/icon/icon';
 import { AuthService } from '../../auth/auth.service';
 import { NotificationService } from '../../services/notification.service';
+import { ConversationService } from '../../services/conversation.service';
 
 @Component({
   selector: 'app-bottom-nav',
@@ -17,5 +18,6 @@ export class BottomNav {
   constructor(
     protected authService: AuthService,
     protected notificationService: NotificationService,
+    protected conversationService: ConversationService,
   ) {}
 }

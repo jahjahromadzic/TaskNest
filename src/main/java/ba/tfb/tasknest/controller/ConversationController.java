@@ -33,6 +33,12 @@ public class ConversationController {
                 conversationService.getMyConversations(principal.getId(), unsorted(pageable)));
     }
 
+    @GetMapping("/by-offer/{offerId}")
+    public ConversationResponse forOffer(@PathVariable UUID offerId,
+                                         @AuthenticationPrincipal UserPrincipal principal) {
+        return conversationService.getForOffer(offerId, principal.getId());
+    }
+
     @GetMapping("/unread-count")
     public Map<String, Long> unreadCount(@AuthenticationPrincipal UserPrincipal principal) {
         return Map.of("count", conversationService.countUnread(principal.getId()));

@@ -24,3 +24,7 @@ export type ReviewPage = Schemas['PagedResponseReviewResponse'];
 export type AppNotification = Schemas['NotificationResponse'];
 export type NotificationPage = Schemas['PagedResponseNotificationResponse'];
 export type NotificationType = NonNullable<AppNotification['type']>;
+export type Conversation = Schemas['ConversationResponse'];
+export type ConversationPage = Schemas['PagedResponseConversationResponse'];
+export type ChatMessage = Schemas['MessageResponse'];
+export type ChatMessagePage = Schemas['PagedResponseMessageResponse'];

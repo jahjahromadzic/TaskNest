@@ -7,6 +7,7 @@ import { AuthService } from '../../auth/auth.service';
 import { CurrentUser } from '../../auth/current-user';
 import { ToastService } from '../../shared/toast/toast.service';
 import { NotificationBell } from '../notification-bell/notification-bell';
+import { ConversationService } from '../../services/conversation.service';
 
 @Component({
   selector: 'app-header',
@@ -28,6 +29,7 @@ export class Header {
 
   constructor(
     protected authService: AuthService,
+    protected conversationService: ConversationService,
     private toastService: ToastService,
     private router: Router,
   ) {}

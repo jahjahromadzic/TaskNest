@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { BadgeCheck, ChevronDown, Handshake, Inbox, LoaderCircle, RotateCcw, Star, TrendingDown } from 'lucide';
+import { BadgeCheck, ChevronDown, Handshake, Inbox, LoaderCircle, MessageSquare, RotateCcw, Star, TrendingDown } from 'lucide';
 import { TaskDetail, TaskOffer } from '../../api/models';
 import { OfferService } from '../../services/offer.service';
 import { readApiError } from '../../shared/api-error';
@@ -32,7 +32,7 @@ export function sortOffers(offers: TaskOffer[], sort: OfferSort): TaskOffer[] {
   templateUrl: './task-offers.html',
 })
 export class TaskOffers implements OnChanges {
-  protected readonly icons = { BadgeCheck, ChevronDown, Handshake, Inbox, LoaderCircle, RotateCcw, Star, TrendingDown };
+  protected readonly icons = { BadgeCheck, ChevronDown, Handshake, Inbox, LoaderCircle, MessageSquare, RotateCcw, Star, TrendingDown };
 
   @Input({ required: true }) task!: TaskDetail;
   @Output() accepted = new EventEmitter<void>();

@@ -183,7 +183,7 @@ class ConversationServiceTest {
             // Arrange
             Conversation archived = aConversation(ConversationStatus.ARCHIVED);
             stubConversation(archived);
-            when(messageRepository.findByConversationOrderByCreatedAtAsc(eq(archived), any(Pageable.class)))
+            when(messageRepository.findByConversationOrderByCreatedAtDesc(eq(archived), any(Pageable.class)))
                     .thenReturn(Page.empty());
 
             // Act

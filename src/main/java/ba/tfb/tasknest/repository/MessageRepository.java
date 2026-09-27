@@ -19,7 +19,15 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
 
     List<Message> findByConversationOrderByCreatedAtAsc(Conversation conversation);
 
-    Page<Message> findByConversationOrderByCreatedAtAsc(Conversation conversation, Pageable pageable);
+    Page<Message> findByConversationOrderByCreatedAtDesc(Conversation conversation, Pageable pageable);
+
+    @Query("""
+            select m from Message m
+            where m.conversation.id in :conversationIds
+              and m.createdAt = (select max(latest.createdAt) from Message latest
+                                 where latest.conversation = m.conversation)
+            """)
+    List<Message> findLatestIn(@Param("conversationIds") Collection<UUID> conversationIds);
 
     @Query("""
             select count(m) from Message m

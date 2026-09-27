@@ -1,59 +1,29 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, Signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { NavigationEnd, Router } from '@angular/router';
-import {
-  EMPTY,
-  Observable,
-  Subject,
-  catchError,
-  combineLatest,
-  distinctUntilChanged,
-  filter,
-  fromEvent,
-  map,
-  merge,
-  of,
-  startWith,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { Router } from '@angular/router';
+import { Observable, map, of, tap } from 'rxjs';
 import { AppNotification, NotificationPage } from '../api/models';
 import { AuthService } from '../auth/auth.service';
 import { notificationLink } from '../shared/notification-kind/notification-kind';
+import { UnreadCounter } from '../shared/unread-counter/unread-counter';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-  readonly unreadCount = signal(0);
+  readonly unreadCount: Signal<number>;
 
-  private readonly recount$ = new Subject<void>();
+  private readonly counter: UnreadCounter;
 
   constructor(
     private http: HttpClient,
     private router: Router,
     authService: AuthService,
   ) {
-    const userId$ = authService.user$.pipe(
-      map((user) => user?.id ?? null),
-      distinctUntilChanged(),
-    );
-    const checkAgain$ = merge(
-      router.events.pipe(filter((event) => event instanceof NavigationEnd)),
-      fromEvent(document, 'visibilitychange').pipe(filter(() => document.visibilityState === 'visible')),
-      this.recount$,
-    ).pipe(startWith(null));
+    this.counter = new UnreadCounter(http, router, authService.user$, '/api/notifications/unread-count');
+    this.unreadCount = this.counter.count.asReadonly();
+  }
 
-    combineLatest([userId$, checkAgain$])
-      .pipe(
-        switchMap(([userId]) =>
-          userId
-            ? this.http.get<{ count: number }>('/api/notifications/unread-count').pipe(
-                map((response) => response.count),
-                catchError(() => EMPTY),
-              )
-            : of(0),
-        ),
-      )
-      .subscribe((count) => this.unreadCount.set(count));
+  recount(): void {
+    this.counter.recount();
   }
 
   list(page: number, size = 20): Observable<NotificationPage> {
@@ -65,16 +35,16 @@ export class NotificationService {
     if (notification.read || !notification.id) {
       return of(undefined);
     }
-    this.unreadCount.update((count) => Math.max(0, count - 1));
+    this.counter.lower();
     return this.http.post<AppNotification>(`/api/notifications/${encodeURIComponent(notification.id)}/read`, null).pipe(
       map(() => undefined),
-      tap({ finalize: () => this.recount$.next() }),
+      tap({ finalize: () => this.counter.recount() }),
     );
   }
 
   markAllRead(): Observable<void> {
     return this.http.post<{ marked: number }>('/api/notifications/read-all', null).pipe(
-      tap(() => this.unreadCount.set(0)),
+      tap(() => this.counter.count.set(0)),
       map(() => undefined),
     );
   }

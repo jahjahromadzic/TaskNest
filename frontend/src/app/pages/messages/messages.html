@@ -1,0 +1,232 @@
+<div class="h-[calc(100dvh-11rem)] sm:h-[calc(100dvh-7rem)] bg-white rounded-card border border-surface-border shadow-subtle flex overflow-hidden animate-fade-in">
+  <aside class="w-full md:w-80 lg:w-96 shrink-0 border-r border-surface-border flex-col bg-slate-50/60"
+         [class]="selectedId() ? 'hidden md:flex' : 'flex'">
+    <div class="p-4 border-b border-surface-border bg-white space-y-3">
+      <h1 class="font-semibold text-lg flex items-center gap-2">
+        <svg [appIcon]="icons.MessagesSquare" class="w-5 h-5 text-brand"></svg> Messages
+      </h1>
+      <label class="relative block">
+        <span class="sr-only">Search conversations</span>
+        <svg [appIcon]="icons.Search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
+        <input type="search" [value]="search()" (input)="search.set($any($event.target).value)"
+               placeholder="Search by name or task" class="form-input pl-9 py-2" />
+      </label>
+    </div>
+
+    <div class="flex-1 min-h-0 overflow-y-auto scroll-area p-2 space-y-1">
+      @if (conversations(); as all) {
+        @for (conversation of filtered(); track conversation.id; let i = $index) {
+          <a routerLink="/messages" [queryParams]="{ conversation: conversation.id }"
+             class="group flex gap-3 p-3 rounded-xl border transition-all duration-200 animate-fade-in"
+             [class]="conversation.id === selectedId()
+               ? 'bg-white border-brand/30 shadow-subtle ring-4 ring-brand/10'
+               : 'border-transparent hover:bg-white hover:border-surface-border'"
+             [style.animation-delay.ms]="(i % 20) * 30">
+            <span class="relative shrink-0 w-10 h-10 rounded-full text-white text-sm font-bold flex items-center justify-center transition-transform duration-200 group-hover:scale-105"
+                  [class]="avatarTone(conversation.otherPartyName)" [class.opacity-60]="conversation.status === 'ARCHIVED'">
+              {{ initials(conversation.otherPartyName) }}
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="flex items-center justify-between gap-2">
+                <span class="font-semibold text-sm truncate" [class.text-slate-500]="conversation.status === 'ARCHIVED'">{{ conversation.otherPartyName }}</span>
+                <span class="shrink-0 text-[11px] text-slate-400">{{ timeAgo(conversation.lastMessageAt) }}</span>
+              </span>
+              <span class="block text-xs font-medium truncate" [class]="conversation.status === 'ARCHIVED' ? 'text-slate-400' : 'text-brand'">
+                {{ conversation.taskTitle }}
+              </span>
+              <span class="mt-0.5 flex items-center justify-between gap-2">
+                <span class="text-xs truncate" [class]="(conversation.unreadCount ?? 0) > 0 ? 'text-text-main font-semibold' : 'text-text-sub'">
+                  @if (conversation.status === 'ARCHIVED') {
+                    <svg [appIcon]="icons.Archive" class="inline w-3 h-3 -mt-0.5 mr-0.5"></svg>
+                  }
+                  {{ conversation.lastMessage ? previewOf(conversation) : 'No messages yet' }}
+                </span>
+                @if ((conversation.unreadCount ?? 0) > 0) {
+                  <span class="shrink-0 min-w-5 h-5 px-1.5 rounded-full bg-brand text-white text-[11px] font-bold flex items-center justify-center tabular-nums animate-pop">
+                    {{ conversation.unreadCount }}
+                  </span>
+                }
+              </span>
+            </span>
+          </a>
+        } @empty {
+          <div class="py-10 px-4 text-center space-y-2">
+            <div class="mx-auto w-12 h-12 rounded-full bg-brand-50 text-brand flex items-center justify-center">
+              <svg [appIcon]="icons.MessageSquare" class="w-6 h-6"></svg>
+            </div>
+            @if (all.length === 0) {
+              <p class="text-sm font-semibold">No conversations yet</p>
+              <p class="text-xs text-text-sub">A conversation opens as soon as a tasker sends an offer on a task.</p>
+            } @else {
+              <p class="text-sm font-semibold">Nothing matches "{{ search() }}"</p>
+            }
+          </div>
+        }
+      } @else if (listFailed()) {
+        <div role="alert" class="py-10 text-center space-y-2">
+          <p class="text-sm text-text-sub">Your conversations could not be loaded.</p>
+          <button type="button" (click)="loadConversations()" class="btn-ghost text-brand">Try again</button>
+        </div>
+      } @else {
+        @for (row of skeletons; track row) {
+          <div class="flex gap-3 p-3" aria-hidden="true">
+            <span class="skeleton w-10 h-10 rounded-full shrink-0"></span>
+            <span class="flex-1 space-y-1.5">
+              <span class="skeleton block h-3.5 w-1/2"></span>
+              <span class="skeleton block h-3 w-3/4"></span>
+              <span class="skeleton block h-3 w-full"></span>
+            </span>
+          </div>
+        }
+      }
+    </div>
+  </aside>
+
+  <section class="flex-1 min-w-0 flex-col" [class]="selectedId() ? 'flex' : 'hidden md:flex'">
+    @if (selected(); as conversation) {
+      <header class="shrink-0 px-4 py-3 border-b border-surface-border flex items-center gap-3 bg-white">
+        <a routerLink="/messages" class="icon-btn md:hidden -ml-2" aria-label="Back to conversations">
+          <svg [appIcon]="icons.ArrowLeft" class="w-5 h-5"></svg>
+        </a>
+        <span class="shrink-0 w-10 h-10 rounded-full text-white text-sm font-bold flex items-center justify-center"
+              [class]="avatarTone(conversation.otherPartyName)">
+          {{ initials(conversation.otherPartyName) }}
+        </span>
+        <div class="min-w-0 flex-1">
+          <h2 class="font-semibold truncate">{{ conversation.otherPartyName }}</h2>
+          <p class="text-xs text-text-sub truncate">{{ conversation.taskTitle }}</p>
+        </div>
+        <app-status-badge [status]="taskStatus(conversation)" class="hidden sm:block" />
+        <a [routerLink]="['/tasks', conversation.taskId]" class="btn-ghost text-brand text-xs px-2.5">
+          <svg [appIcon]="icons.ExternalLink" class="w-3.5 h-3.5"></svg>
+          <span class="hidden sm:inline">View task</span>
+        </a>
+      </header>
+
+      @if (archived()) {
+        <div class="shrink-0 bg-slate-100 border-b border-slate-200 px-4 py-2 text-xs text-slate-600 flex items-center justify-center gap-2 animate-fade-in">
+          <svg [appIcon]="icons.Archive" class="w-4 h-4 text-slate-500"></svg>
+          This conversation is archived because the offer is no longer active. You can still read it.
+        </div>
+      }
+
+      <div #scroller class="flex-1 min-h-0 overflow-y-auto scroll-area px-4 py-4 bg-gradient-to-b from-slate-50/80 to-white">
+        <div class="max-w-2xl mx-auto mb-4 p-3.5 rounded-xl bg-brand-50/70 border border-brand/15 flex gap-3 text-sm animate-fade-in">
+          <span class="shrink-0 w-8 h-8 rounded-full bg-white text-brand flex items-center justify-center shadow-subtle">
+            <svg [appIcon]="icons.Tag" class="w-4 h-4"></svg>
+          </span>
+          <div class="min-w-0">
+            <p class="font-semibold">Offer · <span class="text-brand">{{ formatBudget(conversation.offerPrice) }}</span></p>
+            @if (conversation.offerMessage) {
+              <p class="text-text-sub mt-0.5 whitespace-pre-line">"{{ conversation.offerMessage }}"</p>
+            }
+          </div>
+        </div>
+
+        @if (messages(); as list) {
+          @if (hasOlder()) {
+            <div class="text-center mb-3">
+              <button type="button" (click)="loadOlder()" [disabled]="loadingOlder()"
+                      class="btn-ghost text-xs text-brand border border-surface-border bg-white py-1.5">
+                @if (loadingOlder()) {
+                  <svg [appIcon]="icons.LoaderCircle" class="w-3.5 h-3.5 animate-spin"></svg>
+                }
+                Load earlier messages
+              </button>
+            </div>
+          }
+          <ol class="max-w-2xl mx-auto space-y-1" aria-live="polite">
+            @for (item of thread(); track item.key) {
+              @if (item.kind === 'day') {
+                <li class="flex justify-center py-2">
+                  <span class="bg-white border border-surface-border text-slate-500 text-[11px] font-medium px-2.5 py-0.5 rounded-full shadow-subtle">{{ item.label }}</span>
+                </li>
+              } @else {
+                <li class="flex animate-fade-in" [class]="(item.mine ? 'justify-end' : 'justify-start') + (item.startsGroup ? ' pt-2' : '')">
+                  <div class="max-w-[80%] sm:max-w-[70%] flex flex-col" [class]="item.mine ? 'items-end' : 'items-start'">
+                    <div class="px-3.5 py-2 text-sm whitespace-pre-wrap break-words shadow-subtle transition-opacity"
+                         [class]="bubbleClass(item.mine, item.message.state)">{{ item.message.content }}</div>
+                    <span class="mt-0.5 px-1 text-[10px] text-slate-400 flex items-center gap-1">
+                      @if (item.message.state === 'failed') {
+                        <span class="text-status-error font-medium">Not sent</span>
+                        <button type="button" (click)="retry(item.message)" class="text-brand font-semibold hover:underline flex items-center gap-0.5">
+                          <svg [appIcon]="icons.RotateCcw" class="w-3 h-3"></svg> Retry
+                        </button>
+                      } @else if (item.message.state === 'sending') {
+                        Sending...
+                      } @else {
+                        {{ clockTime(item.message.createdAt) }}
+                        @if (item.mine) {
+                          <svg [appIcon]="item.message.readAt ? icons.CheckCheck : icons.Check" class="w-3.5 h-3.5"
+                               [class]="item.message.readAt ? 'text-brand' : 'text-slate-400'"
+                               [attr.aria-label]="item.message.readAt ? 'Read' : 'Sent'"></svg>
+                        }
+                      }
+                    </span>
+                  </div>
+                </li>
+              }
+            } @empty {
+              <li class="py-10 text-center text-sm text-text-sub">
+                No messages yet. Say hello and agree on the details.
+              </li>
+            }
+          </ol>
+        } @else if (threadFailed()) {
+          <div role="alert" class="py-10 text-center space-y-2">
+            <svg [appIcon]="icons.CircleAlert" class="w-8 h-8 mx-auto text-status-error"></svg>
+            <p class="text-sm text-text-sub">The messages could not be loaded.</p>
+            <button type="button" (click)="retryThread()" class="btn-ghost text-brand">Try again</button>
+          </div>
+        } @else {
+          <div class="max-w-2xl mx-auto space-y-3" aria-hidden="true">
+            <span class="skeleton block h-10 w-2/3 rounded-2xl"></span>
+            <span class="skeleton block h-10 w-1/2 rounded-2xl ml-auto"></span>
+            <span class="skeleton block h-14 w-3/5 rounded-2xl"></span>
+          </div>
+        }
+      </div>
+
+      <form (submit)="$event.preventDefault(); send()" class="shrink-0 p-3 border-t border-surface-border bg-white">
+        <div class="max-w-2xl mx-auto flex items-end gap-2">
+          <label class="flex-1">
+            <span class="sr-only">Message</span>
+            <textarea #composer rows="1" [value]="draft()" (input)="onDraftInput($any($event.target).value)"
+                      (keydown)="onComposerKeydown($event)" [disabled]="archived()" [attr.maxlength]="maxLength"
+                      [placeholder]="archived() ? 'This conversation is archived' : 'Write a message to ' + conversation.otherPartyName + '...'"
+                      class="form-input resize-none py-2.5 max-h-32 block disabled:opacity-60 disabled:cursor-not-allowed"></textarea>
+          </label>
+          <button type="submit" [disabled]="archived() || draft().trim().length === 0"
+                  class="btn-primary py-2.5 px-4 disabled:opacity-50 disabled:pointer-events-none" aria-label="Send">
+            <svg [appIcon]="icons.SendHorizontal" class="w-4 h-4"></svg>
+            <span class="hidden sm:inline">Send</span>
+          </button>
+        </div>
+        @if (draft().length > maxLength - 200) {
+          <p class="max-w-2xl mx-auto mt-1 text-[11px] text-right text-text-sub">{{ draft().length }} / {{ maxLength }}</p>
+        }
+      </form>
+    } @else if (missing()) {
+      <div class="flex-1 flex items-center justify-center p-8 text-center">
+        <div class="space-y-2 max-w-xs">
+          <svg [appIcon]="icons.CircleAlert" class="w-10 h-10 mx-auto text-slate-300"></svg>
+          <p class="font-semibold">This conversation could not be found</p>
+          <p class="text-sm text-text-sub">It may belong to someone else, or the link is wrong.</p>
+          <a routerLink="/messages" class="btn-ghost text-brand">Back to messages</a>
+        </div>
+      </div>
+    } @else if (selectedId() && conversations() === null) {
+      <div class="flex-1" aria-hidden="true"></div>
+    } @else {
+      <div class="flex-1 flex items-center justify-center p-8 text-center bg-gradient-to-b from-slate-50/80 to-white">
+        <div class="space-y-3 max-w-xs">
+          <div class="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-brand to-teal-500 text-white flex items-center justify-center shadow-card animate-slide-in">
+            <svg [appIcon]="icons.MessagesSquare" class="w-8 h-8"></svg>
+          </div>
+          <p class="font-semibold">Pick a conversation</p>
+          <p class="text-sm text-text-sub">Talk to clients and taskers about the details before and during the job.</p>
+        </div>
+      </div>
+    }
+  </section>
+</div>

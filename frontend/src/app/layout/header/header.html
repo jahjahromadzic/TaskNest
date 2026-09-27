@@ -15,8 +15,16 @@
         <a routerLink="/tasks/new" class="btn-primary hidden md:inline-flex py-2 mr-1">
           <svg [appIcon]="icons.Plus" class="w-4 h-4"></svg> Post a task
         </a>
-        <a routerLink="/messages" routerLinkActive="!text-brand bg-brand-50" class="icon-btn hidden sm:inline-flex" title="Messages">
+        <a routerLink="/messages" routerLinkActive="!text-brand bg-brand-50" class="icon-btn hidden sm:inline-flex" title="Messages"
+           [attr.aria-label]="conversationService.unreadCount() > 0 ? 'Messages, ' + conversationService.unreadCount() + ' unread' : 'Messages'">
           <svg [appIcon]="icons.MessageSquare" class="w-5 h-5"></svg>
+          @for (count of [conversationService.unreadCount()]; track count) {
+            @if (count > 0) {
+              <span class="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-status-error text-white text-[10px] font-bold flex items-center justify-center border-2 border-white animate-pop tabular-nums">
+                {{ count > 9 ? '9+' : count }}
+              </span>
+            }
+          }
         </a>
         <app-notification-bell class="hidden sm:block" />
 

@@ -72,8 +72,7 @@ export const routes: Routes = [
     path: 'messages',
     canActivate: [authGuard],
     title: 'Messages · TaskNest',
-    loadComponent: placeholder,
-    data: { heading: 'Messages', phase: 4 },
+    loadComponent: () => import('./pages/messages/messages').then((m) => m.Messages),
   },
   {
     path: 'notifications',

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { Offer, TaskDetail } from '../../api/models';
 import { ConfirmOptions, ConfirmService } from '../../shared/confirm/confirm.service';
 import { TaskerPanel } from './tasker-panel';
@@ -21,6 +22,7 @@ describe('Tasker panel', () => {
     changed = 0;
     TestBed.configureTestingModule({
       providers: [
+        provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
         {
@@ -107,6 +109,9 @@ describe('Tasker panel', () => {
     await show(pending);
     expect(text()).toContain('55 KM');
     expect(text()).toContain('Waiting for Amra to choose');
+    const chat = fixture.nativeElement.querySelector('a[href^="/messages"]');
+    expect(chat.getAttribute('href')).toBe('/messages?offer=o1');
+    expect(chat.textContent).toContain('Message Amra');
 
     answer = false;
     await press('Withdraw offer');
@@ -145,6 +150,7 @@ describe('Tasker panel', () => {
     await show({ ...pending, status: 'REJECTED' }, { status: 'ASSIGNED' });
 
     expect(text()).toContain('Amra chose another tasker for this job.');
+    expect(fixture.nativeElement.querySelector('a[href^="/messages"]').textContent).toContain('View conversation');
     expect(fixture.nativeElement.querySelector('button')).toBeNull();
   });
 

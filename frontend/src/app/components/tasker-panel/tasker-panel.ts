@@ -1,7 +1,8 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
-import { CircleCheckBig, Clock, Handshake, LoaderCircle, LogOut, Play, Send, Undo2 } from 'lucide';
+import { CircleCheckBig, Clock, Handshake, LoaderCircle, LogOut, MessageSquare, Play, Send, Undo2 } from 'lucide';
 import { Offer, TaskDetail } from '../../api/models';
 import { OfferService } from '../../services/offer.service';
 import { TaskService } from '../../services/task.service';
@@ -18,11 +19,11 @@ type TaskerAction = 'offer' | 'withdraw' | 'start' | 'complete';
 
 @Component({
   selector: 'app-tasker-panel',
-  imports: [FormsModule, Icon],
+  imports: [FormsModule, RouterLink, Icon],
   templateUrl: './tasker-panel.html',
 })
 export class TaskerPanel implements OnChanges {
-  protected readonly icons = { CircleCheckBig, Clock, Handshake, LoaderCircle, LogOut, Play, Send, Undo2 };
+  protected readonly icons = { CircleCheckBig, Clock, Handshake, LoaderCircle, LogOut, MessageSquare, Play, Send, Undo2 };
 
   @Input({ required: true }) task!: TaskDetail;
   @Output() changed = new EventEmitter<void>();

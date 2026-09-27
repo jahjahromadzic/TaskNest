@@ -244,6 +244,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["markAllAsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/conversations/{id}/read": {
         parameters: {
             query?: never;
@@ -676,6 +692,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/conversations/by-offer/{offerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["forOffer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/categories": {
         parameters: {
             query?: never;
@@ -989,9 +1021,13 @@ export interface components {
             id?: string;
             /** Format: uuid */
             offerId?: string;
+            offerPrice?: number;
+            offerMessage?: string;
             /** Format: uuid */
             taskId?: string;
             taskTitle?: string;
+            /** @enum {string} */
+            taskStatus?: "DRAFT" | "PUBLISHED" | "ASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CLOSED" | "CANCELLED" | "EXPIRED" | "REMOVED";
             /** Format: uuid */
             otherPartyId?: string;
             otherPartyName?: string;
@@ -999,6 +1035,9 @@ export interface components {
             status?: "OPEN" | "ARCHIVED";
             /** Format: date-time */
             lastMessageAt?: string;
+            lastMessage?: string;
+            /** Format: uuid */
+            lastMessageSenderId?: string;
             /** Format: int64 */
             unreadCount?: number;
         };
@@ -1480,6 +1519,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["NotificationResponse"];
+                };
+            };
+        };
+    };
+    markAllAsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: number;
+                    };
                 };
             };
         };
@@ -2103,6 +2164,28 @@ export interface operations {
                     "*/*": {
                         [key: string]: number;
                     };
+                };
+            };
+        };
+    };
+    forOffer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ConversationResponse"];
                 };
             };
         };

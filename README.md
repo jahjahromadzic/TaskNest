@@ -218,7 +218,7 @@ frontend/src/app/
 | 1 | Application shell, login and sign-up, session renewal, guards, public task list | Done |
 | 2 | Client flow: post tasks, review offers, accept, confirm and close, review | Done |
 | 3 | Tasker flow: profile, matching tasks, offers, work execution, public profile | Done |
-| 4 | Messages and notifications | In progress: notification bell and page done |
+| 4 | Messages and notifications | In progress: notifications and two-pane chat done, live updates next |
 | 5 | Administration | Planned |
 
 ## Configuration
@@ -371,9 +371,10 @@ Paged responses use the following shape:
 
 | Method | Path | Access | Description |
 |---|---|---|---|
-| GET | `/` | Authenticated | The caller's conversations, latest activity first, with unread counts |
+| GET | `/` | Authenticated | The caller's conversations, latest activity first, with the offer, a preview of the last message and unread counts. The query count stays the same however many conversations there are |
+| GET | `/by-offer/{offerId}` | Participant | The conversation that belongs to an offer, so the task page can open it |
 | GET | `/unread-count` | Authenticated | Unread messages across all conversations: `{ "count": 3 }` |
-| GET | `/{id}/messages` | Participant | Messages, oldest first |
+| GET | `/{id}/messages` | Participant | Messages in pages from the newest: page 0 holds the latest messages, and every page reads oldest to newest |
 | POST | `/{id}/messages` | Participant | Send a message |
 | POST | `/{id}/read` | Participant | Mark the other party's messages as read |
 
@@ -638,19 +639,19 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **308 tests** and requires no manual setup — Testcontainers
+The suite contains **313 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 138 | Service business rules and the task state machine |
-| Integration | 170 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, demo data |
+| Integration | 175 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, demo data |
 
-The frontend has its own suite of **158 tests** (Vitest), covering the session
+The frontend has its own suite of **175 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
 header, the task list and task details, posting a task, the client's own tasks, offers
 and hiring, cancelling, reopening and closing a task, reviews, becoming a tasker and editing the tasker profile, sending and withdrawing offers,
-starting and finishing a job, the tasker dashboard, the public tasker profile, the notification bell and page, the confirmation dialog, the dropdown, the progress
+starting and finishing a job, the tasker dashboard, the public tasker profile, the notification bell and page, the messages page and chat helpers, the confirmation dialog, the dropdown, the progress
 timeline, date helpers and the category icons. The server is simulated with Angular's
 `HttpTestingController`.
 

@@ -86,6 +86,11 @@
       </p>
     }
   }
+  <a routerLink="/messages" [queryParams]="{ offer: offer.id }"
+     class="btn-ghost w-full border border-surface-border bg-white">
+    <svg [appIcon]="icons.MessageSquare" class="w-4 h-4 text-brand"></svg>
+    {{ offer.status === 'PENDING' || offer.status === 'ACCEPTED' ? 'Message ' + client : 'View conversation' }}
+  </a>
 } @else if (task.status === 'PUBLISHED') {
   <form #form="ngForm" (ngSubmit)="sendOffer(form)" novalidate class="space-y-3 animate-fade-in">
     <p class="font-semibold flex items-center gap-1.5">

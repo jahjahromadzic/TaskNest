@@ -5,6 +5,7 @@ import ba.tfb.tasknest.dto.conversation.MessageResponse;
 import ba.tfb.tasknest.dto.conversation.SendMessageRequest;
 import ba.tfb.tasknest.entity.Conversation;
 import ba.tfb.tasknest.entity.Message;
+import ba.tfb.tasknest.entity.Offer;
 import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.ConversationStatus;
 import ba.tfb.tasknest.exception.BusinessRuleException;
@@ -15,6 +16,7 @@ import ba.tfb.tasknest.repository.MessageRepository;
 import ba.tfb.tasknest.repository.projection.ConversationUnreadCount;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,26 +40,32 @@ public class ConversationService {
     @Transactional(readOnly = true)
     public Page<ConversationResponse> getMyConversations(UUID userId, Pageable pageable) {
         Page<Conversation> page = conversationRepository.findAllByParticipant(userId, pageable);
+        List<ConversationResponse> described = describe(page.getContent(), userId);
+        return new PageImpl<>(described, page.getPageable(), page.getTotalElements());
+    }
 
-        if (page.isEmpty()) {
-            return page.map(conversation -> toResponse(conversation, userId, 0L));
+    @Transactional(readOnly = true)
+    public ConversationResponse getForOffer(UUID offerId, UUID userId) {
+        Conversation conversation = conversationRepository.findWithParticipantsByOfferId(offerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Conversation for offer", offerId));
+
+        if (!isParticipant(conversation, userId)) {
+            throw new NotResourceOwnerException("You are not a participant in this conversation");
         }
 
-        List<UUID> ids = page.getContent().stream().map(Conversation::getId).toList();
-        Map<UUID, Long> unread = messageRepository.countUnreadByConversation(userId, ids).stream()
-                .collect(Collectors.toMap(
-                        ConversationUnreadCount::conversationId, ConversationUnreadCount::unread));
-
-        return page.map(conversation ->
-                toResponse(conversation, userId, unread.getOrDefault(conversation.getId(), 0L)));
+        return describe(List.of(conversation), userId).getFirst();
     }
 
     @Transactional(readOnly = true)
     public Page<MessageResponse> getMessages(UUID conversationId, UUID userId, Pageable pageable) {
         Conversation conversation = loadForParticipant(conversationId, userId);
 
-        return messageRepository.findByConversationOrderByCreatedAtAsc(conversation, pageable)
-                .map(MessageResponse::from);
+        Page<Message> newestFirst = messageRepository.findByConversationOrderByCreatedAtDesc(conversation, pageable);
+        List<MessageResponse> chronological = newestFirst.getContent().reversed().stream()
+                .map(MessageResponse::from)
+                .toList();
+
+        return new PageImpl<>(chronological, newestFirst.getPageable(), newestFirst.getTotalElements());
     }
 
     @Transactional
@@ -135,18 +143,43 @@ public class ConversationService {
         return conversation.getOffer().getTask().getClient();
     }
 
-    private static ConversationResponse toResponse(Conversation conversation, UUID viewerId, long unread) {
+    private List<ConversationResponse> describe(List<Conversation> conversations, UUID viewerId) {
+        if (conversations.isEmpty()) {
+            return List.of();
+        }
+
+        List<UUID> ids = conversations.stream().map(Conversation::getId).toList();
+        Map<UUID, Long> unread = messageRepository.countUnreadByConversation(viewerId, ids).stream()
+                .collect(Collectors.toMap(
+                        ConversationUnreadCount::conversationId, ConversationUnreadCount::unread));
+        Map<UUID, Message> latest = messageRepository.findLatestIn(ids).stream()
+                .collect(Collectors.toMap(
+                        message -> message.getConversation().getId(), message -> message, (first, second) -> first));
+
+        return conversations.stream()
+                .map(conversation -> toResponse(conversation, viewerId,
+                        unread.getOrDefault(conversation.getId(), 0L), latest.get(conversation.getId())))
+                .toList();
+    }
+
+    private static ConversationResponse toResponse(Conversation conversation, UUID viewerId, long unread, Message last) {
         User other = otherParty(conversation, viewerId);
+        Offer offer = conversation.getOffer();
 
         return new ConversationResponse(
                 conversation.getId(),
-                conversation.getOffer().getId(),
-                conversation.getOffer().getTask().getId(),
-                conversation.getOffer().getTask().getTitle(),
+                offer.getId(),
+                offer.getPrice(),
+                offer.getMessage(),
+                offer.getTask().getId(),
+                offer.getTask().getTitle(),
+                offer.getTask().getStatus(),
                 other.getId(),
                 other.getFirstName() + " " + other.getLastName(),
                 conversation.getStatus(),
                 conversation.getLastMessageAt(),
+                last == null ? null : last.getContent(),
+                last == null ? null : last.getSender().getId(),
                 unread
         );
     }
