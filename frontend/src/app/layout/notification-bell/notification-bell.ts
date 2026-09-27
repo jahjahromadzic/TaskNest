@@ -6,6 +6,7 @@ import { AppNotification } from '../../api/models';
 import { Icon } from '../../components/icon/icon';
 import { NotificationItem } from '../../components/notification-item/notification-item';
 import { NotificationService } from '../../services/notification.service';
+import { RealtimeService } from '../../services/realtime.service';
 import { ToastService } from '../../shared/toast/toast.service';
 
 export const BELL_PREVIEW_SIZE = 5;
@@ -28,8 +29,14 @@ export class NotificationBell {
     private toastService: ToastService,
     private host: ElementRef<HTMLElement>,
     router: Router,
+    realtime: RealtimeService,
   ) {
     router.events.pipe(filter((event) => event instanceof NavigationStart)).subscribe(() => this.open.set(false));
+    realtime.notifications$.subscribe((notification) => {
+      if (this.open()) {
+        this.items.update((items) => (items ? [notification, ...items].slice(0, BELL_PREVIEW_SIZE) : items));
+      }
+    });
   }
 
   badge(count: number): string {

@@ -19,6 +19,7 @@ single-page application that uses it.
 - [Task lifecycle](#task-lifecycle)
 - [Reviews and reputation](#reviews-and-reputation)
 - [Messaging](#messaging)
+- [Real-time updates](#real-time-updates)
 - [Administration](#administration)
 - [Asynchronous processing](#asynchronous-processing)
 - [Testing](#testing)
@@ -68,6 +69,7 @@ single-page application that uses it.
 | Persistence | Spring Data JPA, Hibernate 7 (`ddl-auto: validate`) |
 | Security | Spring Security, JWT (jjwt 0.12.6) |
 | Messaging | RabbitMQ |
+| Real-time | WebSocket with STOMP (Spring simple broker), `@stomp/stompjs` in the browser |
 | Mail | Spring Mail, Mailpit for local development |
 | Documentation | springdoc OpenAPI |
 | Testing | JUnit 5, Mockito, AssertJ, Testcontainers |
@@ -195,6 +197,11 @@ browser sees one origin. That matters because the refresh token travels in a
   return address must stay inside the application.
 - **Task list** — filters, sorting and the page number live in the URL, so a
   filtered list can be shared, reloaded and navigated with the back button.
+- **Live updates** — one WebSocket connection per signed-in user delivers new
+  messages, read receipts and notifications. Unread counts are fetched again on
+  every live event and after every reconnect, so an event missed while offline
+  cannot leave a wrong badge behind. In development the Angular proxy forwards
+  `/ws` to the backend.
 - **Icons** — Lucide icon data is drawn by one small component, so an icon costs a
   few hundred bytes and loads only with the page that uses it.
 
@@ -218,7 +225,7 @@ frontend/src/app/
 | 1 | Application shell, login and sign-up, session renewal, guards, public task list | Done |
 | 2 | Client flow: post tasks, review offers, accept, confirm and close, review | Done |
 | 3 | Tasker flow: profile, matching tasks, offers, work execution, public profile | Done |
-| 4 | Messages and notifications | In progress: notifications and two-pane chat done, live updates next |
+| 4 | Messages and notifications, delivered live over WebSocket | Done |
 | 5 | Administration | Planned |
 
 ## Configuration
@@ -554,6 +561,26 @@ New messages notify the recipient at most once per conversation until that
 notification is read, so a conversation of fifty messages produces one
 notification rather than fifty.
 
+## Real-time updates
+
+The browser opens one STOMP connection to `/ws` after login. The handshake is
+public, because browsers cannot add headers to a WebSocket request; the access
+token travels in the STOMP `CONNECT` frame instead and is checked like any API
+call, including the account status. A connection without a valid token is
+refused.
+
+| Queue | Receives |
+|---|---|
+| `/user/queue/messages` | Every new message in the user's conversations, including their own, so other open tabs stay in sync |
+| `/user/queue/reads` | The other party read the conversation; the sender's ticks turn green |
+| `/user/queue/notifications` | Every new notification, the moment it is stored |
+
+Clients may subscribe only to their own `/user/queue/...` destinations and cannot
+send anything; any other frame closes the connection. Events are published only
+after the database transaction commits, so a rolled back change is never pushed.
+If a push fails, the change itself still stands; the client catches up by
+reloading its counts after reconnecting.
+
 ## Administration
 
 There is no way to register as an administrator. An existing account is promoted
@@ -639,19 +666,19 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **313 tests** and requires no manual setup — Testcontainers
+The suite contains **319 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 138 | Service business rules and the task state machine |
-| Integration | 175 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, demo data |
+| Integration | 181 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
 
-The frontend has its own suite of **175 tests** (Vitest), covering the session
+The frontend has its own suite of **185 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
 header, the task list and task details, posting a task, the client's own tasks, offers
 and hiring, cancelling, reopening and closing a task, reviews, becoming a tasker and editing the tasker profile, sending and withdrawing offers,
-starting and finishing a job, the tasker dashboard, the public tasker profile, the notification bell and page, the messages page and chat helpers, the confirmation dialog, the dropdown, the progress
+starting and finishing a job, the tasker dashboard, the public tasker profile, the notification bell and page, the messages page and chat helpers, live updates over WebSocket, the confirmation dialog, the dropdown, the progress
 timeline, date helpers and the category icons. The server is simulated with Angular's
 `HttpTestingController`.
 
@@ -669,13 +696,14 @@ build and the tests.
 ```
 src/main/java/ba/tfb/tasknest/
 ├── bootstrap/      Administrator promotion and demo data at startup
-├── config/         Security and OpenAPI configuration
+├── config/         Security, WebSocket and OpenAPI configuration
 ├── controller/     REST controllers
 ├── domain/         Task state machine
 ├── dto/            Request and response records
 ├── entity/         JPA entities and enums
 ├── exception/      Application exceptions and the global handler
 ├── messaging/      RabbitMQ events, publisher, listeners, mailers
+├── realtime/       WebSocket authentication and pushes after commit
 ├── repository/     Spring Data repositories and query projections
 ├── scheduler/      Scheduled expiry and deadlines
 ├── security/       JWT filter, principal, authentication entry points
@@ -690,9 +718,9 @@ frontend/           Angular application, see Frontend
 
 ## Roadmap
 
-- [ ] Real-time message delivery over WebSocket
+- [x] Real-time message delivery over WebSocket
 - [ ] Email verification, password reset, rate limiting
-- [ ] Angular frontend phases 2 to 5 (client and tasker flows, messaging, administration)
+- [ ] Angular frontend phase 5 (administration)
 - [ ] Application Dockerfile
 
 ## License

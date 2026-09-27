@@ -1,15 +1,25 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
-import { ChatMessage, Conversation } from '../../api/models';
+import { AppNotification, ChatMessage, Conversation } from '../../api/models';
+import { Subject } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
+import { LiveMessage, LiveRead, RealtimeService } from '../../services/realtime.service';
 
 describe('Messages page', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
+  let live: {
+    connected: ReturnType<typeof signal<boolean>>;
+    connected$: Subject<void>;
+    messages$: Subject<LiveMessage>;
+    reads$: Subject<LiveRead>;
+    notifications$: Subject<AppNotification>;
+  };
 
   const withEmir: Conversation = {
     id: 'c1',
@@ -49,8 +59,20 @@ describe('Messages page', () => {
   }, 60_000);
 
   beforeEach(async () => {
+    live = {
+      connected: signal(false),
+      connected$: new Subject(),
+      messages$: new Subject(),
+      reads$: new Subject(),
+      notifications$: new Subject(),
+    };
     TestBed.configureTestingModule({
-      providers: [provideRouter(routes), provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideRouter(routes),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: RealtimeService, useValue: live },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     TestBed.inject(AuthService).login({ email: 'amra@test.ba', password: 'password123' }).subscribe();
@@ -242,5 +264,72 @@ describe('Messages page', () => {
     await harness.fixture.whenStable();
 
     expect(text()).toContain('No messages yet. Say hello');
+  });
+
+  it('adds a live message to the open conversation and marks it read straight away', async () => {
+    await openThread();
+
+    live.messages$.next({
+      conversationId: 'c1',
+      message: { id: 'm9', senderId: 'emir', content: 'I am on my way', createdAt: '2026-09-27T12:00:00' },
+    });
+    await harness.fixture.whenStable();
+
+    expect(text()).toContain('I am on my way');
+    http.expectOne({ method: 'POST', url: '/api/conversations/c1/read' }).flush(null);
+    answerCounts();
+    expect(rows()[0]).toContain('I am on my way');
+    expect(rows()[0]).not.toMatch(/\d$/);
+  });
+
+  it('raises the unread count of another conversation and moves it to the top', async () => {
+    await openThread();
+
+    live.messages$.next({
+      conversationId: 'c2',
+      message: { id: 'm9', senderId: 'selma', content: 'Are you there?', createdAt: '2026-09-27T12:00:00' },
+    });
+    answerCounts();
+    await harness.fixture.whenStable();
+
+    expect(rows()[0]).toContain('Selma Karić');
+    expect(rows()[0]).toMatch(/Are you there\? 1$/);
+    expect(element().querySelector('ol')!.textContent).not.toContain('Are you there?');
+    http.expectNone('/api/conversations/c2/read');
+  });
+
+  it('turns the ticks green when the other person reads the conversation', async () => {
+    const unread: ChatMessage = { ...hello, readAt: undefined };
+    await openThread([unread]);
+    expect(element().querySelector('[aria-label=Read]')).toBeNull();
+
+    live.reads$.next({ conversationId: 'c1', readerId: 'emir', readAt: '2026-09-27T12:00:00' });
+    await harness.fixture.whenStable();
+
+    expect(element().querySelector('[aria-label=Read]')).not.toBeNull();
+  });
+
+  it('shows a sent message once when its live copy arrives before the reply', async () => {
+    await openThread();
+
+    await pressEnter(await type('On my way'));
+    const saved = { id: 'm9', senderId: 'u1', content: 'On my way', createdAt: '2026-09-27T12:00:00' };
+    live.messages$.next({ conversationId: 'c1', message: saved });
+    http.expectOne({ method: 'POST', url: '/api/conversations/c1/messages' }).flush(saved);
+    await harness.fixture.whenStable();
+
+    const bubbles = Array.from(element().querySelectorAll('ol li')).filter((item) => item.textContent?.includes('On my way'));
+    expect(bubbles.length).toBe(1);
+    expect(text()).not.toContain('Sending...');
+  });
+
+  it('shows whether new messages arrive live', async () => {
+    await open('/messages');
+    expect(text()).toContain('Offline');
+
+    live.connected.set(true);
+    await harness.fixture.whenStable();
+
+    expect(text()).toContain('Live');
   });
 });

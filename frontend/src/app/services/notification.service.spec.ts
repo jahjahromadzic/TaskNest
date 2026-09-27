@@ -2,17 +2,27 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
+import { Subject } from 'rxjs';
+import { AppNotification } from '../api/models';
 import { AuthService } from '../auth/auth.service';
 import { NotificationService } from './notification.service';
+import { RealtimeService } from './realtime.service';
 
 describe('NotificationService', () => {
   let service: NotificationService;
   let http: HttpTestingController;
   let authService: AuthService;
+  let live: { connected$: Subject<void>; notifications$: Subject<AppNotification> };
 
   beforeEach(() => {
+    live = { connected$: new Subject(), notifications$: new Subject() };
     TestBed.configureTestingModule({
-      providers: [provideRouter([{ path: '**', children: [] }]), provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideRouter([{ path: '**', children: [] }]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: RealtimeService, useValue: live },
+      ],
     });
     service = TestBed.inject(NotificationService);
     http = TestBed.inject(HttpTestingController);
@@ -47,11 +57,18 @@ describe('NotificationService', () => {
     expect(service.unreadCount()).toBe(3);
   });
 
-  it('checks the count again after every page change and resets it on logout', async () => {
+  it('checks the count again when a notification arrives live or the connection comes back, and resets it on logout', async () => {
     logIn();
     answerCount(1);
 
     await TestBed.inject(Router).navigateByUrl('/tasks');
+    http.expectNone('/api/notifications/unread-count');
+
+    live.notifications$.next({ id: 'n9', type: 'NEW_OFFER', read: false });
+    answerCount(2);
+    expect(service.unreadCount()).toBe(2);
+
+    live.connected$.next();
     answerCount(4);
     expect(service.unreadCount()).toBe(4);
 

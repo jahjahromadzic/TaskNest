@@ -1,11 +1,12 @@
 import { Injectable, Signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, map, of, tap } from 'rxjs';
+import { Observable, map, merge, of, tap } from 'rxjs';
 import { AppNotification, NotificationPage } from '../api/models';
 import { AuthService } from '../auth/auth.service';
 import { notificationLink } from '../shared/notification-kind/notification-kind';
 import { UnreadCounter } from '../shared/unread-counter/unread-counter';
+import { RealtimeService } from './realtime.service';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -17,8 +18,14 @@ export class NotificationService {
     private http: HttpClient,
     private router: Router,
     authService: AuthService,
+    realtime: RealtimeService,
   ) {
-    this.counter = new UnreadCounter(http, router, authService.user$, '/api/notifications/unread-count');
+    this.counter = new UnreadCounter(
+      http,
+      authService.user$,
+      '/api/notifications/unread-count',
+      merge(realtime.connected$, realtime.notifications$),
+    );
     this.unreadCount = this.counter.count.asReadonly();
   }
 

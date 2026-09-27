@@ -1,11 +1,11 @@
 import { Injectable, Signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable, filter, merge, tap } from 'rxjs';
 import { ChatMessage, ChatMessagePage, Conversation, ConversationPage } from '../api/models';
 import { AuthService } from '../auth/auth.service';
 import { UnreadCounter } from '../shared/unread-counter/unread-counter';
 import { NotificationService } from './notification.service';
+import { RealtimeService } from './realtime.service';
 
 @Injectable({ providedIn: 'root' })
 export class ConversationService {
@@ -16,10 +16,18 @@ export class ConversationService {
   constructor(
     private http: HttpClient,
     private notificationService: NotificationService,
-    router: Router,
     authService: AuthService,
+    realtime: RealtimeService,
   ) {
-    this.counter = new UnreadCounter(http, router, authService.user$, '/api/conversations/unread-count');
+    this.counter = new UnreadCounter(
+      http,
+      authService.user$,
+      '/api/conversations/unread-count',
+      merge(
+        realtime.connected$,
+        realtime.messages$.pipe(filter((live) => live.message.senderId !== authService.currentUser?.id)),
+      ),
+    );
     this.unreadCount = this.counter.count.asReadonly();
   }
 

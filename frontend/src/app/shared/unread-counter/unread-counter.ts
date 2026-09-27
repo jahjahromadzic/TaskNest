@@ -1,6 +1,5 @@
 import { signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { NavigationEnd, Router } from '@angular/router';
 import {
   EMPTY,
   Observable,
@@ -23,13 +22,13 @@ export class UnreadCounter {
 
   private readonly recount$ = new Subject<void>();
 
-  constructor(http: HttpClient, router: Router, user$: Observable<CurrentUser | null>, url: string) {
+  constructor(http: HttpClient, user$: Observable<CurrentUser | null>, url: string, changes$: Observable<unknown>) {
     const userId$ = user$.pipe(
       map((user) => user?.id ?? null),
       distinctUntilChanged(),
     );
     const checkAgain$ = merge(
-      router.events.pipe(filter((event) => event instanceof NavigationEnd)),
+      changes$,
       fromEvent(document, 'visibilitychange').pipe(filter(() => document.visibilityState === 'visible')),
       this.recount$,
     ).pipe(startWith(null));

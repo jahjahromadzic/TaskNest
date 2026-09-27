@@ -16,8 +16,10 @@ import ba.tfb.tasknest.repository.NotificationRepository;
 import ba.tfb.tasknest.repository.TaskerProfileRepository;
 import ba.tfb.tasknest.repository.UserRepository;
 import ba.tfb.tasknest.repository.projection.TaskerNotificationTarget;
+import ba.tfb.tasknest.realtime.RealtimeEvents;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final TaskerProfileRepository taskerProfileRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public List<TaskerNotificationTarget> notifyTaskersAboutNewTask(TaskPublishedEvent event) {
@@ -49,7 +52,7 @@ public class NotificationService {
                 .map(target -> buildNotification(target, event))
                 .toList();
 
-        notificationRepository.saveAll(notifications);
+        notificationRepository.saveAll(notifications).forEach(this::announce);
         log.info("Stored {} notifications for task {}", notifications.size(), event.taskId());
 
         return targets;
@@ -63,7 +66,7 @@ public class NotificationService {
         notification.setRelatedEntityId(event.taskId());
         notification.setContent("Your task has expired: " + event.title());
 
-        notificationRepository.save(notification);
+        announce(notificationRepository.save(notification));
         log.info("Stored expiry notification for task {}", event.taskId());
     }
 
@@ -122,7 +125,7 @@ public class NotificationService {
         notification.setRelatedEntityId(conversation.getId());
         notification.setContent("New message about: " + conversation.getOffer().getTask().getTitle());
 
-        notificationRepository.save(notification);
+        announce(notificationRepository.save(notification));
     }
 
     @Transactional
@@ -179,7 +182,11 @@ public class NotificationService {
         notification.setRelatedEntityId(task.getId());
         notification.setContent(content);
 
-        notificationRepository.save(notification);
+        announce(notificationRepository.save(notification));
+    }
+
+    private void announce(Notification notification) {
+        eventPublisher.publishEvent(new RealtimeEvents.NotificationCreated(notification));
     }
 
     @Transactional(readOnly = true)

@@ -14,7 +14,9 @@ import ba.tfb.tasknest.exception.ResourceNotFoundException;
 import ba.tfb.tasknest.repository.ConversationRepository;
 import ba.tfb.tasknest.repository.MessageRepository;
 import ba.tfb.tasknest.repository.projection.ConversationUnreadCount;
+import ba.tfb.tasknest.realtime.RealtimeEvents;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +37,7 @@ public class ConversationService {
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
     private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
     @Transactional(readOnly = true)
@@ -88,6 +91,7 @@ public class ConversationService {
         conversation.setLastMessageAt(LocalDateTime.now(clock));
 
         notificationService.notifyNewMessage(conversation, recipient);
+        eventPublisher.publishEvent(new RealtimeEvents.MessageSent(saved, sender.getId(), recipient.getId()));
 
         return MessageResponse.from(saved);
     }
@@ -96,8 +100,14 @@ public class ConversationService {
     public int markAsRead(UUID conversationId, UUID readerId) {
         Conversation conversation = loadForParticipant(conversationId, readerId);
 
-        int marked = messageRepository.markReadByRecipient(conversation, readerId, LocalDateTime.now(clock));
+        LocalDateTime now = LocalDateTime.now(clock);
+        int marked = messageRepository.markReadByRecipient(conversation, readerId, now);
         notificationService.clearNewMessageNotifications(conversation, readerId);
+
+        if (marked > 0) {
+            eventPublisher.publishEvent(new RealtimeEvents.MessagesRead(
+                    conversationId, readerId, otherParty(conversation, readerId).getId(), now));
+        }
 
         return marked;
     }

@@ -63,6 +63,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/tasks").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tasks/*").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/ws").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(
                                 "/swagger-ui.html",

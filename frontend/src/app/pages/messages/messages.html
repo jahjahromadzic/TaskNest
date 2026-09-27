@@ -2,9 +2,22 @@
   <aside class="w-full md:w-80 lg:w-96 shrink-0 border-r border-surface-border flex-col bg-slate-50/60"
          [class]="selectedId() ? 'hidden md:flex' : 'flex'">
     <div class="p-4 border-b border-surface-border bg-white space-y-3">
-      <h1 class="font-semibold text-lg flex items-center gap-2">
-        <svg [appIcon]="icons.MessagesSquare" class="w-5 h-5 text-brand"></svg> Messages
-      </h1>
+      <div class="flex items-center justify-between gap-2">
+        <h1 class="font-semibold text-lg flex items-center gap-2">
+          <svg [appIcon]="icons.MessagesSquare" class="w-5 h-5 text-brand"></svg> Messages
+        </h1>
+        <span class="flex items-center gap-1.5 text-[11px] font-medium"
+              [class]="realtime.connected() ? 'text-emerald-600' : 'text-slate-400'"
+              [title]="realtime.connected() ? 'New messages arrive instantly' : 'Reconnecting. New messages show up when the connection is back'">
+          <span class="relative flex w-2 h-2">
+            @if (realtime.connected()) {
+              <span class="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-60"></span>
+            }
+            <span class="relative w-2 h-2 rounded-full" [class]="realtime.connected() ? 'bg-emerald-500' : 'bg-slate-300'"></span>
+          </span>
+          {{ realtime.connected() ? 'Live' : 'Offline' }}
+        </span>
+      </div>
       <label class="relative block">
         <span class="sr-only">Search conversations</span>
         <svg [appIcon]="icons.Search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>

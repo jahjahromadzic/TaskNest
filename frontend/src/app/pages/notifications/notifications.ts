@@ -1,9 +1,11 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Bell, BellOff, CheckCheck, CircleAlert, LoaderCircle, RotateCcw } from 'lucide';
 import { AppNotification } from '../../api/models';
 import { Icon } from '../../components/icon/icon';
 import { NotificationItem } from '../../components/notification-item/notification-item';
 import { NotificationService } from '../../services/notification.service';
+import { RealtimeService } from '../../services/realtime.service';
 import { groupByDay } from '../../shared/notification-kind/notification-kind';
 import { ToastService } from '../../shared/toast/toast.service';
 
@@ -31,7 +33,16 @@ export class Notifications implements OnInit {
   constructor(
     protected notificationService: NotificationService,
     private toastService: ToastService,
-  ) {}
+    realtime: RealtimeService,
+  ) {
+    realtime.notifications$.pipe(takeUntilDestroyed()).subscribe((notification) => {
+      const items = this.items();
+      if (items !== null && !items.some((item) => item.id === notification.id)) {
+        this.items.set([notification, ...items]);
+        this.total.update((total) => total + 1);
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.load();

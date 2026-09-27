@@ -80,9 +80,15 @@ describe('Review dialog', () => {
     expect(posted).toBeNull();
   });
 
+  it('opens as a modal on top of the page, so no scrolling column can clip it', () => {
+    expect(fixture.nativeElement.querySelector('dialog').hasAttribute('open')).toBe(true);
+  });
+
   it('closes on Escape', () => {
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    const cancel = new Event('cancel', { cancelable: true });
+    fixture.nativeElement.querySelector('dialog').dispatchEvent(cancel);
 
     expect(dismissed).toBe(true);
+    expect(cancel.defaultPrevented).toBe(true);
   });
 });

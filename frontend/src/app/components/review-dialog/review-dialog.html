@@ -1,6 +1,7 @@
-<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+<dialog #dialog (cancel)="$event.preventDefault(); onEscape()" aria-labelledby="review-title"
+        class="hidden open:flex fixed inset-0 m-0 w-full h-full max-w-none max-h-none p-4 bg-transparent items-end sm:items-center justify-center backdrop:bg-transparent">
   <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-fade-in" (click)="onEscape()" aria-hidden="true"></div>
-  <form (ngSubmit)="submit()" role="dialog" aria-modal="true" aria-labelledby="review-title"
+  <form (ngSubmit)="submit()"
         class="relative w-full max-w-md bg-white rounded-2xl shadow-modal border border-surface-border p-6 space-y-4 text-center animate-slide-in">
     <div class="mx-auto w-12 h-12 rounded-full bg-accent-light text-accent flex items-center justify-center">
       <svg [appIcon]="icons.Star" class="w-6 h-6 fill-accent"></svg>
@@ -58,4 +59,4 @@
       </button>
     </div>
   </form>
-</div>
+</dialog>

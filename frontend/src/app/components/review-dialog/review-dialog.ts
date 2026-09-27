@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, Output, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CircleAlert, LoaderCircle, Star } from 'lucide';
 import { Review } from '../../api/models';
@@ -14,7 +14,7 @@ export const COMMENT_MAX = 1000;
   imports: [FormsModule, Icon],
   templateUrl: './review-dialog.html',
 })
-export class ReviewDialog {
+export class ReviewDialog implements AfterViewInit {
   protected readonly icons = { CircleAlert, LoaderCircle, Star };
 
   @Input({ required: true }) taskId!: string;
@@ -31,7 +31,18 @@ export class ReviewDialog {
   readonly error = signal<string | null>(null);
   comment = '';
 
+  @ViewChild('dialog', { static: true }) private dialog!: ElementRef<HTMLDialogElement>;
+
   constructor(private reviewService: ReviewService) {}
+
+  ngAfterViewInit(): void {
+    const dialog = this.dialog.nativeElement;
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+    } else {
+      dialog.setAttribute('open', '');
+    }
+  }
 
   get shown(): number {
     return this.hovered() || this.rating();
@@ -68,7 +79,6 @@ export class ReviewDialog {
       });
   }
 
-  @HostListener('document:keydown.escape')
   onEscape(): void {
     if (!this.sending()) {
       this.dismissed.emit();

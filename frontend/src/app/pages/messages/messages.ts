@@ -1,7 +1,7 @@
 import { Component, DestroyRef, ElementRef, Injector, OnInit, ViewChild, afterNextRender, computed, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subject, catchError, map, of, switchMap } from 'rxjs';
+import { Subject, catchError, filter, fromEvent, map, of, switchMap } from 'rxjs';
 import {
   Archive,
   ArrowLeft,
@@ -22,6 +22,7 @@ import { AuthService } from '../../auth/auth.service';
 import { Icon } from '../../components/icon/icon';
 import { StatusBadge } from '../../components/status-badge/status-badge';
 import { ConversationService } from '../../services/conversation.service';
+import { LiveMessage, LiveRead, RealtimeService } from '../../services/realtime.service';
 import { readApiError } from '../../shared/api-error';
 import {
   PendingMessage,
@@ -106,6 +107,7 @@ export class Messages implements OnInit {
 
   constructor(
     private conversationService: ConversationService,
+    protected realtime: RealtimeService,
     private authService: AuthService,
     private toastService: ToastService,
     private route: ActivatedRoute,
@@ -124,6 +126,20 @@ export class Messages implements OnInit {
         takeUntilDestroyed(),
       )
       .subscribe(({ id, page }) => this.showThread(id, page));
+
+    this.realtime.messages$.pipe(takeUntilDestroyed()).subscribe((live) => this.onLiveMessage(live));
+    this.realtime.reads$.pipe(takeUntilDestroyed()).subscribe((read) => this.onLiveRead(read));
+    fromEvent(document, 'visibilitychange')
+      .pipe(
+        filter(() => document.visibilityState === 'visible'),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => {
+        const selected = this.selected();
+        if (selected?.id && (selected.unreadCount ?? 0) > 0) {
+          this.markRead(selected.id);
+        }
+      });
   }
 
   ngOnInit(): void {
@@ -259,8 +275,11 @@ export class Messages implements OnInit {
     this.conversationService.send(conversationId, pending.content ?? '').subscribe({
       next: (saved) => {
         if (this.selectedId() === conversationId) {
+          const pushedFirst = (this.messages() ?? []).some((item) => item.id === saved.id);
           this.replace(pending.id, saved);
-          this.totalMessages.update((total) => total + 1);
+          if (!pushedFirst) {
+            this.totalMessages.update((total) => total + 1);
+          }
         }
         this.bump(conversationId, {
           lastMessage: saved.content,
@@ -275,6 +294,49 @@ export class Messages implements OnInit {
         this.toastService.error(readApiError(error).message);
       },
     });
+  }
+
+  private onLiveMessage({ conversationId, message }: LiveMessage): void {
+    const mine = message.senderId === this.myId();
+    const watching = conversationId === this.selectedId() && document.visibilityState === 'visible';
+
+    if (conversationId === this.selectedId() && this.messages() !== null) {
+      const known = (this.messages() ?? []).some((item) => item.id === message.id);
+      if (!known) {
+        this.messages.update((current) => [...(current ?? []), message]);
+        this.totalMessages.update((total) => total + 1);
+        this.scrollToBottom();
+      }
+      if (!mine && watching) {
+        this.markRead(conversationId);
+      }
+    }
+
+    const current = this.conversations()?.find((item) => item.id === conversationId);
+    if (!current) {
+      if (this.conversations() !== null) {
+        this.loadConversations();
+      }
+      return;
+    }
+    const unread = mine || watching ? (current.unreadCount ?? 0) : (current.unreadCount ?? 0) + 1;
+    this.bump(conversationId, {
+      lastMessage: message.content,
+      lastMessageSenderId: message.senderId,
+      lastMessageAt: message.createdAt,
+      unreadCount: unread,
+    });
+  }
+
+  private onLiveRead({ conversationId, readAt }: LiveRead): void {
+    if (conversationId !== this.selectedId()) {
+      return;
+    }
+    this.messages.update((current) =>
+      (current ?? []).map((item) =>
+        item.senderId === this.myId() && !item.readAt && !item.state ? { ...item, readAt } : item,
+      ),
+    );
   }
 
   private openOffer(offerId: string): void {
@@ -332,7 +394,13 @@ export class Messages implements OnInit {
   }
 
   private replace(id: string | undefined, message: PendingMessage): void {
-    this.messages.update((current) => (current ?? []).map((item) => (item.id === id ? message : item)));
+    this.messages.update((current) => {
+      const list = current ?? [];
+      if (message.id !== id && list.some((item) => item.id === message.id)) {
+        return list.filter((item) => item.id !== id);
+      }
+      return list.map((item) => (item.id === id ? message : item));
+    });
   }
 
   private withResolved(list: Conversation[]): Conversation[] {
