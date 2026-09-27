@@ -1,6 +1,9 @@
 app:
   jwt:
     secret: ${JWT_SECRET:dev-only-insecure-signing-key-do-not-use-in-production}
+  demo-data:
+    enabled: ${DEMO_DATA_ENABLED:true}
+    password: ${DEMO_DATA_PASSWORD:demo12345}
 
 spring:
   jpa:

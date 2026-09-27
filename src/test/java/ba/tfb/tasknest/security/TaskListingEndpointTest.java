@@ -3,6 +3,11 @@ package ba.tfb.tasknest.security;
 import ba.tfb.tasknest.AbstractIntegrationTest;
 import ba.tfb.tasknest.dto.auth.AuthResponse;
 import ba.tfb.tasknest.dto.auth.RegisterRequest;
+import ba.tfb.tasknest.entity.Task;
+import ba.tfb.tasknest.entity.User;
+import ba.tfb.tasknest.entity.enums.TaskStatus;
+import ba.tfb.tasknest.repository.CategoryRepository;
+import ba.tfb.tasknest.repository.MunicipalityRepository;
 import ba.tfb.tasknest.repository.RefreshTokenRepository;
 import ba.tfb.tasknest.repository.TaskRepository;
 import ba.tfb.tasknest.repository.TaskerProfileRepository;
@@ -15,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -30,6 +37,8 @@ class TaskListingEndpointTest extends AbstractIntegrationTest {
     @Autowired private TaskRepository taskRepository;
     @Autowired private TaskerProfileRepository taskerProfileRepository;
     @Autowired private RefreshTokenRepository refreshTokenRepository;
+    @Autowired private CategoryRepository categoryRepository;
+    @Autowired private MunicipalityRepository municipalityRepository;
 
     @AfterEach
     void tearDown() {
@@ -114,6 +123,25 @@ class TaskListingEndpointTest extends AbstractIntegrationTest {
     }
 
     @Test
+    @DisplayName("Tasks without a budget come last whichever way the budget is sorted")
+    void browse_putsTasksWithoutBudgetLast_inBothDirections() throws Exception {
+        User client = userRepository.findById(register("budget.client@test.ba").userId()).orElseThrow();
+        publishedTask(client, "Cheap", new BigDecimal("50"));
+        publishedTask(client, "Open", null);
+        publishedTask(client, "Expensive", new BigDecimal("200"));
+
+        mockMvc.perform(get("/api/tasks").param("sort", "budget,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].title").value(
+                        org.hamcrest.Matchers.contains("Expensive", "Cheap", "Open")));
+
+        mockMvc.perform(get("/api/tasks").param("sort", "budget,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].title").value(
+                        org.hamcrest.Matchers.contains("Cheap", "Expensive", "Open")));
+    }
+
+    @Test
     @DisplayName("An oversized page request is capped instead of honoured")
     void browse_capsPageSize_whenSizeIsAbsurd() throws Exception {
         mockMvc.perform(get("/api/tasks").param("size", "100000"))
@@ -157,6 +185,19 @@ class TaskListingEndpointTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.page").exists())
                 .andExpect(jsonPath("$.pageable").doesNotExist());
+    }
+
+    private void publishedTask(User client, String title, BigDecimal budget) {
+        Task task = new Task();
+        task.setClient(client);
+        task.setCategory(categoryRepository.findAll().getFirst());
+        task.setMunicipality(municipalityRepository.findAll().getFirst());
+        task.setTitle(title);
+        task.setBudget(budget);
+        task.setStatus(TaskStatus.PUBLISHED);
+        task.setPublishedAt(LocalDateTime.now());
+        task.setExpiresAt(LocalDateTime.now().plusDays(30));
+        taskRepository.save(task);
     }
 
     private AuthResponse register(String email) {

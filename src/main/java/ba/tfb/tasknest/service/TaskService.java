@@ -22,7 +22,9 @@ import ba.tfb.tasknest.messaging.TaskPublishedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +38,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TaskService {
 
-    static final int PUBLICATION_VALIDITY_DAYS = 30;
+    public static final int PUBLICATION_VALIDITY_DAYS = 30;
 
     private static final Set<String> SORTABLE_FIELDS =
             Set.of("publishedAt", "createdAt", "updatedAt", "expiresAt", "budget", "title", "status");
@@ -299,36 +301,34 @@ public class TaskService {
     public Page<TaskSummaryResponse> browseTasks(UUID categoryId,
                                                  UUID municipalityId,
                                                  Pageable pageable) {
-        requireSortableFields(pageable);
         return taskRepository.findOpenTasks(TaskStatus.PUBLISHED, LocalDateTime.now(clock),
-                categoryId, municipalityId, pageable);
+                categoryId, municipalityId, sortable(pageable));
     }
 
     @Transactional(readOnly = true)
     public Page<TaskSummaryResponse> getMatchingTasks(UUID taskerId, Pageable pageable) {
-        requireSortableFields(pageable);
         return taskRepository.findMatchingTasks(
-                taskerId, TaskStatus.PUBLISHED, LocalDateTime.now(clock), pageable);
+                taskerId, TaskStatus.PUBLISHED, LocalDateTime.now(clock), sortable(pageable));
     }
 
     @Transactional(readOnly = true)
     public Page<TaskSummaryResponse> getMyTasks(UUID clientId, Pageable pageable) {
-        requireSortableFields(pageable);
-        return taskRepository.findByClientId(clientId, pageable);
+        return taskRepository.findByClientId(clientId, sortable(pageable));
     }
 
     @Transactional(readOnly = true)
     public Page<TaskSummaryResponse> getAssignedTasks(UUID taskerId, Pageable pageable) {
-        requireSortableFields(pageable);
-        return taskRepository.findAssignedToTasker(taskerId, pageable);
+        return taskRepository.findAssignedToTasker(taskerId, sortable(pageable));
     }
 
-    private void requireSortableFields(Pageable pageable) {
+    private Pageable sortable(Pageable pageable) {
         pageable.getSort().forEach(order -> {
             if (!SORTABLE_FIELDS.contains(order.getProperty())) {
                 throw new BusinessRuleException("Cannot sort by '" + order.getProperty()
                         + "'. Sortable fields: " + SORTABLE_FIELDS.stream().sorted().toList());
             }
         });
+        Sort emptyValuesLast = Sort.by(pageable.getSort().stream().map(Sort.Order::nullsLast).toList());
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), emptyValuesLast);
     }
 }

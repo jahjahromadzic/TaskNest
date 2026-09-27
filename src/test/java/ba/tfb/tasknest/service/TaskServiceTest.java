@@ -357,7 +357,8 @@ class TaskServiceTest {
         void browseTasks_delegatesToRepository_whenSortFieldIsAllowed() {
             // Arrange
             PageRequest pageable = PageRequest.of(0, 20, Sort.by("budget"));
-            when(taskRepository.findOpenTasks(eq(TaskStatus.PUBLISHED), any(), isNull(), isNull(), eq(pageable)))
+            PageRequest emptyValuesLast = PageRequest.of(0, 20, Sort.by(Sort.Order.asc("budget").nullsLast()));
+            when(taskRepository.findOpenTasks(eq(TaskStatus.PUBLISHED), any(), isNull(), isNull(), eq(emptyValuesLast)))
                     .thenReturn(Page.empty());
 
             // Act

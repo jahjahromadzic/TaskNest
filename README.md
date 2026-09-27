@@ -96,6 +96,38 @@ Start the application:
 The API is available at `http://localhost:8080`. Liquibase creates the schema and
 seeds reference data on first run.
 
+### Demo data
+
+In the `dev` profile the application also fills an empty database with demo data
+on startup: eight accounts, eighteen open tasks with offers, and a few tasks further
+along the lifecycle (assigned with a conversation, in progress, closed with reviews,
+and a draft). Dates are relative to the moment of seeding, so the tasks are fresh
+and none of them is picked up by the expiry or deadline schedulers.
+
+Every demo account uses the password `demo12345` (`DEMO_DATA_PASSWORD`).
+
+| Account | Roles | Story |
+|---|---|---|
+| `amra@demo.tasknest.ba` | client | Open tasks, an assigned task with an unread message, a task in progress, a closed and reviewed task, a draft |
+| `emina@demo.tasknest.ba` | client | Open tasks and two closed, reviewed jobs |
+| `haris@demo.tasknest.ba` | client | Open tasks and one closed, reviewed job |
+| `lejla@demo.tasknest.ba` | client, admin | Administration |
+| `emir@demo.tasknest.ba` | client, tasker | Plumbing and electrical, verified, rating 4.00 |
+| `selma@demo.tasknest.ba` | client, tasker | Cleaning and painting, verified, rating 5.00 |
+| `adnan@demo.tasknest.ba` | client, tasker | Moving and furniture assembly, rating 4.50 |
+| `tarik@demo.tasknest.ba` | client, tasker | Electrical and painting, no jobs yet |
+
+The seeder runs only once: it does nothing when `amra@demo.tasknest.ba` already
+exists. To start again from a clean database, remove the Docker volume:
+
+```bash
+docker compose down -v
+docker compose up -d
+```
+
+Demo data is off by default in every other profile; the seeder refuses to start
+when it is enabled without a password.
+
 ### Local endpoints
 
 | Service | URL |
@@ -135,6 +167,8 @@ The default profile is `dev` and runs without any environment variables.
 | `MAIL_PORT` | `1025` | |
 | `MAIL_FROM` | `noreply@tasknest.ba` | Sender address on notification emails |
 | `APP_ADMIN_EMAIL` | empty | Existing account promoted to administrator at startup |
+| `DEMO_DATA_ENABLED` | `true` in `dev`, `false` otherwise | Fill an empty database with demo accounts and tasks |
+| `DEMO_DATA_PASSWORD` | `demo12345` in `dev` | Password of every demo account |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:4200` | Comma-separated origins allowed to call the API |
 | `TASK_EXPIRY_ENABLED` | `true` | Set to `false` to disable the expiry scheduler |
 | `TASK_EXPIRY_INTERVAL_MS` | `60000` | Delay between two expiry passes |
@@ -146,7 +180,7 @@ The default profile is `dev` and runs without any environment variables.
 
 | Profile | Purpose |
 |---|---|
-| `dev` | Default. SQL logging enabled, development signing key |
+| `dev` | Default. SQL logging enabled, development signing key, demo data |
 | `prod` | Requires `JWT_SECRET`; the application fails to start without it |
 | `test` | Used by the test suite with a Testcontainers database |
 
@@ -204,7 +238,9 @@ API, which in development is done by the Angular dev-server proxy.
 
 Listing endpoints accept `page`, `size` and `sort`. The maximum page size is 50.
 Sortable fields are `publishedAt`, `createdAt`, `updatedAt`, `expiresAt`,
-`budget`, `title` and `status`. An unsupported sort field returns `400`.
+`budget`, `title` and `status`. An unsupported sort field returns `400`. Tasks
+without a value in the sorted field, such as tasks without a budget, always come
+last in both directions.
 
 Paged responses use the following shape:
 
@@ -524,13 +560,13 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **285 tests** and requires no manual setup — Testcontainers
+The suite contains **291 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 135 | Service business rules and the task state machine |
-| Integration | 150 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline |
+| Integration | 156 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, demo data |
 
 GitHub Actions runs the same command on every push and pull request.
 

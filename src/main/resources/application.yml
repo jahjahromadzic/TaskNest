@@ -50,6 +50,10 @@ app:
   admin:
     email: ${APP_ADMIN_EMAIL:}
 
+  demo-data:
+    enabled: ${DEMO_DATA_ENABLED:false}
+    password: ${DEMO_DATA_PASSWORD:}
+
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
 
