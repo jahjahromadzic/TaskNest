@@ -160,4 +160,14 @@ body {
   .bottom-nav-item.active {
     @apply text-brand font-semibold;
   }
+
+  .category-option {
+    @apply shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-text-sub text-left whitespace-nowrap
+      border border-transparent transition-all duration-200
+      hover:bg-slate-50 hover:text-text-main active:scale-[0.98];
+  }
+
+  .category-option.active {
+    @apply bg-brand-50 text-brand font-semibold border-brand/20 shadow-subtle;
+  }
 }

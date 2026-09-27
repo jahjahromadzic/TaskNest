@@ -1,0 +1,27 @@
+@if (totalPages > 1) {
+  <nav aria-label="Pages" class="flex items-center justify-center gap-1.5 pt-2">
+    <button type="button" (click)="go(page - 1)" [disabled]="page === 0" aria-label="Previous page"
+            class="icon-btn border border-surface-border bg-white disabled:opacity-40 disabled:pointer-events-none">
+      <svg lucideChevronLeft class="w-4 h-4"></svg>
+    </button>
+
+    @for (item of pages; track $index) {
+      @if (item === null) {
+        <span class="w-9 text-center text-slate-400 select-none">…</span>
+      } @else {
+        <button type="button" (click)="go(item)" [attr.aria-current]="item === page ? 'page' : null"
+                class="min-w-9 h-9 px-2 rounded-lg text-sm font-semibold transition-all duration-200"
+                [class]="item === page
+                  ? 'bg-brand text-white shadow-card scale-105'
+                  : 'bg-white border border-surface-border text-text-main hover:border-brand/40 hover:text-brand active:scale-95'">
+          {{ item + 1 }}
+        </button>
+      }
+    }
+
+    <button type="button" (click)="go(page + 1)" [disabled]="page >= totalPages - 1" aria-label="Next page"
+            class="icon-btn border border-surface-border bg-white disabled:opacity-40 disabled:pointer-events-none">
+      <svg lucideChevronRight class="w-4 h-4"></svg>
+    </button>
+  </nav>
+}

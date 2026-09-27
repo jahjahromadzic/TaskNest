@@ -11,3 +11,4 @@ export type Municipality = Schemas['MunicipalityResponse'];
 
 export type TaskSummary = Schemas['TaskSummaryResponse'];
 export type TaskDetail = Schemas['TaskResponse'];
+export type TaskPage = Schemas['PagedResponseTaskSummaryResponse'];

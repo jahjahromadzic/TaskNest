@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from './app.routes';
 import { ReferenceService } from './services/reference.service';
+import { TaskService } from './services/task.service';
 
 describe('App routes', () => {
   let harness: RouterTestingHarness;
@@ -16,7 +17,8 @@ describe('App routes', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter(routes),
-        { provide: ReferenceService, useValue: { getCategories: () => of([]) } },
+        { provide: ReferenceService, useValue: { getCategories: () => of([]), getMunicipalities: () => of([]) } },
+        { provide: TaskService, useValue: { browse: () => of({ content: [], page: 0, totalElements: 0, totalPages: 0 }) } },
       ],
     });
     harness = await RouterTestingHarness.create();

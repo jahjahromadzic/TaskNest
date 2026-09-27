@@ -6,6 +6,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { routes } from '../app.routes';
 import { ReferenceService } from '../services/reference.service';
+import { TaskService } from '../services/task.service';
 import { AuthService } from './auth.service';
 
 describe('Route guards', () => {
@@ -22,7 +23,8 @@ describe('Route guards', () => {
         provideRouter(routes),
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: ReferenceService, useValue: { getCategories: () => of([]) } },
+        { provide: ReferenceService, useValue: { getCategories: () => of([]), getMunicipalities: () => of([]) } },
+        { provide: TaskService, useValue: { browse: () => of({ content: [], page: 0, totalElements: 0, totalPages: 0 }) } },
       ],
     });
     router = TestBed.inject(Router);
