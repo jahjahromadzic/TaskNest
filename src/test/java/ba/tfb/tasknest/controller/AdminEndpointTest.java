@@ -17,7 +17,9 @@ import ba.tfb.tasknest.entity.enums.RoleName;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
 import ba.tfb.tasknest.exception.BusinessRuleException;
 import ba.tfb.tasknest.repository.*;
+import ba.tfb.tasknest.security.RefreshTokenCookie;
 import ba.tfb.tasknest.service.AuthService;
+import jakarta.servlet.http.Cookie;
 import ba.tfb.tasknest.service.OfferService;
 import ba.tfb.tasknest.service.TaskService;
 import org.junit.jupiter.api.AfterEach;
@@ -164,8 +166,7 @@ class AdminEndpointTest extends AbstractIntegrationTest {
 
             // Assert
             mockMvc.perform(post("/api/auth/refresh")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"refreshToken\":\"" + tasker.refreshToken() + "\"}"))
+                            .cookie(new Cookie(RefreshTokenCookie.NAME, tasker.refreshToken())))
                     .andExpect(status().isUnauthorized());
         }
 

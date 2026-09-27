@@ -128,6 +128,7 @@ The default profile is `dev` and runs without any environment variables.
 | `JWT_SECRET` | development value | HMAC signing key. Required in `prod` |
 | `JWT_EXPIRATION_MINUTES` | `60` | Access token lifetime |
 | `REFRESH_TOKEN_EXPIRATION_DAYS` | `30` | Refresh token lifetime |
+| `REFRESH_COOKIE_SECURE` | `true` | Send the refresh cookie over HTTPS only; browsers also accept it on `localhost` |
 | `RABBITMQ_HOST` | `localhost` | |
 | `RABBITMQ_PORT` | `5672` | |
 | `MAIL_HOST` | `localhost` | |
@@ -172,9 +173,17 @@ application is running.
 |---|---|---|---|
 | POST | `/register` | Public | Create an account and receive a token pair |
 | POST | `/login` | Public | Authenticate and receive a token pair |
-| POST | `/refresh` | Public | Exchange a refresh token for a new pair |
-| POST | `/logout` | Public | Revoke a refresh token |
+| POST | `/refresh` | Public | Exchange the refresh-token cookie for a new access token; rotates the cookie |
+| POST | `/logout` | Public | Revoke the refresh token and clear its cookie |
 | POST | `/activate-tasker` | Authenticated | Activate the tasker role |
+
+The refresh token never appears in a response body. Register, login and refresh
+set it as a cookie that is `HttpOnly` (unreadable by JavaScript, so an injected
+script cannot steal it), `SameSite=Strict` (not sent with requests started from
+another site) and scoped to `/api/auth` (not sent with any other request). The
+access token is returned in the body and kept in memory by the client. Because
+of `SameSite=Strict`, the frontend has to be served from the same site as the
+API, which in development is done by the Angular dev-server proxy.
 
 ### Tasks — `/api/tasks`
 
@@ -515,13 +524,13 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **283 tests** and requires no manual setup — Testcontainers
+The suite contains **285 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 135 | Service business rules and the task state machine |
-| Integration | 148 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline |
+| Integration | 150 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline |
 
 GitHub Actions runs the same command on every push and pull request.
 

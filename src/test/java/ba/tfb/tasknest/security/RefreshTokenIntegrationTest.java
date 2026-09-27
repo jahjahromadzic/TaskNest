@@ -9,6 +9,9 @@ import ba.tfb.tasknest.entity.enums.AccountStatus;
 import ba.tfb.tasknest.repository.RefreshTokenRepository;
 import ba.tfb.tasknest.repository.UserRepository;
 import ba.tfb.tasknest.service.AuthService;
+import ba.tfb.tasknest.security.RefreshTokenCookie;
+import jakarta.servlet.http.Cookie;
+import org.springframework.http.HttpHeaders;
 import ba.tfb.tasknest.service.RefreshTokenService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,6 +27,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -187,35 +192,59 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/refresh works end to end and is publicly reachable")
-    void refreshEndpointWorksOverHttp() throws Exception {
-        AuthResponse initial = register("http.refresh@test.ba");
+    @DisplayName("Login sets the refresh token as an httpOnly cookie and keeps it out of the body")
+    void loginSetsRefreshTokenCookie() throws Exception {
+        register("cookie.login@test.ba");
 
-        mockMvc.perform(post("/api/auth/refresh")
+        mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(refreshTokenJson(initial.refreshToken())))
+                        .content("{\"email\":\"cookie.login@test.ba\",\"password\":\"password123\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isNotEmpty())
-                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
-                .andExpect(jsonPath("$.expiresIn").isNumber());
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString(RefreshTokenCookie.NAME + "=")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("HttpOnly")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("SameSite=Strict")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Path=" + RefreshTokenCookie.PATH)));
     }
 
     @Test
-    @DisplayName("POST /api/auth/logout returns 204 and is publicly reachable")
-    void logoutEndpointWorksOverHttp() throws Exception {
+    @DisplayName("POST /api/auth/refresh reads the cookie and rotates it")
+    void refreshEndpointReadsAndRotatesTheCookie() throws Exception {
+        AuthResponse initial = register("http.refresh@test.ba");
+
+        String setCookie = mockMvc.perform(post("/api/auth/refresh")
+                        .cookie(new Cookie(RefreshTokenCookie.NAME, initial.refreshToken())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                .andExpect(jsonPath("$.expiresIn").isNumber())
+                .andReturn().getResponse().getHeader(HttpHeaders.SET_COOKIE);
+
+        assertNotNull(setCookie);
+        assertFalse(setCookie.contains(RefreshTokenCookie.NAME + "=" + initial.refreshToken() + ";"),
+                "the cookie must carry a new token after rotation");
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/refresh without the cookie is rejected with 401")
+    void refreshWithoutCookieIsRejected() throws Exception {
+        mockMvc.perform(post("/api/auth/refresh"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/logout revokes the token and clears the cookie")
+    void logoutRevokesTokenAndClearsCookie() throws Exception {
         AuthResponse initial = register("http.logout@test.ba");
 
         mockMvc.perform(post("/api/auth/logout")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(refreshTokenJson(initial.refreshToken())))
-                .andExpect(status().isNoContent());
+                        .cookie(new Cookie(RefreshTokenCookie.NAME, initial.refreshToken())))
+                .andExpect(status().isNoContent())
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=0")));
 
         RefreshToken stored = refreshTokenRepository.findByTokenHash(RefreshTokenService.hash(initial.refreshToken())).orElseThrow();
         assertNotNull(stored.getRevokedAt());
-    }
-
-    private String refreshTokenJson(String refreshToken) {
-        return "{\"refreshToken\":\"" + refreshToken + "\"}";
     }
 
     private AuthResponse register(String email) {
