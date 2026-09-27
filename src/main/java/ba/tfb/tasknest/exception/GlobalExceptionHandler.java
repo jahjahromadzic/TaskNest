@@ -11,6 +11,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.stream.Collectors;
 
@@ -70,6 +71,12 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleUnauthenticated(AuthenticationException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED,
                 "Authentication is required to access this resource");
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ProblemDetail handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                "Invalid value '" + ex.getValue() + "' for parameter '" + ex.getName() + "'");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -4,6 +4,7 @@ import ba.tfb.tasknest.dto.common.PagedResponse;
 import ba.tfb.tasknest.dto.task.CreateTaskRequest;
 import ba.tfb.tasknest.dto.task.TaskResponse;
 import ba.tfb.tasknest.dto.task.TaskSummaryResponse;
+import ba.tfb.tasknest.entity.enums.TaskStatus;
 import ba.tfb.tasknest.security.UserPrincipal;
 import ba.tfb.tasknest.service.TaskService;
 import jakarta.validation.Valid;
@@ -16,6 +17,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -97,9 +100,16 @@ public class TaskController {
     @PreAuthorize("hasRole('CLIENT')")
     public PagedResponse<TaskSummaryResponse> mine(
             @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(name = "status", required = false) Set<TaskStatus> statuses,
             @PageableDefault(size = 20, sort = "createdAt",
                     direction = Sort.Direction.DESC) Pageable pageable) {
-        return PagedResponse.from(taskService.getMyTasks(principal.getId(), pageable));
+        return PagedResponse.from(taskService.getMyTasks(principal.getId(), statuses, pageable));
+    }
+
+    @GetMapping("/mine/counts")
+    @PreAuthorize("hasRole('CLIENT')")
+    public Map<TaskStatus, Long> myCounts(@AuthenticationPrincipal UserPrincipal principal) {
+        return taskService.countMyTasks(principal.getId());
     }
 
     @GetMapping("/assigned")

@@ -17,9 +17,14 @@ describe('format', () => {
     expect(timeAgo('2026-09-20T12:00:00', now)).toBe('7 days ago');
   });
 
-  it('counts the days left and never goes below zero', () => {
+  it('counts calendar days left and never goes below zero', () => {
     expect(daysLeft('2026-10-07T12:00:00', now)).toBe(10);
-    expect(daysLeft('2026-09-27T18:00:00', now)).toBe(1);
+    expect(daysLeft('2026-09-28T08:00:00', now)).toBe(1);
+    expect(daysLeft('2026-09-27T18:00:00', now)).toBe(0);
     expect(daysLeft('2026-09-20T12:00:00', now)).toBe(0);
+  });
+
+  it('is not thrown off by the clock change at the end of October', () => {
+    expect(daysLeft('2026-10-27T19:05:00', new Date('2026-09-27T19:05:00'))).toBe(30);
   });
 });

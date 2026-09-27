@@ -12,6 +12,9 @@
 
     @if (authService.user$ | async; as user) {
       <div class="flex items-center gap-1 sm:gap-2">
+        <a routerLink="/tasks/new" class="btn-primary hidden md:inline-flex py-2 mr-1">
+          <svg [appIcon]="icons.Plus" class="w-4 h-4"></svg> Post a task
+        </a>
         <a routerLink="/messages" routerLinkActive="!text-brand bg-brand-50" class="icon-btn hidden sm:inline-flex" title="Messages">
           <svg [appIcon]="icons.MessageSquare" class="w-5 h-5"></svg>
         </a>

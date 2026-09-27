@@ -3,6 +3,7 @@ package ba.tfb.tasknest.repository;
 import ba.tfb.tasknest.dto.task.TaskSummaryResponse;
 import ba.tfb.tasknest.entity.Task;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
+import ba.tfb.tasknest.repository.projection.TaskStatusCount;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -81,9 +83,19 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
         join t.category c
         join t.municipality m
         where t.client.id = :clientId
+          and t.status in :statuses
         """)
     Page<TaskSummaryResponse> findByClientId(@Param("clientId") UUID clientId,
+                                             @Param("statuses") Collection<TaskStatus> statuses,
                                              Pageable pageable);
+
+    @Query("""
+        select new ba.tfb.tasknest.repository.projection.TaskStatusCount(t.status, count(t))
+        from Task t
+        where t.client.id = :clientId
+        group by t.status
+        """)
+    List<TaskStatusCount> countByStatusForClient(@Param("clientId") UUID clientId);
 
     @Query("""
         select new ba.tfb.tasknest.dto.task.TaskSummaryResponse(

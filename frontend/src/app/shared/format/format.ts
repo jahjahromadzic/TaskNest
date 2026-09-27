@@ -25,7 +25,12 @@ export function daysLeft(date: string | undefined, now = new Date()): number | n
   if (!date) {
     return null;
   }
-  return Math.max(0, Math.ceil((new Date(date).getTime() - now.getTime()) / DAY_MS));
+  const calendarDays = Math.round((startOfDay(new Date(date)) - startOfDay(now)) / DAY_MS);
+  return Math.max(0, calendarDays);
+}
+
+function startOfDay(date: Date): number {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 }
 
 const dateFormat = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });

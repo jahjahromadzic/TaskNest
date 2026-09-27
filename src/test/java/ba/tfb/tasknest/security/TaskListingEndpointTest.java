@@ -142,6 +142,61 @@ class TaskListingEndpointTest extends AbstractIntegrationTest {
     }
 
     @Test
+    @DisplayName("A client can list only their own tasks in the chosen statuses")
+    void mine_filtersByStatus_andShowsOnlyOwnTasks() throws Exception {
+        AuthResponse amra = register("mine.amra@test.ba");
+        User amraUser = userRepository.findById(amra.userId()).orElseThrow();
+        User emina = userRepository.findById(register("mine.emina@test.ba").userId()).orElseThrow();
+        task(amraUser, "Amra draft", TaskStatus.DRAFT);
+        task(amraUser, "Amra open", TaskStatus.PUBLISHED);
+        task(amraUser, "Amra closed", TaskStatus.CLOSED);
+        task(emina, "Emina draft", TaskStatus.DRAFT);
+
+        mockMvc.perform(get("/api/tasks/mine").param("status", "DRAFT")
+                        .header("Authorization", "Bearer " + amra.token()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].title").value(org.hamcrest.Matchers.contains("Amra draft")));
+
+        mockMvc.perform(get("/api/tasks/mine").param("status", "PUBLISHED", "CLOSED")
+                        .header("Authorization", "Bearer " + amra.token()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+
+        mockMvc.perform(get("/api/tasks/mine").header("Authorization", "Bearer " + amra.token()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(3));
+    }
+
+    @Test
+    @DisplayName("A client gets the number of their own tasks in every status")
+    void myCounts_countsOwnTasksPerStatus() throws Exception {
+        AuthResponse amra = register("counts.amra@test.ba");
+        User amraUser = userRepository.findById(amra.userId()).orElseThrow();
+        User emina = userRepository.findById(register("counts.emina@test.ba").userId()).orElseThrow();
+        task(amraUser, "One", TaskStatus.PUBLISHED);
+        task(amraUser, "Two", TaskStatus.PUBLISHED);
+        task(amraUser, "Three", TaskStatus.DRAFT);
+        task(emina, "Not Amra's", TaskStatus.PUBLISHED);
+
+        mockMvc.perform(get("/api/tasks/mine/counts").header("Authorization", "Bearer " + amra.token()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.PUBLISHED").value(2))
+                .andExpect(jsonPath("$.DRAFT").value(1))
+                .andExpect(jsonPath("$.CLOSED").value(0));
+    }
+
+    @Test
+    @DisplayName("An unknown status in the filter is 400, not 500")
+    void mine_isBadRequest_whenStatusIsUnknown() throws Exception {
+        AuthResponse amra = register("badstatus.amra@test.ba");
+
+        mockMvc.perform(get("/api/tasks/mine").param("status", "NEPOSTOJI")
+                        .header("Authorization", "Bearer " + amra.token()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("Invalid value 'NEPOSTOJI' for parameter 'status'"));
+    }
+
+    @Test
     @DisplayName("An oversized page request is capped instead of honoured")
     void browse_capsPageSize_whenSizeIsAbsurd() throws Exception {
         mockMvc.perform(get("/api/tasks").param("size", "100000"))
@@ -185,6 +240,16 @@ class TaskListingEndpointTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.page").exists())
                 .andExpect(jsonPath("$.pageable").doesNotExist());
+    }
+
+    private void task(User client, String title, TaskStatus status) {
+        Task task = new Task();
+        task.setClient(client);
+        task.setCategory(categoryRepository.findAll().getFirst());
+        task.setMunicipality(municipalityRepository.findAll().getFirst());
+        task.setTitle(title);
+        task.setStatus(status);
+        taskRepository.save(task);
     }
 
     private void publishedTask(User client, String title, BigDecimal budget) {

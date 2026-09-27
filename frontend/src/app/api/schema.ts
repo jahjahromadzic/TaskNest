@@ -484,6 +484,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tasks/mine/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["myCounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tasks/matching": {
         parameters: {
             query?: never;
@@ -1731,6 +1747,7 @@ export interface operations {
     mine: {
         parameters: {
             query: {
+                status?: ("DRAFT" | "PUBLISHED" | "ASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CLOSED" | "CANCELLED" | "EXPIRED" | "REMOVED")[];
                 pageable: components["schemas"]["Pageable"];
             };
             header?: never;
@@ -1746,6 +1763,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PagedResponseTaskSummaryResponse"];
+                };
+            };
+        };
+    };
+    myCounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: number;
+                    };
                 };
             };
         };

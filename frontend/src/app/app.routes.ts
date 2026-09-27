@@ -11,6 +11,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/browse-tasks/browse-tasks').then((m) => m.BrowseTasks),
   },
   {
+    path: 'tasks/new',
+    canActivate: [roleGuard('CLIENT')],
+    title: 'Post a task · TaskNest',
+    loadComponent: () => import('./pages/post-task/post-task').then((m) => m.PostTask),
+  },
+  {
     path: 'tasks/:id',
     title: 'Task · TaskNest',
     loadComponent: () => import('./pages/task-detail/task-detail').then((m) => m.TaskDetailPage),
@@ -34,10 +40,9 @@ export const routes: Routes = [
   },
   {
     path: 'my-tasks',
-    canActivate: [authGuard],
+    canActivate: [roleGuard('CLIENT')],
     title: 'My tasks · TaskNest',
-    loadComponent: placeholder,
-    data: { heading: 'My tasks', phase: 2 },
+    loadComponent: () => import('./pages/my-tasks/my-tasks').then((m) => m.MyTasks),
   },
   {
     path: 'tasker',

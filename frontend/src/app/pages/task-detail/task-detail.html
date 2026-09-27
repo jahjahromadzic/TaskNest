@@ -118,6 +118,15 @@
               }
             </dl>
 
+            @if (isOwner(task, vm.user) && task.status === 'DRAFT') {
+              <button type="button" (click)="publish(task)" [disabled]="publishing()" class="btn-primary w-full">
+                @if (publishing()) {
+                  <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Publishing...
+                } @else {
+                  <svg [appIcon]="icons.Send" class="w-4 h-4"></svg> Publish task
+                }
+              </button>
+            }
             @if (isOwner(task, vm.user)) {
               <div class="flex items-start gap-2.5 p-3 rounded-btn bg-brand-50 border border-brand/20 text-sm">
                 <svg [appIcon]="icons.UserRound" class="w-4 h-4 text-brand mt-0.5 shrink-0"></svg>

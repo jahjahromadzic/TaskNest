@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
@@ -12,10 +12,12 @@ import {
   FileText,
   Info,
   Link,
+  LoaderCircle,
   LogIn,
   MapPin,
   RotateCcw,
   SearchX,
+  Send,
   UserRound,
 } from 'lucide';
 import { Icon } from '../../components/icon/icon';
@@ -26,6 +28,7 @@ import { CategoryIcon } from '../../components/category-icon/category-icon';
 import { StatusBadge } from '../../components/status-badge/status-badge';
 import { TaskTimeline } from '../../components/task-timeline/task-timeline';
 import { TaskService } from '../../services/task.service';
+import { readApiError } from '../../shared/api-error';
 import { daysLeft, formatBudget, formatDate, timeAgo } from '../../shared/format/format';
 import { isStopped } from '../../shared/task-status/task-status';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -62,10 +65,12 @@ export class TaskDetailPage {
     FileText,
     Info,
     Link,
+    LoaderCircle,
     LogIn,
     MapPin,
     RotateCcw,
     SearchX,
+    Send,
     UserRound,
   };
 
@@ -77,6 +82,8 @@ export class TaskDetailPage {
   readonly timeAgo = timeAgo;
   readonly daysLeft = daysLeft;
   readonly isStopped = isStopped;
+
+  readonly publishing = signal(false);
 
   private readonly retry$ = new BehaviorSubject<void>(undefined);
 
@@ -124,6 +131,24 @@ export class TaskDetailPage {
     } catch {
       this.toastService.error('The link could not be copied. Copy it from the address bar instead.');
     }
+  }
+
+  publish(task: TaskDetail): void {
+    if (this.publishing()) {
+      return;
+    }
+    this.publishing.set(true);
+    this.taskService.publishTask(task.id!).subscribe({
+      next: () => {
+        this.publishing.set(false);
+        this.toastService.success('Your task is live. Taskers nearby can now send offers.');
+        this.retry$.next();
+      },
+      error: (error) => {
+        this.publishing.set(false);
+        this.toastService.error(readApiError(error).message);
+      },
+    });
   }
 
   retry(): void {

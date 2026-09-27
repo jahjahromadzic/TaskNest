@@ -60,7 +60,7 @@ describe('Login page', () => {
   });
 
   it('logs in and goes back to the page that asked for it', async () => {
-    await harness.navigateByUrl('/login?returnUrl=/my-tasks');
+    await harness.navigateByUrl('/login?returnUrl=/messages');
 
     await fillAndSubmit('amra@test.ba', 'password123');
     http.expectOne('/api/auth/login').flush({
@@ -73,6 +73,6 @@ describe('Login page', () => {
     await harness.fixture.whenStable();
 
     expect(TestBed.inject(AuthService).currentUser?.email).toBe('amra@test.ba');
-    expect(TestBed.inject(Router).url).toBe('/my-tasks');
+    expect(TestBed.inject(Router).url).toBe('/messages');
   });
 });

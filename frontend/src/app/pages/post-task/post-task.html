@@ -1,0 +1,159 @@
+@if (
+  { categories: categories$ | async, municipalities: municipalities$ | async, municipalityOptions: municipalityOptions$ | async };
+  as vm
+) {
+  <div class="space-y-5">
+    <nav aria-label="Breadcrumb">
+      <a routerLink="/tasks" class="group inline-flex items-center gap-1 text-sm text-text-sub hover:text-brand transition-colors">
+        <svg [appIcon]="icons.ArrowLeft" class="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5"></svg>
+        Browse tasks
+      </a>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <form #form="ngForm" (ngSubmit)="submit(form, 'publish')" novalidate
+            class="lg:col-span-2 bg-white p-5 sm:p-7 rounded-card border border-surface-border shadow-subtle space-y-6 animate-fade-in">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Post a task</h1>
+          <p class="text-sm text-text-sub mt-1">Describe the job and local taskers will send you price offers.</p>
+        </div>
+
+        @if (error(); as error) {
+          <div role="alert" class="animate-shake flex items-start gap-2.5 p-3 rounded-btn bg-red-50 border border-red-200 text-sm text-red-700">
+            <svg [appIcon]="icons.CircleAlert" class="w-4 h-4 mt-0.5 shrink-0"></svg>
+            <span>{{ error.message }}</span>
+          </div>
+        }
+
+        <div>
+          <div class="flex items-baseline justify-between">
+            <label for="task-title" class="form-label">What do you need done?</label>
+            <span class="text-xs tabular-nums" [class]="title.length > titleMax - 20 ? 'text-amber-600' : 'text-slate-400'">
+              {{ title.length }}/{{ titleMax }}
+            </span>
+          </div>
+          <input id="task-title" name="title" [(ngModel)]="title" (ngModelChange)="clearServerError('title')"
+                 #titleField="ngModel" required [maxlength]="titleMax"
+                 placeholder="e.g. Fix a leaking tap in the bathroom" class="form-input"
+                 [class.form-input-invalid]="(titleField.invalid && (titleField.touched || attempted())) || serverError('title')">
+          @if (serverError('title'); as message) {
+            <p class="form-error">{{ message }}</p>
+          } @else if (titleField.invalid && (titleField.touched || attempted())) {
+            <p class="form-error">Give your task a short title</p>
+          }
+        </div>
+
+        <fieldset>
+          <legend class="form-label">Category</legend>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Category">
+            @for (category of vm.categories; track category.id) {
+              <button type="button" role="radio" [attr.aria-checked]="category.id === categoryId"
+                      (click)="categoryId = category.id ?? null; clearServerError('categoryId')"
+                      class="category-tile" [class.active]="category.id === categoryId">
+                <app-category-icon [name]="category.name" size="w-4 h-4 shrink-0" />
+                <span class="truncate">{{ category.name }}</span>
+              </button>
+            } @empty {
+              @for (tile of [1, 2, 3, 4, 5, 6]; track tile) {
+                <span class="skeleton h-11 rounded-btn"></span>
+              }
+            }
+          </div>
+          @if (serverError('categoryId'); as message) {
+            <p class="form-error">{{ message }}</p>
+          } @else if (!categoryId && attempted()) {
+            <p class="form-error">Choose the kind of work</p>
+          }
+        </fieldset>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label for="task-municipality" class="form-label">Municipality</label>
+            <app-select inputId="task-municipality" name="municipalityId" placeholder="Where is the job?"
+                        [options]="vm.municipalityOptions ?? []" [(ngModel)]="municipalityId"
+                        (ngModelChange)="clearServerError('municipalityId')" #municipalityField="ngModel" required
+                        [class.select-invalid]="municipalityField.invalid && (municipalityField.touched || attempted())" />
+            @if (serverError('municipalityId'); as message) {
+              <p class="form-error">{{ message }}</p>
+            } @else if (municipalityField.invalid && (municipalityField.touched || attempted())) {
+              <p class="form-error">Choose a municipality</p>
+            }
+          </div>
+
+          <div>
+            <label for="task-budget" class="form-label">
+              Budget <span class="font-normal text-text-sub">(optional)</span>
+            </label>
+            <div class="relative">
+              <input id="task-budget" name="budget" type="number" inputmode="decimal" min="0" step="1"
+                     [(ngModel)]="budget" (ngModelChange)="clearServerError('budget')" #budgetField="ngModel"
+                     placeholder="Let taskers suggest a price" class="form-input pr-12"
+                     [class.form-input-invalid]="(budgetField.value !== null && budgetField.value < 0) || serverError('budget')">
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400 pointer-events-none">KM</span>
+            </div>
+            @if (serverError('budget'); as message) {
+              <p class="form-error">{{ message }}</p>
+            } @else if (budgetField.value !== null && budgetField.value < 0) {
+              <p class="form-error">The budget cannot be negative</p>
+            }
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-baseline justify-between">
+            <label for="task-description" class="form-label">
+              Details <span class="font-normal text-text-sub">(optional)</span>
+            </label>
+            <span class="text-xs tabular-nums text-slate-400">{{ description.length }}/{{ descriptionMax }}</span>
+          </div>
+          <textarea id="task-description" name="description" rows="6" [(ngModel)]="description"
+                    (ngModelChange)="clearServerError('description')" [maxlength]="descriptionMax"
+                    placeholder="What exactly needs to be done? Is there parking, a lift, materials you already bought?"
+                    class="form-input resize-y min-h-32"></textarea>
+          @if (serverError('description'); as message) {
+            <p class="form-error">{{ message }}</p>
+          }
+        </div>
+
+        <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 pt-5 border-t border-slate-100">
+          <button type="button" (click)="submit(form, 'draft')" [disabled]="submitting() !== null"
+                  class="btn-ghost border border-surface-border disabled:opacity-60">
+            @if (submitting() === 'draft') {
+              <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Saving...
+            } @else {
+              <svg [appIcon]="icons.Save" class="w-4 h-4"></svg> Save as draft
+            }
+          </button>
+          <button type="submit" [disabled]="submitting() !== null" class="btn-primary">
+            @if (submitting() === 'publish') {
+              <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Publishing...
+            } @else {
+              <svg [appIcon]="icons.Send" class="w-4 h-4"></svg> Publish task
+            }
+          </button>
+        </div>
+      </form>
+
+      <aside class="space-y-4 lg:sticky lg:top-24 animate-fade-in [animation-delay:100ms]">
+        <div class="space-y-2">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <svg [appIcon]="icons.Eye" class="w-3.5 h-3.5"></svg> Preview
+          </p>
+          <app-task-card [task]="preview(vm.categories, vm.municipalities)" inert class="block pointer-events-none" />
+        </div>
+
+        <div class="bg-accent-light/50 border border-amber-200 rounded-card p-4 space-y-2 text-sm">
+          <p class="font-semibold flex items-center gap-1.5 text-amber-900">
+            <svg [appIcon]="icons.Lightbulb" class="w-4 h-4"></svg> Tips for more offers
+          </p>
+          <ul class="space-y-1.5 text-amber-900/80 list-disc pl-5">
+            <li>Say what and where in the title.</li>
+            <li>Mention sizes, quantities and the floor.</li>
+            <li>A budget helps, but taskers can suggest a price too.</li>
+            <li>A task stays open for offers for 30 days.</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+}

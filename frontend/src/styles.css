@@ -176,6 +176,21 @@ body {
       hover:bg-slate-50 hover:text-text-main active:scale-[0.98];
   }
 
+  .category-tile {
+    @apply flex items-center gap-2 min-w-0 px-3 py-2.5 rounded-btn border border-slate-200 bg-slate-50
+      text-sm text-text-sub text-left transition-all duration-200
+      hover:border-brand/40 hover:bg-white hover:text-text-main active:scale-[0.98]
+      focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/20;
+  }
+
+  .category-tile.active {
+    @apply bg-brand-50 border-brand text-brand font-semibold shadow-subtle;
+  }
+
+  .select-invalid .form-input {
+    @apply border-status-error/70 bg-red-50/40;
+  }
+
   .category-option.active {
     @apply bg-brand-50 text-brand font-semibold border-brand/20 shadow-subtle;
   }

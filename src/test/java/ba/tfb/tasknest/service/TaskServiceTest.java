@@ -19,6 +19,7 @@ import ba.tfb.tasknest.repository.CategoryRepository;
 import ba.tfb.tasknest.repository.MunicipalityRepository;
 import ba.tfb.tasknest.repository.TaskRepository;
 import ba.tfb.tasknest.repository.UserRepository;
+import ba.tfb.tasknest.repository.projection.TaskStatusCount;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -35,8 +36,11 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -379,9 +383,37 @@ class TaskServiceTest {
 
         @Test
         void getMyTasks_throwsBusinessRule_whenSortFieldIsUnknown() {
-            assertThatThrownBy(() -> taskService.getMyTasks(CLIENT_ID,
+            assertThatThrownBy(() -> taskService.getMyTasks(CLIENT_ID, null,
                     PageRequest.of(0, 20, Sort.by("nesto"))))
                     .isInstanceOf(BusinessRuleException.class);
+        }
+
+        @Test
+        void getMyTasks_asksForEveryStatus_whenNoStatusIsChosen() {
+            // Arrange
+            when(taskRepository.findByClientId(eq(CLIENT_ID), eq(EnumSet.allOf(TaskStatus.class)), any()))
+                    .thenReturn(Page.empty());
+
+            // Act
+            Page<TaskSummaryResponse> page = taskService.getMyTasks(CLIENT_ID, Set.of(), PageRequest.of(0, 20));
+
+            // Assert
+            assertThat(page).isEmpty();
+        }
+
+        @Test
+        void countMyTasks_reportsZero_forStatusesWithoutTasks() {
+            // Arrange
+            when(taskRepository.countByStatusForClient(CLIENT_ID))
+                    .thenReturn(List.of(new TaskStatusCount(TaskStatus.PUBLISHED, 3)));
+
+            // Act
+            Map<TaskStatus, Long> counts = taskService.countMyTasks(CLIENT_ID);
+
+            // Assert
+            assertThat(counts).hasSize(TaskStatus.values().length);
+            assertThat(counts.get(TaskStatus.PUBLISHED)).isEqualTo(3);
+            assertThat(counts.get(TaskStatus.DRAFT)).isZero();
         }
 
         @Test

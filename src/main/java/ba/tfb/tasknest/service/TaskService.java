@@ -30,7 +30,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -312,8 +315,20 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public Page<TaskSummaryResponse> getMyTasks(UUID clientId, Pageable pageable) {
-        return taskRepository.findByClientId(clientId, sortable(pageable));
+    public Page<TaskSummaryResponse> getMyTasks(UUID clientId, Set<TaskStatus> statuses, Pageable pageable) {
+        Set<TaskStatus> filter = statuses == null || statuses.isEmpty() ? EnumSet.allOf(TaskStatus.class) : statuses;
+        return taskRepository.findByClientId(clientId, filter, sortable(pageable));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<TaskStatus, Long> countMyTasks(UUID clientId) {
+        Map<TaskStatus, Long> counts = new EnumMap<>(TaskStatus.class);
+        for (TaskStatus status : TaskStatus.values()) {
+            counts.put(status, 0L);
+        }
+        taskRepository.countByStatusForClient(clientId)
+                .forEach(row -> counts.put(row.status(), row.count()));
+        return counts;
     }
 
     @Transactional(readOnly = true)
