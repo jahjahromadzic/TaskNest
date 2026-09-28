@@ -82,7 +82,7 @@ const AVATAR_TONES = [
   'bg-rose-600',
   'bg-emerald-600',
   'bg-indigo-600',
-  'bg-slate-700',
+  'bg-cyan-600',
 ];
 
 export function avatarTone(name: string | undefined): string {

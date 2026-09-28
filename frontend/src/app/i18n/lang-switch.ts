@@ -1,29 +1,33 @@
-import { Component } from '@angular/core';
+import { Component, computed } from '@angular/core';
+import { Languages } from 'lucide';
+import { Icon } from '../components/icon/icon';
 import { I18nService } from './i18n.service';
 import { LANGS } from './lang';
 import { TranslatePipe } from './translate.pipe';
 
 @Component({
   selector: 'app-lang-switch',
-  imports: [TranslatePipe],
+  imports: [Icon, TranslatePipe],
   template: `
-    <div role="group" [attr.aria-label]="'common.language' | t"
-         class="relative grid grid-cols-2 p-0.5 bg-slate-100 rounded-lg text-[11px] font-bold">
-      <span class="absolute inset-y-0.5 left-0.5 w-[calc(50%-0.125rem)] bg-white rounded-md shadow-subtle transition-transform duration-300 ease-out-soft"
-            [class.translate-x-full]="i18n.lang() === 'bs'" aria-hidden="true"></span>
-      @for (lang of langs; track lang.code) {
-        <button type="button" (click)="i18n.use(lang.code)" [attr.aria-pressed]="i18n.lang() === lang.code"
-                [title]="lang.name" [attr.lang]="lang.code"
-                class="relative z-10 px-2 py-1 rounded-md transition-colors duration-200"
-                [class]="i18n.lang() === lang.code ? 'text-brand' : 'text-slate-500 hover:text-text-main'">
-          {{ lang.label }}
-        </button>
+    <button type="button" (click)="i18n.use(next().code)"
+            class="icon-btn inline-flex items-center gap-1.5 overflow-hidden"
+            [title]="'common.switchLanguage' | t: { name: next().name }"
+            [attr.aria-label]="'common.switchLanguage' | t: { name: next().name }">
+      <svg [appIcon]="icons.Languages" class="w-5 h-5"></svg>
+      @switch (i18n.lang()) {
+        @case ('bs') {
+          <span class="w-5 text-left text-xs font-bold animate-fade-in" lang="bs">BS</span>
+        }
+        @default {
+          <span class="w-5 text-left text-xs font-bold animate-fade-in" lang="en">EN</span>
+        }
       }
-    </div>
+    </button>
   `,
 })
 export class LangSwitch {
-  readonly langs = LANGS;
+  readonly icons = { Languages };
+  protected readonly next = computed(() => LANGS.find((lang) => lang.code !== this.i18n.lang()) ?? LANGS[0]);
 
   constructor(protected i18n: I18nService) {}
 }

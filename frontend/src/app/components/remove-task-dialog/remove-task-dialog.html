@@ -1,8 +1,8 @@
 <dialog #dialog (cancel)="$event.preventDefault(); onEscape()" aria-labelledby="remove-title"
         class="hidden open:flex fixed inset-0 m-0 w-full h-full max-w-none max-h-none p-4 bg-transparent items-end sm:items-center justify-center backdrop:bg-transparent">
-  <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-fade-in" (click)="onEscape()" aria-hidden="true"></div>
+  <div class="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in" (click)="onEscape()" aria-hidden="true"></div>
   <form (ngSubmit)="submit()" novalidate
-        class="relative w-full max-w-md bg-white rounded-2xl shadow-modal border border-surface-border p-6 space-y-4 animate-slide-in">
+        class="relative w-full max-w-md bg-surface-card rounded-2xl shadow-modal border border-surface-border p-6 space-y-4 animate-slide-in">
     <div class="flex items-start gap-4">
       <span class="shrink-0 w-11 h-11 rounded-full bg-red-50 text-status-error flex items-center justify-center">
         <svg [appIcon]="icons.ShieldAlert" class="w-5 h-5"></svg>
@@ -44,7 +44,7 @@
         {{ 'remove.keep' | t }}
       </button>
       <button type="submit" [disabled]="sending()"
-              class="btn-primary bg-status-error hover:bg-red-700 focus-visible:ring-red-200">
+              class="btn-primary bg-status-error hover:bg-status-error/90 focus-visible:ring-red-200">
         @if (sending()) {
           <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'remove.removing' | t }}
         } @else {

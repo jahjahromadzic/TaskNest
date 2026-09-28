@@ -11,6 +11,7 @@ import { ConversationService } from '../../services/conversation.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { t } from '../../i18n/translate';
 import { LangSwitch } from '../../i18n/lang-switch';
+import { ThemeToggle } from '../../theme/theme-toggle';
 
 @Component({
   selector: 'app-header',
@@ -21,6 +22,7 @@ import { LangSwitch } from '../../i18n/lang-switch';
     RouterLinkActive,
     NotificationBell,
     LangSwitch,
+    ThemeToggle,
     TranslatePipe,
   ],
   templateUrl: './header.html',

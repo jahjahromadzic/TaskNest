@@ -1,4 +1,4 @@
-<section class="bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-4">
+<section class="bg-surface-card p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-4">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <h2 class="font-semibold flex items-center gap-2">
       {{ 'offers.title' | t }}
@@ -82,7 +82,7 @@
           <div class="flex sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0">
             <span class="text-2xl font-bold text-brand">{{ formatBudget(offer.price) }}</span>
             <a routerLink="/messages" [queryParams]="{ offer: offer.id }"
-               class="btn-ghost py-1.5 text-xs text-brand border border-surface-border bg-white"
+               class="btn-ghost py-1.5 text-xs text-brand border border-surface-border bg-surface-card"
                [attr.aria-label]="'offers.messageTo' | t: { name: offer.taskerName }">
               <svg [appIcon]="icons.MessageSquare" class="w-3.5 h-3.5"></svg> {{ 'offers.message' | t }}
             </a>

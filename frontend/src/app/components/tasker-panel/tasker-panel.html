@@ -91,7 +91,7 @@
     }
   }
   <a routerLink="/messages" [queryParams]="{ offer: offer.id }"
-     class="btn-ghost w-full border border-surface-border bg-white">
+     class="btn-ghost w-full border border-surface-border bg-surface-card">
     <svg [appIcon]="icons.MessageSquare" class="w-4 h-4 text-brand"></svg>
     {{ offer.status === 'PENDING' || offer.status === 'ACCEPTED' ? ('panel.message' | t: { name: client }) : ('panel.viewConversation' | t) }}
   </a>

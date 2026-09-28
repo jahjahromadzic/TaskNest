@@ -202,12 +202,16 @@ browser sees one origin. That matters because the refresh token travels in a
   every live event and after every reconnect, so an event missed while offline
   cannot leave a wrong badge behind. In development the Angular proxy forwards
   `/ws` to the backend.
-- **Two languages** — the whole interface is available in English and Bosnian, switched from the header
+- **Two languages** — the whole interface is available in English and Bosnian, switched with one header button
   without a reload. Texts live in two dictionaries, `i18n/en.ts` and `i18n/bs.ts`; the Bosnian one must have
   exactly the same keys, and every key used in a template is type-checked, so a missing or misspelled
   translation fails the build. Plurals follow the Bosnian rules (1 dan, 2 dana, 5 dana), dates and prices are
   formatted per language, and the choice is remembered. The API stays in English: the frontend translates the
   fixed set of server messages and notification texts, and passes anything unknown through unchanged.
+- **Light and dark theme** — one header button switches between them with a circular reveal that starts
+  at the button. Colours are CSS variables, so the dark theme redefines the palette once instead of adding
+  a dark variant to every template. Without a saved choice the app follows the system setting, and a small
+  script in `index.html` applies the theme before the first paint, so the page never flashes white.
 - **Icons** — Lucide icon data is drawn by one small component, so an icon costs a
   few hundred bytes and loads only with the page that uses it.
 
@@ -222,7 +226,8 @@ frontend/src/app/
 ├── layout/       Header and mobile bottom navigation
 ├── pages/        One folder per route
 ├── services/     HTTP services per backend area
-└── shared/       Toasts, error parsing, formatting helpers
+├── shared/       Toasts, error parsing, formatting helpers
+└── theme/        Light and dark theme service and switch
 ```
 
 ### Status
@@ -690,11 +695,11 @@ about to be deleted. The listener also ignores events for tasks that are no long
 left over from an earlier test cannot reach the next one. The suite passes in random class order
 (`./mvnw verify -Dsurefire.runOrder=random`).
 
-The frontend has its own suite of **205 tests** (Vitest), covering the session
+The frontend has its own suite of **209 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
 header, the task list and task details, posting a task, the client's own tasks, offers
 and hiring, cancelling, reopening and closing a task, reviews, becoming a tasker and editing the tasker profile, sending and withdrawing offers,
-starting and finishing a job, the tasker dashboard, the public tasker profile, the notification bell and page, the messages page and chat helpers, live updates over WebSocket, the admin panel, translations and plural rules, the confirmation dialog, the dropdown, the progress
+starting and finishing a job, the tasker dashboard, the public tasker profile, the notification bell and page, the messages page and chat helpers, live updates over WebSocket, the admin panel, translations and plural rules, the theme switch, the confirmation dialog, the dropdown, the progress
 timeline, date helpers and the category icons. The server is simulated with Angular's
 `HttpTestingController`.
 

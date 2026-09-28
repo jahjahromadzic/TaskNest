@@ -189,7 +189,7 @@ export class Messages implements OnInit {
 
   bubbleClass(mine: boolean, state: PendingMessage['state']): string {
     if (!mine) {
-      return 'bg-white border border-surface-border rounded-2xl rounded-bl-md';
+      return 'bg-surface-card border border-surface-border rounded-2xl rounded-bl-md';
     }
     const tone = state === 'failed' ? 'bg-red-600' : 'bg-brand';
     return `${tone} text-white rounded-2xl rounded-br-md${state === 'sending' ? ' opacity-60' : ''}`;

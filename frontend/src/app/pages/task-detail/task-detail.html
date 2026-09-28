@@ -14,7 +14,7 @@
     @if (vm.state?.task; as task) {
       <div class="grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-[minmax(0,1fr)] gap-6 lg:flex-1 lg:min-h-0">
         <div class="lg:col-span-2 space-y-5 lg:h-full lg:overflow-y-auto scroll-area lg:-mx-1 lg:px-1 lg:-mt-1 lg:pt-1 lg:pb-2">
-          <section class="bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-5 animate-fade-in">
+          <section class="bg-surface-card p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-5 animate-fade-in">
             <div class="space-y-3">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="inline-flex items-center gap-1.5 bg-brand-50 text-brand border border-brand/20 px-2.5 py-0.5 rounded-full text-xs font-medium">
@@ -61,7 +61,7 @@
             </div>
           </section>
 
-          <section class="bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-3 animate-fade-in [animation-delay:80ms]">
+          <section class="bg-surface-card p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-3 animate-fade-in [animation-delay:80ms]">
             <h2 class="font-semibold">{{ 'detail.about' | t }}</h2>
             @if (task.description) {
               <p class="text-sm leading-relaxed text-text-main whitespace-pre-line">{{ task.description }}</p>
@@ -80,7 +80,7 @@
         </div>
 
         <aside class="space-y-4 lg:h-full lg:overflow-y-auto scroll-area lg:-mx-1 lg:px-1 lg:-mt-1 lg:pt-1 animate-fade-in [animation-delay:120ms]">
-          <section class="bg-white p-5 rounded-card border border-surface-border shadow-card space-y-4">
+          <section class="bg-surface-card p-5 rounded-card border border-surface-border shadow-card space-y-4">
             <div>
               <span class="text-xs uppercase tracking-wide text-slate-400">{{ 'common.budget' | t }}</span>
               <p class="font-bold" [class]="task.budget == null ? 'text-xl text-slate-500' : 'text-3xl text-brand'">
@@ -155,11 +155,11 @@
           </section>
 
           <div class="grid grid-cols-2 gap-3">
-            <button type="button" (click)="share()" class="btn-ghost bg-white border border-surface-border shadow-subtle">
+            <button type="button" (click)="share()" class="btn-ghost bg-surface-card border border-surface-border shadow-subtle">
               <svg [appIcon]="icons.Link" class="w-4 h-4"></svg> {{ 'detail.copyLink' | t }}
             </button>
             <a routerLink="/tasks" [queryParams]="{ category: task.categoryId }"
-               class="btn-ghost bg-white border border-surface-border shadow-subtle">
+               class="btn-ghost bg-surface-card border border-surface-border shadow-subtle">
               <app-category-icon [slug]="task.categorySlug" size="w-4 h-4" /> {{ 'detail.similar' | t }}
             </a>
           </div>
@@ -171,7 +171,7 @@
               </p>
               <p class="text-xs text-text-sub">{{ 'detail.moderationHint' | t }}</p>
               <button type="button" (click)="removing.set(true)"
-                      class="btn-ghost w-full bg-white border border-red-200 text-status-error hover:bg-red-50">
+                      class="btn-ghost w-full bg-surface-card border border-red-200 text-status-error hover:bg-red-50">
                 {{ 'detail.removeTask' | t }}
               </button>
             </section>
@@ -183,7 +183,7 @@
         </aside>
       </div>
     } @else if (vm.state?.notFound) {
-      <div class="bg-white p-10 rounded-card border border-surface-border shadow-subtle text-center space-y-3 max-w-lg mx-auto animate-slide-in">
+      <div class="bg-surface-card p-10 rounded-card border border-surface-border shadow-subtle text-center space-y-3 max-w-lg mx-auto animate-slide-in">
         <div class="mx-auto w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
           <svg [appIcon]="icons.SearchX" class="w-7 h-7"></svg>
         </div>
@@ -192,7 +192,7 @@
         <a routerLink="/tasks" class="btn-primary py-2">{{ 'detail.browseOther' | t }}</a>
       </div>
     } @else if (vm.state?.failed) {
-      <div role="alert" class="bg-white p-10 rounded-card border border-red-200 text-center space-y-3 max-w-lg mx-auto animate-fade-in">
+      <div role="alert" class="bg-surface-card p-10 rounded-card border border-red-200 text-center space-y-3 max-w-lg mx-auto animate-fade-in">
         <div class="mx-auto w-14 h-14 rounded-full bg-red-50 text-status-error flex items-center justify-center">
           <svg [appIcon]="icons.CircleAlert" class="w-7 h-7"></svg>
         </div>
@@ -205,19 +205,19 @@
     } @else {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" aria-hidden="true">
         <div class="lg:col-span-2 space-y-5">
-          <div class="bg-white p-6 rounded-card border border-surface-border space-y-4">
+          <div class="bg-surface-card p-6 rounded-card border border-surface-border space-y-4">
             <span class="skeleton block h-5 w-40 rounded-full"></span>
             <span class="skeleton block h-8 w-3/4"></span>
             <span class="skeleton block h-4 w-1/2"></span>
             <span class="skeleton block h-16 w-full mt-6"></span>
           </div>
-          <div class="bg-white p-6 rounded-card border border-surface-border space-y-3">
+          <div class="bg-surface-card p-6 rounded-card border border-surface-border space-y-3">
             <span class="skeleton block h-5 w-32"></span>
             <span class="skeleton block h-4 w-full"></span>
             <span class="skeleton block h-4 w-5/6"></span>
           </div>
         </div>
-        <div class="bg-white p-5 rounded-card border border-surface-border space-y-3">
+        <div class="bg-surface-card p-5 rounded-card border border-surface-border space-y-3">
           <span class="skeleton block h-3 w-16"></span>
           <span class="skeleton block h-9 w-32"></span>
           <span class="skeleton block h-24 w-full"></span>

@@ -1,8 +1,14 @@
 @import "tailwindcss";
-@import "@fontsource/inter/400.css";
-@import "@fontsource/inter/500.css";
-@import "@fontsource/inter/600.css";
-@import "@fontsource/inter/700.css";
+@import "@fontsource/inter/latin-400.css";
+@import "@fontsource/inter/latin-ext-400.css";
+@import "@fontsource/inter/latin-500.css";
+@import "@fontsource/inter/latin-ext-500.css";
+@import "@fontsource/inter/latin-600.css";
+@import "@fontsource/inter/latin-ext-600.css";
+@import "@fontsource/inter/latin-700.css";
+@import "@fontsource/inter/latin-ext-700.css";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -44,6 +50,7 @@
   --animate-float: float 14s ease-in-out infinite;
   --animate-pop: pop 0.4s var(--ease-out-soft) both;
   --animate-ring: ring 0.9s ease-in-out both;
+  --animate-spin-in: spin-in 0.45s var(--ease-out-soft) both;
 
   @keyframes fade-in {
     from { opacity: 0; transform: translateY(6px); }
@@ -81,10 +88,133 @@
     75% { transform: rotate(2deg); }
   }
 
+  @keyframes spin-in {
+    from { opacity: 0; transform: rotate(-90deg) scale(0.4); }
+    to { opacity: 1; transform: rotate(0) scale(1); }
+  }
+
   @keyframes float {
     0%, 100% { transform: translate(0, 0) scale(1); }
     50% { transform: translate(24px, -18px) scale(1.06); }
   }
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-brand: #0d9488;
+  --color-brand-hover: #0f766e;
+  --color-brand-light: color-mix(in oklab, oklch(70.4% 0.14 182.503) 22%, #111a2c);
+  --color-brand-50: color-mix(in oklab, oklch(70.4% 0.14 182.503) 12%, #111a2c);
+  --color-accent-light: color-mix(in oklab, oklch(76.9% 0.188 70.08) 18%, #111a2c);
+
+  --color-surface-bg: #0a1120;
+  --color-surface-card: #111a2c;
+  --color-surface-border: #243149;
+
+  --color-text-main: #e6ebf2;
+  --color-text-sub: #98a4b7;
+
+  --color-status-error: #ef4444;
+  --color-status-info: #3b82f6;
+  --color-status-progress: #6366f1;
+
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 4px 10px -2px rgba(0, 0, 0, 0.45), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-modal: 0 20px 40px -8px rgba(0, 0, 0, 0.6), 0 10px 16px -6px rgba(0, 0, 0, 0.4);
+
+  --color-slate-50: #162034;
+  --color-slate-100: #1c283f;
+  --color-slate-200: #26344e;
+  --color-slate-300: #34445f;
+  --color-slate-400: #6b7a92;
+  --color-slate-500: #8d9aaf;
+  --color-slate-600: #a6b1c3;
+  --color-slate-700: #c2cbd8;
+  --color-slate-800: #d9e0ea;
+  --color-slate-900: #edf1f6;
+  --color-slate-950: #f8fafc;
+
+  --color-red-50: color-mix(in oklab, oklch(63.7% 0.237 25.331) 10%, #111a2c);
+  --color-red-100: color-mix(in oklab, oklch(63.7% 0.237 25.331) 16%, #111a2c);
+  --color-red-200: color-mix(in oklab, oklch(63.7% 0.237 25.331) 26%, #111a2c);
+  --color-red-300: color-mix(in oklab, oklch(63.7% 0.237 25.331) 40%, #111a2c);
+  --color-red-700: oklch(80.8% 0.114 19.571);
+  --color-red-800: oklch(88.5% 0.062 18.334);
+  --color-red-900: oklch(93.6% 0.032 17.717);
+  --color-red-950: oklch(97.1% 0.013 17.38);
+
+  --color-amber-50: color-mix(in oklab, oklch(76.9% 0.188 70.08) 10%, #111a2c);
+  --color-amber-100: color-mix(in oklab, oklch(76.9% 0.188 70.08) 16%, #111a2c);
+  --color-amber-200: color-mix(in oklab, oklch(76.9% 0.188 70.08) 26%, #111a2c);
+  --color-amber-300: color-mix(in oklab, oklch(76.9% 0.188 70.08) 40%, #111a2c);
+  --color-amber-700: oklch(87.9% 0.169 91.605);
+  --color-amber-800: oklch(92.4% 0.12 95.746);
+  --color-amber-900: oklch(96.2% 0.059 95.617);
+  --color-amber-950: oklch(98.7% 0.022 95.277);
+
+  --color-green-50: color-mix(in oklab, oklch(72.3% 0.219 149.579) 10%, #111a2c);
+  --color-green-100: color-mix(in oklab, oklch(72.3% 0.219 149.579) 16%, #111a2c);
+  --color-green-200: color-mix(in oklab, oklch(72.3% 0.219 149.579) 26%, #111a2c);
+  --color-green-300: color-mix(in oklab, oklch(72.3% 0.219 149.579) 40%, #111a2c);
+  --color-green-700: oklch(87.1% 0.15 154.449);
+  --color-green-800: oklch(92.5% 0.084 155.995);
+  --color-green-900: oklch(96.2% 0.044 156.743);
+  --color-green-950: oklch(98.2% 0.018 155.826);
+
+  --color-emerald-50: color-mix(in oklab, oklch(69.6% 0.17 162.48) 10%, #111a2c);
+  --color-emerald-100: color-mix(in oklab, oklch(69.6% 0.17 162.48) 16%, #111a2c);
+  --color-emerald-200: color-mix(in oklab, oklch(69.6% 0.17 162.48) 26%, #111a2c);
+  --color-emerald-300: color-mix(in oklab, oklch(69.6% 0.17 162.48) 40%, #111a2c);
+  --color-emerald-700: oklch(84.5% 0.143 164.978);
+  --color-emerald-800: oklch(90.5% 0.093 164.15);
+  --color-emerald-900: oklch(95% 0.052 163.051);
+  --color-emerald-950: oklch(97.9% 0.021 166.113);
+
+  --color-teal-50: color-mix(in oklab, oklch(70.4% 0.14 182.503) 10%, #111a2c);
+  --color-teal-100: color-mix(in oklab, oklch(70.4% 0.14 182.503) 16%, #111a2c);
+  --color-teal-200: color-mix(in oklab, oklch(70.4% 0.14 182.503) 26%, #111a2c);
+  --color-teal-300: color-mix(in oklab, oklch(70.4% 0.14 182.503) 40%, #111a2c);
+  --color-teal-700: oklch(85.5% 0.138 181.071);
+  --color-teal-800: oklch(91% 0.096 180.426);
+  --color-teal-900: oklch(95.3% 0.051 180.801);
+  --color-teal-950: oklch(98.4% 0.014 180.72);
+
+  --color-sky-50: color-mix(in oklab, oklch(68.5% 0.169 237.323) 10%, #111a2c);
+  --color-sky-100: color-mix(in oklab, oklch(68.5% 0.169 237.323) 16%, #111a2c);
+  --color-sky-200: color-mix(in oklab, oklch(68.5% 0.169 237.323) 26%, #111a2c);
+  --color-sky-300: color-mix(in oklab, oklch(68.5% 0.169 237.323) 40%, #111a2c);
+  --color-sky-700: oklch(82.8% 0.111 230.318);
+  --color-sky-800: oklch(90.1% 0.058 230.902);
+  --color-sky-900: oklch(95.1% 0.026 236.824);
+  --color-sky-950: oklch(97.7% 0.013 236.62);
+
+  --color-indigo-50: color-mix(in oklab, oklch(58.5% 0.233 277.117) 10%, #111a2c);
+  --color-indigo-100: color-mix(in oklab, oklch(58.5% 0.233 277.117) 16%, #111a2c);
+  --color-indigo-200: color-mix(in oklab, oklch(58.5% 0.233 277.117) 26%, #111a2c);
+  --color-indigo-300: color-mix(in oklab, oklch(58.5% 0.233 277.117) 40%, #111a2c);
+  --color-indigo-700: oklch(78.5% 0.115 274.713);
+  --color-indigo-800: oklch(87% 0.065 274.039);
+  --color-indigo-900: oklch(93% 0.034 272.788);
+  --color-indigo-950: oklch(96.2% 0.018 272.314);
+
+  --color-violet-50: color-mix(in oklab, oklch(60.6% 0.25 292.717) 10%, #111a2c);
+  --color-violet-100: color-mix(in oklab, oklch(60.6% 0.25 292.717) 16%, #111a2c);
+  --color-violet-200: color-mix(in oklab, oklch(60.6% 0.25 292.717) 26%, #111a2c);
+  --color-violet-300: color-mix(in oklab, oklch(60.6% 0.25 292.717) 40%, #111a2c);
+  --color-violet-700: oklch(81.1% 0.111 293.571);
+  --color-violet-800: oklch(89.4% 0.057 293.283);
+  --color-violet-900: oklch(94.3% 0.029 294.588);
+  --color-violet-950: oklch(96.9% 0.016 293.756);
+
+  --color-rose-50: color-mix(in oklab, oklch(64.5% 0.246 16.439) 10%, #111a2c);
+  --color-rose-100: color-mix(in oklab, oklch(64.5% 0.246 16.439) 16%, #111a2c);
+  --color-rose-200: color-mix(in oklab, oklch(64.5% 0.246 16.439) 26%, #111a2c);
+  --color-rose-300: color-mix(in oklab, oklch(64.5% 0.246 16.439) 40%, #111a2c);
+  --color-rose-700: oklch(81% 0.117 11.638);
+  --color-rose-800: oklch(89.2% 0.058 10.001);
+  --color-rose-900: oklch(94.1% 0.03 12.58);
+  --color-rose-950: oklch(96.9% 0.015 12.422);
 }
 
 html {
@@ -111,6 +241,12 @@ body {
   from { opacity: 0; transform: translateY(8px); }
 }
 
+html.theme-switching::view-transition-old(root),
+html.theme-switching::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -132,11 +268,11 @@ body {
     @apply w-full bg-slate-50 border border-slate-300 rounded-btn px-3 py-2.5 text-sm text-text-main
       placeholder:text-slate-400 transition-all duration-200
       hover:border-slate-400
-      focus:outline-none focus:bg-white focus:border-brand focus:ring-4 focus:ring-brand/15;
+      focus:outline-none focus:bg-surface-card focus:border-brand focus:ring-4 focus:ring-brand/15;
   }
 
   .form-input-open {
-    @apply bg-white border-brand ring-4 ring-brand/15 hover:border-brand;
+    @apply bg-surface-card border-brand ring-4 ring-brand/15 hover:border-brand;
   }
 
   .form-input-invalid {
@@ -196,7 +332,7 @@ body {
   .category-tile {
     @apply flex items-center gap-2 min-w-0 px-3 py-2 rounded-btn border border-slate-200 bg-slate-50
       text-sm text-text-sub text-left transition-all duration-200
-      hover:border-brand/40 hover:bg-white hover:text-text-main active:scale-[0.98]
+      hover:border-brand/40 hover:bg-surface-card hover:text-text-main active:scale-[0.98]
       focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/20;
   }
 

@@ -1,5 +1,5 @@
 @if (authService.user$ | async) {
-  <nav class="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-white/90 backdrop-blur-md border-t border-surface-border px-2 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]
+  <nav class="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-card/90 backdrop-blur-md border-t border-surface-border px-2 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]
               grid grid-cols-4 text-[11px] font-medium animate-fade-in">
     <a routerLink="/tasks" routerLinkActive="active" class="bottom-nav-item group">
       <svg [appIcon]="icons.House" class="w-5 h-5"></svg>
@@ -14,7 +14,7 @@
         <svg [appIcon]="icons.MessageSquare" class="w-5 h-5"></svg>
         @for (count of [conversationService.unreadCount()]; track count) {
           @if (count > 0) {
-            <span class="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-status-error text-white text-[10px] font-bold flex items-center justify-center border-2 border-white animate-pop tabular-nums">
+            <span class="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-status-error text-white text-[10px] font-bold flex items-center justify-center border-2 border-surface-card animate-pop tabular-nums">
               {{ count > 9 ? '9+' : count }}
             </span>
           }
@@ -27,7 +27,7 @@
         <svg [appIcon]="icons.Bell" class="w-5 h-5"></svg>
         @for (count of [notificationService.unreadCount()]; track count) {
           @if (count > 0) {
-            <span class="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-status-error text-white text-[10px] font-bold flex items-center justify-center border-2 border-white animate-pop tabular-nums">
+            <span class="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-status-error text-white text-[10px] font-bold flex items-center justify-center border-2 border-surface-card animate-pop tabular-nums">
               {{ count > 9 ? '9+' : count }}
             </span>
           }

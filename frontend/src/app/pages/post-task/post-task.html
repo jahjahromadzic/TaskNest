@@ -12,7 +12,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
       <form #form="ngForm" (ngSubmit)="submit(form, 'publish')" novalidate
-            class="lg:col-span-2 bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-4 animate-fade-in">
+            class="lg:col-span-2 bg-surface-card p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-4 animate-fade-in">
         <div>
           <h1 class="text-2xl font-bold tracking-tight">{{ 'postTask.title' | t }}</h1>
           <p class="text-sm text-text-sub mt-0.5">{{ 'postTask.subtitle' | t }}</p>

@@ -1,4 +1,4 @@
-<header class="bg-white/80 backdrop-blur-md border-b border-surface-border sticky top-0 z-40 h-16 px-4 flex items-center">
+<header class="bg-surface-card/80 backdrop-blur-md border-b border-surface-border sticky top-0 z-40 h-16 px-4 flex items-center">
   <div class="w-full max-w-7xl mx-auto flex items-center justify-between gap-4">
     <a routerLink="/tasks" class="group flex items-center gap-3">
       <span class="bg-gradient-to-br from-brand to-teal-500 text-white p-2 rounded-lg shadow-subtle transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105">
@@ -12,7 +12,8 @@
 
     @if (authService.user$ | async; as user) {
       <div class="flex items-center gap-1 sm:gap-2">
-        <app-lang-switch class="mr-1" />
+        <app-lang-switch />
+        <app-theme-toggle class="mr-1" />
         <a routerLink="/tasks/new" class="btn-primary hidden md:inline-flex py-2 mr-1">
           <svg [appIcon]="icons.Plus" class="w-4 h-4"></svg> {{ 'nav.postTask' | t }}
         </a>
@@ -21,7 +22,7 @@
           <svg [appIcon]="icons.MessageSquare" class="w-5 h-5"></svg>
           @for (count of [conversationService.unreadCount()]; track count) {
             @if (count > 0) {
-              <span class="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-status-error text-white text-[10px] font-bold flex items-center justify-center border-2 border-white animate-pop tabular-nums">
+              <span class="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-status-error text-white text-[10px] font-bold flex items-center justify-center border-2 border-surface-card animate-pop tabular-nums">
                 {{ count > 9 ? '9+' : count }}
               </span>
             }
@@ -46,7 +47,7 @@
 
           @if (menuOpen()) {
             <div role="menu"
-                 class="absolute right-0 top-12 w-60 origin-top-right animate-scale-in bg-white rounded-card shadow-modal border border-surface-border z-50 py-2 text-sm">
+                 class="absolute right-0 top-12 w-60 origin-top-right animate-scale-in bg-surface-card rounded-card shadow-modal border border-surface-border z-50 py-2 text-sm">
               <div class="px-3 pb-2 mb-1 border-b border-slate-100">
                 <p class="font-semibold truncate">{{ user.fullName }}</p>
                 <p class="text-text-sub text-xs truncate">{{ user.email }}</p>
@@ -87,6 +88,7 @@
     } @else {
       <nav class="flex items-center gap-2">
         <app-lang-switch />
+        <app-theme-toggle />
         <a routerLink="/login" class="btn-ghost">{{ 'nav.logIn' | t }}</a>
         <a routerLink="/register" class="btn-primary py-2">{{ 'nav.signUp' | t }}</a>
       </nav>

@@ -5,7 +5,7 @@
     @for (count of [notificationService.unreadCount()]; track count) {
       <svg [appIcon]="icons.Bell" class="w-5 h-5 origin-top group-hover:animate-ring" [class.animate-ring]="count > 0"></svg>
       @if (count > 0) {
-        <span class="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-status-error text-white text-[10px] font-bold flex items-center justify-center border-2 border-white animate-pop tabular-nums">
+        <span class="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-status-error text-white text-[10px] font-bold flex items-center justify-center border-2 border-surface-card animate-pop tabular-nums">
           {{ badge(count) }}
         </span>
       }
@@ -14,7 +14,7 @@
 
   @if (open()) {
     <div role="dialog" [attr.aria-label]="'nav.notifications' | t"
-         class="absolute right-0 top-12 w-[22rem] origin-top-right animate-scale-in bg-white rounded-card shadow-modal border border-surface-border z-50 p-2">
+         class="absolute right-0 top-12 w-[22rem] origin-top-right animate-scale-in bg-surface-card rounded-card shadow-modal border border-surface-border z-50 p-2">
       <div class="flex items-center justify-between gap-2 px-2 pt-1 pb-2 border-b border-slate-100 mb-1">
         <h2 class="font-semibold text-sm flex items-center gap-1.5">
           <svg [appIcon]="icons.Bell" class="w-4 h-4 text-brand"></svg> {{ 'notifications.title' | t }}

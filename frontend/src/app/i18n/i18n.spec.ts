@@ -146,15 +146,23 @@ describe('Choosing the language', () => {
     const fixture = TestBed.createComponent(LangSwitch);
     await fixture.whenStable();
 
-    const buttons = Array.from<HTMLButtonElement>(fixture.nativeElement.querySelectorAll('button'));
-    expect(buttons.map((button) => button.getAttribute('aria-pressed'))).toEqual(['true', 'false']);
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+    expect(fixture.nativeElement.querySelectorAll('button').length).toBe(1);
+    expect(button.textContent?.trim()).toBe('EN');
+    expect(button.getAttribute('aria-label')).toBe('Switch language to Bosanski');
 
-    buttons[1].click();
+    button.click();
     await fixture.whenStable();
 
     expect(currentLang()).toBe('bs');
-    expect(buttons.map((button) => button.getAttribute('aria-pressed'))).toEqual(['false', 'true']);
-    expect(fixture.nativeElement.querySelector('[role=group]').getAttribute('aria-label')).toBe('Jezik');
+    expect(button.textContent?.trim()).toBe('BS');
+    expect(button.getAttribute('aria-label')).toBe('Promijeni jezik na English');
+
+    button.click();
+    await fixture.whenStable();
+
+    expect(currentLang()).toBe('en');
+    expect(button.textContent?.trim()).toBe('EN');
   });
 });
 

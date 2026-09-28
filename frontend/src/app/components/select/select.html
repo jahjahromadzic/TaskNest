@@ -10,7 +10,7 @@
 @if (open()) {
   <ul role="listbox" [id]="listId" [attr.aria-labelledby]="inputId"
       class="absolute z-30 left-0 right-0 mt-1.5 min-w-full max-h-64 overflow-y-auto origin-top animate-scale-in
-             bg-white rounded-card border border-surface-border shadow-modal p-1.5">
+             bg-surface-card rounded-card border border-surface-border shadow-modal p-1.5">
     @for (option of options; track option.value; let i = $index) {
       <li role="option" [id]="optionId(i)" [attr.aria-selected]="option.value === value()"
           (click)="choose(option)" (mouseenter)="activeIndex.set(i)"

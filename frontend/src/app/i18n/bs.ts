@@ -3,7 +3,9 @@ import { en } from './en';
 
 export const bs: SameShape<typeof en> = {
   common: {
-    language: 'Jezik',
+    switchLanguage: 'Promijeni jezik na {name}',
+    darkTheme: 'Uključi tamnu temu',
+    lightTheme: 'Uključi svijetlu temu',
     tryAgain: 'Pokušaj ponovo',
     retry: 'Ponovi',
     cancel: 'Odustani',

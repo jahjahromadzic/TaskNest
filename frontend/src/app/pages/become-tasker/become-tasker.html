@@ -9,7 +9,7 @@
         {{ 'becomeTasker.text' | t }}
       </p>
       <button type="button" (click)="activate()" [disabled]="activating()"
-              class="group inline-flex items-center gap-2 bg-white text-brand px-5 py-3 rounded-btn font-semibold shadow-card
+              class="group inline-flex items-center gap-2 bg-surface-card text-brand px-5 py-3 rounded-btn font-semibold shadow-card
                      transition-all duration-200 hover:-translate-y-0.5 hover:shadow-modal active:translate-y-0 disabled:opacity-80">
         @if (activating()) {
           <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'becomeTasker.activating' | t }}
@@ -23,7 +23,7 @@
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
     @for (benefit of benefits; track $index; let i = $index) {
-      <article class="bg-white p-5 rounded-card border border-surface-border shadow-subtle space-y-2 animate-fade-in
+      <article class="bg-surface-card p-5 rounded-card border border-surface-border shadow-subtle space-y-2 animate-fade-in
                       transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card"
                [style.animation-delay.ms]="100 + i * 70">
         <span class="w-10 h-10 rounded-xl bg-brand-50 text-brand flex items-center justify-center">
@@ -35,7 +35,7 @@
     }
   </div>
 
-  <section class="bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle">
+  <section class="bg-surface-card p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle">
     <h2 class="font-semibold mb-4 flex items-center gap-2">
       <svg [appIcon]="icons.UserPen" class="w-4 h-4 text-brand"></svg> {{ 'becomeTasker.howItWorks' | t }}
     </h2>

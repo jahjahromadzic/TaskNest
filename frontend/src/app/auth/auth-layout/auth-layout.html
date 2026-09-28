@@ -1,10 +1,10 @@
 <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
   <div class="absolute -top-16 -left-20 w-[28rem] h-[28rem] rounded-full bg-teal-300/45 blur-3xl animate-float"></div>
-  <div class="absolute top-1/2 -right-32 w-[28rem] h-[28rem] rounded-full bg-accent-light/60 blur-3xl animate-float [animation-delay:-7s]"></div>
+  <div class="absolute top-1/2 -right-32 w-[28rem] h-[28rem] rounded-full bg-accent-light/60 dark:bg-amber-500/15 blur-3xl animate-float [animation-delay:-7s]"></div>
 </div>
 
 <div class="max-w-md mx-auto py-2 sm:py-6 animate-slide-in">
-  <div class="bg-white/90 backdrop-blur-sm p-6 sm:p-8 rounded-2xl border border-surface-border shadow-modal space-y-5">
+  <div class="bg-surface-card/90 backdrop-blur-sm p-6 sm:p-8 rounded-2xl border border-surface-border shadow-modal space-y-5">
     <div class="text-center space-y-1.5">
       <div class="inline-flex bg-gradient-to-br from-brand to-teal-500 text-white p-3 rounded-2xl mb-2 shadow-card">
         <svg [appIcon]="icons.SquareCheck" class="w-6 h-6"></svg>
@@ -18,7 +18,7 @@
     </div>
 
     <nav class="relative grid grid-cols-2 bg-slate-100 p-1 rounded-xl text-sm font-semibold">
-      <span class="absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] bg-white rounded-lg shadow-subtle transition-transform duration-300 ease-out-soft"
+      <span class="absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] bg-surface-card rounded-lg shadow-subtle transition-transform duration-300 ease-out-soft"
             [class.translate-x-full]="mode() === 'register'"></span>
       <a routerLink="/login" replaceUrl queryParamsHandling="preserve"
          class="relative z-10 py-2 text-center rounded-lg transition-colors duration-200 hover:text-text-main"

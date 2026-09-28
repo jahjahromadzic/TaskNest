@@ -1,6 +1,8 @@
 export const en = {
   common: {
-    language: 'Language',
+    switchLanguage: 'Switch language to {name}',
+    darkTheme: 'Switch to dark theme',
+    lightTheme: 'Switch to light theme',
     tryAgain: 'Try again',
     retry: 'Retry',
     cancel: 'Cancel',

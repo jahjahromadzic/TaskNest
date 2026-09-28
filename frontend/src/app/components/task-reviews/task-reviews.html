@@ -1,4 +1,4 @@
-<section class="bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-4">
+<section class="bg-surface-card p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-4">
   <h2 class="font-semibold">{{ 'reviews.title' | t }}</h2>
 
   @if (canReview) {
@@ -7,7 +7,7 @@
         <p class="font-semibold text-amber-950">{{ 'reviews.howDidItGo' | t: { name: counterpartName } }}</p>
         <p class="text-sm text-amber-900/80">{{ 'reviews.helps' | t }}</p>
       </div>
-      <button type="button" (click)="writing.set(true)" class="btn-primary bg-accent hover:bg-amber-700 shrink-0">
+      <button type="button" (click)="writing.set(true)" class="btn-primary bg-accent hover:bg-accent/90 shrink-0">
         <svg [appIcon]="icons.Star" class="w-4 h-4 fill-white"></svg> {{ 'reviews.leave' | t }}
       </button>
     </div>

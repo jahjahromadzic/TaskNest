@@ -9,6 +9,7 @@ import { TitleStrategy, provideRouter, withViewTransitions } from '@angular/rout
 import { routes } from './app.routes';
 import { authInterceptor } from './auth/auth.interceptor';
 import { AuthService } from './auth/auth.service';
+import { ThemeService } from './theme/theme.service';
 import { I18nService } from './i18n/i18n.service';
 import { TranslatedTitleStrategy } from './i18n/title-strategy';
 import { RealtimeService } from './services/realtime.service';
@@ -20,6 +21,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withViewTransitions({ onViewTransitionCreated: skipWhenOnlyQueryChanges })),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     provideAppInitializer(() => inject(I18nService).start()),
+    provideAppInitializer(() => inject(ThemeService).start()),
     { provide: TitleStrategy, useExisting: TranslatedTitleStrategy },
     provideAppInitializer(() => inject(AuthService).restoreSession()),
     provideAppInitializer(() => inject(RealtimeService).start()),

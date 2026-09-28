@@ -1,4 +1,4 @@
-<section class="flex flex-col gap-3 lg:flex-1 lg:min-h-0 bg-white rounded-card border border-surface-border shadow-subtle p-4 animate-fade-in">
+<section class="flex flex-col gap-3 lg:flex-1 lg:min-h-0 bg-surface-card rounded-card border border-surface-border shadow-subtle p-4 animate-fade-in">
   <div class="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
     <label class="relative block md:w-80">
       <span class="sr-only">{{ 'admin.searchUsers' | t }}</span>
@@ -10,7 +10,7 @@
       @for (option of filters; track option.key) {
         <button type="button" (click)="selectFilter(option.key)" [attr.aria-pressed]="filter() === option.key"
                 class="shrink-0 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all duration-200 active:scale-95"
-                [class]="filter() === option.key ? 'bg-brand text-white border-brand shadow-subtle' : 'bg-white border-surface-border text-text-sub hover:text-text-main hover:border-slate-300'">
+                [class]="filter() === option.key ? 'bg-brand text-white border-brand shadow-subtle' : 'bg-surface-card border-surface-border text-text-sub hover:text-text-main hover:border-slate-300'">
           {{ option.label }}
         </button>
       }
@@ -52,7 +52,7 @@
               <button type="button" (click)="toggleVerified(user)" [disabled]="busy() !== null"
                       [attr.aria-pressed]="user.taskerVerified === true"
                       class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs font-semibold transition-all duration-200 active:scale-95 disabled:opacity-60"
-                      [class]="user.taskerVerified ? 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100' : 'bg-white text-slate-600 border-slate-300 hover:border-sky-300 hover:text-sky-700'">
+                      [class]="user.taskerVerified ? 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100' : 'bg-surface-card text-slate-600 border-slate-300 hover:border-sky-300 hover:text-sky-700'">
                 <svg [appIcon]="icons.BadgeCheck" class="w-3.5 h-3.5"></svg>
                 {{ (user.taskerVerified ? 'common.verified' : 'admin.verify') | t }}
               </button>
