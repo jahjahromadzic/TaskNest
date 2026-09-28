@@ -3,7 +3,7 @@
     @if (welcome) {
       <div class="flex items-center gap-3 px-4 py-2.5 rounded-card bg-brand-50 border border-brand/20 text-sm animate-slide-in">
         <svg [appIcon]="icons.PartyPopper" class="w-5 h-5 text-brand shrink-0"></svg>
-        <p><span class="font-semibold">You are a tasker now.</span> Choose what you do and where, and matching tasks will start showing up for you.</p>
+        <p><span class="font-semibold">{{ 'profile.welcomeTitle' | t }}</span> {{ 'profile.welcomeText' | t }}</p>
       </div>
     }
 
@@ -18,59 +18,59 @@
               {{ profile.fullName }}
               @if (profile.verified) {
                 <span class="inline-flex items-center gap-1 text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded-full">
-                  <svg [appIcon]="icons.BadgeCheck" class="w-3.5 h-3.5"></svg> Verified
+                  <svg [appIcon]="icons.BadgeCheck" class="w-3.5 h-3.5"></svg> {{ 'common.verified' | t }}
                 </span>
               }
             </h1>
             <p class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-text-sub mt-0.5">
               <span class="flex items-center gap-1 font-semibold text-text-main">
                 <svg [appIcon]="icons.Star" class="w-4 h-4 text-accent fill-accent"></svg>
-                {{ profile.averageRating != null ? profile.averageRating.toFixed(1) : 'No ratings yet' }}
+                {{ profile.averageRating != null ? profile.averageRating.toFixed(1) : ('profile.noRatings' | t) }}
               </span>
-              <span>{{ profile.completedJobsCount }} jobs done</span>
-              <span>{{ profile.withdrawnJobsCount }} withdrawn</span>
+              <span>{{ 'common.jobsDone' | t: { count: profile.completedJobsCount ?? 0 } }}</span>
+              <span>{{ 'profile.withdrawn' | t: { count: profile.withdrawnJobsCount ?? 0 } }}</span>
             </p>
           </div>
           <div class="shrink-0 flex flex-col items-end gap-1">
             <button type="submit" [disabled]="!dirty() || saving()" class="btn-primary">
               @if (saving()) {
-                <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Saving...
+                <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'common.saving' | t }}
               } @else {
-                <svg [appIcon]="icons.Save" class="w-4 h-4"></svg> Save profile
+                <svg [appIcon]="icons.Save" class="w-4 h-4"></svg> {{ 'profile.save' | t }}
               }
             </button>
-            <span class="h-4 text-xs text-amber-700" [class.invisible]="!dirty()">Unsaved changes</span>
+            <span class="h-4 text-xs text-amber-700" [class.invisible]="!dirty()">{{ 'profile.unsaved' | t }}</span>
           </div>
         </div>
 
         <div>
           <label for="profile-headline" class="form-label flex justify-between">
-            <span>Headline</span>
+            <span>{{ 'profile.headline' | t }}</span>
             <span class="font-normal text-slate-400 tabular-nums">{{ headline().length }}/{{ headlineMax }}</span>
           </label>
           <input id="profile-headline" name="headline" [ngModel]="headline()" (ngModelChange)="headline.set($event)"
-                 [maxlength]="headlineMax" placeholder="e.g. Plumber with 10 years of experience" class="form-input">
+                 [maxlength]="headlineMax" [placeholder]="'profile.headlinePlaceholder' | t" class="form-input">
         </div>
 
         <div>
           <label for="profile-bio" class="form-label flex justify-between">
-            <span>About you</span>
+            <span>{{ 'profile.about' | t }}</span>
             <span class="font-normal text-slate-400 tabular-nums">{{ bio().length }}/{{ bioMax }}</span>
           </label>
           <textarea id="profile-bio" name="bio" rows="2" [ngModel]="bio()" (ngModelChange)="bio.set($event)" [maxlength]="bioMax"
-                    placeholder="What kind of jobs do you take on? Do you bring your own tools?"
+                    [placeholder]="'profile.aboutPlaceholder' | t"
                     class="form-input resize-y field-sizing-content min-h-16 max-h-48"></textarea>
         </div>
 
         <fieldset>
-          <legend class="form-label">What do you do? <span class="font-normal text-text-sub">({{ categoryIds().length }} selected)</span></legend>
+          <legend class="form-label">{{ 'profile.whatDoYouDo' | t }} <span class="font-normal text-text-sub">{{ 'common.selected' | t: { count: categoryIds().length } }}</span></legend>
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             @for (category of categories(); track category.id) {
               <button type="button" role="checkbox" [attr.aria-checked]="categoryIds().includes(category.id!)"
                       (click)="toggle('categoryIds', category.id)"
                       class="category-tile" [class.active]="categoryIds().includes(category.id!)">
                 <app-category-icon [slug]="category.slug" size="w-4 h-4 shrink-0" />
-                <span class="truncate flex-1">{{ category.name }}</span>
+                <span class="truncate flex-1">{{ category.slug | category: category.name }}</span>
                 @if (categoryIds().includes(category.id!)) {
                   <svg [appIcon]="icons.Check" class="w-3.5 h-3.5 shrink-0 animate-fade-in"></svg>
                 }
@@ -80,7 +80,7 @@
         </fieldset>
 
         <fieldset>
-          <legend class="form-label">Where do you work? <span class="font-normal text-text-sub">({{ municipalityIds().length }} selected)</span></legend>
+          <legend class="form-label">{{ 'profile.whereDoYouWork' | t }} <span class="font-normal text-text-sub">{{ 'common.selected' | t: { count: municipalityIds().length } }}</span></legend>
           <div class="flex flex-wrap gap-2">
             @for (municipality of municipalities(); track municipality.id) {
               <button type="button" role="checkbox" [attr.aria-checked]="municipalityIds().includes(municipality.id!)"
@@ -112,12 +112,12 @@
               <span class="absolute inset-0 flex items-center justify-center text-sm font-bold tabular-nums">{{ completeness() }}%</span>
             </div>
             <div>
-              <p class="font-semibold">{{ completeness() === 100 ? 'Your profile is complete' : 'Complete your profile' }}</p>
-              <p class="text-xs text-text-sub">A complete profile gets more jobs.</p>
+              <p class="font-semibold">{{ (completeness() === 100 ? 'profile.complete' : 'profile.incomplete') | t }}</p>
+              <p class="text-xs text-text-sub">{{ 'profile.completeHint' | t }}</p>
             </div>
           </div>
           <ul class="mt-4 space-y-2 text-sm">
-            @for (item of checklist(); track item.label) {
+            @for (item of checklist(); track $index) {
               <li class="flex items-center gap-2 transition-colors" [class]="item.done ? 'text-text-main' : 'text-text-sub'">
                 <svg [appIcon]="item.done ? icons.CircleCheck : icons.Circle" class="w-4 h-4"
                      [class]="item.done ? 'text-status-success' : 'text-slate-300'"></svg>
@@ -128,21 +128,21 @@
         </section>
 
         <section class="space-y-2">
-          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">How clients see you</p>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">{{ 'profile.howClientsSee' | t }}</p>
           <div class="bg-white p-4 rounded-card border border-surface-border shadow-subtle flex items-start gap-3">
             <span class="shrink-0 w-11 h-11 rounded-full bg-gradient-to-br from-brand to-teal-500 text-white font-semibold flex items-center justify-center">
               {{ initials(profile.fullName) }}
             </span>
             <div class="min-w-0 space-y-1">
               <p class="font-semibold">{{ profile.fullName }}</p>
-              <p class="text-xs text-text-sub line-clamp-2">{{ headline() || 'Your headline appears here' }}</p>
+              <p class="text-xs text-text-sub line-clamp-2">{{ headline() || ('profile.headlineHere' | t) }}</p>
               <p class="text-xs text-text-sub">
                 @if (profile.averageRating != null) {
                   <span class="font-semibold text-text-main">★ {{ profile.averageRating.toFixed(1) }}</span> ·
                 } @else {
-                  <span class="font-medium text-brand">New on TaskNest</span> ·
+                  <span class="font-medium text-brand">{{ 'common.newOnTaskNest' | t }}</span> ·
                 }
-                {{ profile.completedJobsCount }} jobs done
+                {{ 'common.jobsDone' | t: { count: profile.completedJobsCount ?? 0 } }}
               </p>
             </div>
           </div>
@@ -152,8 +152,8 @@
   </div>
 } @else if (failed()) {
   <div role="alert" class="bg-white p-10 rounded-card border border-red-200 text-center space-y-3 max-w-lg mx-auto">
-    <h1 class="text-lg font-semibold">Your profile could not be loaded</h1>
-    <button type="button" (click)="load()" class="btn-primary py-2">Try again</button>
+    <h1 class="text-lg font-semibold">{{ 'profile.loadFailed' | t }}</h1>
+    <button type="button" (click)="load()" class="btn-primary py-2">{{ 'common.tryAgain' | t }}</button>
   </div>
 } @else {
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" aria-hidden="true">

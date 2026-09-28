@@ -1,0 +1,91 @@
+<section class="flex flex-col gap-3 lg:flex-1 lg:min-h-0 bg-white rounded-card border border-surface-border shadow-subtle p-4 animate-fade-in">
+  <div class="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <label class="relative block md:w-80">
+      <span class="sr-only">{{ 'admin.searchTasks' | t }}</span>
+      <svg [appIcon]="icons.Search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
+      <input type="search" [value]="search()" (input)="onSearch($any($event.target).value)"
+             [placeholder]="'admin.searchTasksPlaceholder' | t" class="form-input pl-9 py-2" />
+    </label>
+    <div class="flex gap-1.5 overflow-x-auto [scrollbar-width:none]">
+      @for (option of filters; track option.key) {
+        <button type="button" (click)="selectFilter(option.key)" [attr.aria-pressed]="filter() === option.key"
+                class="shrink-0 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all duration-200 active:scale-95"
+                [class]="filter() === option.key ? 'bg-brand text-white border-brand shadow-subtle' : 'bg-white border-surface-border text-text-sub hover:text-text-main hover:border-slate-300'">
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="space-y-1.5 lg:flex-1 lg:min-h-0 lg:overflow-y-auto scroll-area lg:-mx-1 lg:px-1">
+    @if (rows(); as rows) {
+      @for (task of rows; track task.id; let i = $index) {
+        <article class="flex flex-col md:flex-row md:items-center gap-3 p-3 rounded-xl border border-surface-border hover:border-slate-300 hover:bg-slate-50/60 transition-colors animate-fade-in"
+                 [class.opacity-70]="task.status === 'REMOVED'" [style.animation-delay.ms]="i * 25">
+          <div class="flex items-center gap-3 min-w-0 flex-1">
+            <span class="shrink-0 w-10 h-10 rounded-xl bg-brand-50 text-brand flex items-center justify-center">
+              <app-category-icon [slug]="task.categorySlug" size="w-5 h-5" />
+            </span>
+            <div class="min-w-0">
+              <a [routerLink]="['/tasks', task.id]" class="block text-sm font-semibold truncate hover:text-brand hover:underline underline-offset-2">
+                {{ task.title }}
+              </a>
+              <p class="text-xs text-text-sub truncate">
+                {{ 'admin.taskMeta' | t: { client: task.clientName, email: task.clientEmail, municipality: task.municipalityName, time: timeAgo(task.createdAt) } }}
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center justify-between md:justify-end gap-3 shrink-0">
+            <span class="text-sm font-semibold text-brand tabular-nums">{{ formatBudget(task.budget) }}</span>
+            <app-status-badge [status]="status(task)" />
+            <span class="md:w-24 flex justify-end">
+              @if (canRemove(task.status)) {
+                <button type="button" (click)="removing.set(task)"
+                        class="btn-ghost py-1.5 px-2.5 text-xs text-status-error hover:bg-red-50">
+                  <svg [appIcon]="icons.Ban" class="w-3.5 h-3.5"></svg> {{ 'admin.remove' | t }}
+                </button>
+              }
+            </span>
+          </div>
+        </article>
+      } @empty {
+        <div class="py-12 text-center space-y-2">
+          <div class="mx-auto w-12 h-12 rounded-full bg-brand-50 text-brand flex items-center justify-center">
+            <svg [appIcon]="icons.ClipboardList" class="w-6 h-6"></svg>
+          </div>
+          <p class="text-sm font-semibold">{{ 'admin.noTasksTitle' | t }}</p>
+          <p class="text-xs text-text-sub">{{ 'admin.noTasksText' | t }}</p>
+        </div>
+      }
+    } @else if (failed()) {
+      <div role="alert" class="py-12 text-center space-y-2">
+        <svg [appIcon]="icons.CircleAlert" class="w-8 h-8 mx-auto text-status-error"></svg>
+        <p class="text-sm text-text-sub">{{ 'admin.tasksFailed' | t }}</p>
+        <button type="button" (click)="retry()" class="btn-ghost text-brand">
+          <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> {{ 'common.tryAgain' | t }}
+        </button>
+      </div>
+    } @else {
+      @for (row of skeletons; track row) {
+        <div class="flex items-center gap-3 p-3 rounded-xl border border-surface-border" aria-hidden="true">
+          <span class="skeleton w-10 h-10 rounded-xl"></span>
+          <span class="flex-1 space-y-1.5">
+            <span class="skeleton block h-3.5 w-48"></span>
+            <span class="skeleton block h-3 w-64"></span>
+          </span>
+        </div>
+      }
+    }
+  </div>
+
+  @if (rows() !== null && totalPages() > 1) {
+    <div class="shrink-0">
+      <app-pagination [page]="page()" [totalPages]="totalPages()" (pageChange)="goToPage($event)" />
+    </div>
+  }
+</section>
+
+@if (removing(); as task) {
+  <app-remove-task-dialog [taskId]="task.id!" [taskTitle]="task.title ?? ''"
+                          (removed)="onRemoved(task, $event)" (dismissed)="removing.set(null)" />
+}

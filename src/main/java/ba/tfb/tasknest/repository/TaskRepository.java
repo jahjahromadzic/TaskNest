@@ -1,5 +1,6 @@
 package ba.tfb.tasknest.repository;
 
+import ba.tfb.tasknest.dto.admin.AdminTaskResponse;
 import ba.tfb.tasknest.dto.task.TaskSummaryResponse;
 import ba.tfb.tasknest.entity.Task;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
@@ -109,4 +110,35 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
         """)
     Page<TaskSummaryResponse> findAssignedToTasker(@Param("taskerId") UUID taskerId,
                                                    Pageable pageable);
+
+    long countByStatus(TaskStatus status);
+
+    @Query(value = """
+        select new ba.tfb.tasknest.dto.admin.AdminTaskResponse(
+            t.id, t.title, t.status, c.slug, c.name, m.name,
+            cl.id, concat(cl.firstName, ' ', cl.lastName), cl.email,
+            t.budget, t.createdAt, t.publishedAt)
+        from Task t
+        join t.category c
+        join t.municipality m
+        join t.client cl
+        where t.status <> ba.tfb.tasknest.entity.enums.TaskStatus.DRAFT
+          and (:status is null or t.status = :status)
+          and (lower(t.title) like concat('%', :search, '%')
+               or lower(cl.email) like concat('%', :search, '%')
+               or lower(concat(cl.firstName, ' ', cl.lastName)) like concat('%', :search, '%'))
+        order by t.createdAt desc
+        """,
+        countQuery = """
+        select count(t) from Task t
+        join t.client cl
+        where t.status <> ba.tfb.tasknest.entity.enums.TaskStatus.DRAFT
+          and (:status is null or t.status = :status)
+          and (lower(t.title) like concat('%', :search, '%')
+               or lower(cl.email) like concat('%', :search, '%')
+               or lower(concat(cl.firstName, ' ', cl.lastName)) like concat('%', :search, '%'))
+        """)
+    Page<AdminTaskResponse> findForAdmin(@Param("status") TaskStatus status,
+                                         @Param("search") String search,
+                                         Pageable pageable);
 }

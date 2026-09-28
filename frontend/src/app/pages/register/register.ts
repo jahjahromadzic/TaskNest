@@ -7,12 +7,15 @@ import { AuthService } from '../../auth/auth.service';
 import { safeReturnUrl } from '../../auth/return-url';
 import { ApiError, readApiError } from '../../shared/api-error';
 import { ToastService } from '../../shared/toast/toast.service';
+import { TranslatePipe } from '../../i18n/translate.pipe';
+import { t } from '../../i18n/translate';
 
 @Component({
   selector: 'app-register',
   imports: [
     Icon,
     FormsModule,
+    TranslatePipe,
   ],
   templateUrl: './register.html',
 })
@@ -69,7 +72,7 @@ export class Register {
       })
       .subscribe({
         next: (user) => {
-          this.toastService.success(`Welcome to TaskNest, ${user.fullName.split(' ')[0]}!`);
+          this.toastService.success(t('auth.welcome', { name: user.fullName.split(' ')[0] }));
           this.router.navigateByUrl(safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')));
         },
         error: (error) => {

@@ -6,10 +6,8 @@ import ba.tfb.tasknest.dto.auth.RegisterRequest;
 import ba.tfb.tasknest.entity.Notification;
 import ba.tfb.tasknest.entity.enums.NotificationType;
 import ba.tfb.tasknest.repository.NotificationRepository;
-import ba.tfb.tasknest.repository.RefreshTokenRepository;
 import ba.tfb.tasknest.repository.UserRepository;
 import ba.tfb.tasknest.service.AuthService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,7 +30,6 @@ class NotificationEndpointTest extends AbstractIntegrationTest {
     @Autowired private AuthService authService;
     @Autowired private UserRepository userRepository;
     @Autowired private NotificationRepository notificationRepository;
-    @Autowired private RefreshTokenRepository refreshTokenRepository;
 
     private AuthResponse owner;
     private AuthResponse stranger;
@@ -41,13 +38,6 @@ class NotificationEndpointTest extends AbstractIntegrationTest {
     void setUp() {
         owner = register("notif.owner@test.ba");
         stranger = register("notif.stranger@test.ba");
-    }
-
-    @AfterEach
-    void tearDown() {
-        notificationRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
     }
 
     @Test

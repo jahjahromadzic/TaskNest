@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, catchError, switchMap, throwError } from 'rxjs';
 import { ToastService } from '../shared/toast/toast.service';
 import { AuthService } from './auth.service';
+import { t } from '../i18n/translate';
 
 const PUBLIC_AUTH_URLS = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh', '/api/auth/logout'];
 
@@ -27,7 +28,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
 
   const sessionExpired = (error: unknown): Observable<never> => {
     if (!authService.currentUser) {
-      toastService.info('Your session has expired. Please log in again.');
+      toastService.info(t('nav.sessionExpired'));
       router.navigate(['/login'], { queryParams: { returnUrl: router.url } });
     }
     return throwError(() => error);

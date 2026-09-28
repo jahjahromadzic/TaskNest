@@ -12,11 +12,12 @@
 
     @if (authService.user$ | async; as user) {
       <div class="flex items-center gap-1 sm:gap-2">
+        <app-lang-switch class="mr-1" />
         <a routerLink="/tasks/new" class="btn-primary hidden md:inline-flex py-2 mr-1">
-          <svg [appIcon]="icons.Plus" class="w-4 h-4"></svg> Post a task
+          <svg [appIcon]="icons.Plus" class="w-4 h-4"></svg> {{ 'nav.postTask' | t }}
         </a>
-        <a routerLink="/messages" routerLinkActive="!text-brand bg-brand-50" class="icon-btn hidden sm:inline-flex" title="Messages"
-           [attr.aria-label]="conversationService.unreadCount() > 0 ? 'Messages, ' + conversationService.unreadCount() + ' unread' : 'Messages'">
+        <a routerLink="/messages" routerLinkActive="!text-brand bg-brand-50" class="icon-btn hidden sm:inline-flex" [title]="'nav.messages' | t"
+           [attr.aria-label]="conversationService.unreadCount() > 0 ? ('nav.messagesUnread' | t: { count: conversationService.unreadCount() }) : ('nav.messages' | t)">
           <svg [appIcon]="icons.MessageSquare" class="w-5 h-5"></svg>
           @for (count of [conversationService.unreadCount()]; track count) {
             @if (count > 0) {
@@ -37,7 +38,7 @@
             <span class="hidden lg:block text-left">
               <span class="block text-xs font-semibold leading-tight">{{ user.fullName }}</span>
               <span class="block text-[11px] text-text-sub leading-tight">
-                {{ user.roles.includes('TASKER') ? 'Client & tasker' : 'Client' }}
+                {{ roleLabel(user) }}
               </span>
             </span>
             <svg [appIcon]="icons.ChevronDown" class="hidden sm:block w-4 h-4 text-slate-400 transition-transform duration-200" [class.rotate-180]="menuOpen()"></svg>
@@ -52,32 +53,32 @@
               </div>
               <a routerLink="/my-tasks" (click)="closeMenu()" role="menuitem"
                  class="px-3 py-2 hover:bg-slate-50 flex items-center gap-2.5 transition-colors">
-                <svg [appIcon]="icons.ListTodo" class="w-4 h-4 text-slate-400"></svg> My tasks
+                <svg [appIcon]="icons.ListTodo" class="w-4 h-4 text-slate-400"></svg> {{ 'nav.myTasks' | t }}
               </a>
               @if (user.roles.includes('TASKER')) {
                 <a routerLink="/tasker" (click)="closeMenu()" role="menuitem"
                    class="px-3 py-2 hover:bg-slate-50 flex items-center gap-2.5 transition-colors">
-                  <svg [appIcon]="icons.Briefcase" class="w-4 h-4 text-slate-400"></svg> Tasker dashboard
+                  <svg [appIcon]="icons.Briefcase" class="w-4 h-4 text-slate-400"></svg> {{ 'nav.taskerDashboard' | t }}
                 </a>
                 <a routerLink="/tasker/profile" (click)="closeMenu()" role="menuitem"
                    class="px-3 py-2 hover:bg-slate-50 flex items-center gap-2.5 transition-colors">
-                  <svg [appIcon]="icons.UserPen" class="w-4 h-4 text-slate-400"></svg> Tasker profile
+                  <svg [appIcon]="icons.UserPen" class="w-4 h-4 text-slate-400"></svg> {{ 'nav.taskerProfile' | t }}
                 </a>
               } @else {
                 <a routerLink="/become-a-tasker" (click)="closeMenu()" role="menuitem"
                    class="px-3 py-2 text-brand font-medium hover:bg-brand-50 flex items-center gap-2.5 transition-colors">
-                  <svg [appIcon]="icons.Briefcase" class="w-4 h-4"></svg> Become a tasker
+                  <svg [appIcon]="icons.Briefcase" class="w-4 h-4"></svg> {{ 'nav.becomeTasker' | t }}
                 </a>
               }
               @if (user.roles.includes('ADMIN')) {
                 <a routerLink="/admin" (click)="closeMenu()" role="menuitem"
                    class="px-3 py-2 text-brand font-medium hover:bg-brand-50 flex items-center gap-2.5 transition-colors border-t border-slate-100 mt-1">
-                  <svg [appIcon]="icons.Shield" class="w-4 h-4"></svg> Admin
+                  <svg [appIcon]="icons.Shield" class="w-4 h-4"></svg> {{ 'nav.admin' | t }}
                 </a>
               }
               <button type="button" (click)="logout()" role="menuitem"
                       class="w-full px-3 py-2 text-status-error hover:bg-red-50 flex items-center gap-2.5 transition-colors border-t border-slate-100 mt-1">
-                <svg [appIcon]="icons.LogOut" class="w-4 h-4"></svg> Log out
+                <svg [appIcon]="icons.LogOut" class="w-4 h-4"></svg> {{ 'nav.logOut' | t }}
               </button>
             </div>
           }
@@ -85,8 +86,9 @@
       </div>
     } @else {
       <nav class="flex items-center gap-2">
-        <a routerLink="/login" class="btn-ghost">Log in</a>
-        <a routerLink="/register" class="btn-primary py-2">Sign up</a>
+        <app-lang-switch />
+        <a routerLink="/login" class="btn-ghost">{{ 'nav.logIn' | t }}</a>
+        <a routerLink="/register" class="btn-primary py-2">{{ 'nav.signUp' | t }}</a>
       </nav>
     }
   </div>

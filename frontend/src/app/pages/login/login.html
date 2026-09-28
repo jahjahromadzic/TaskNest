@@ -7,7 +7,7 @@
   }
 
   <div>
-    <label for="login-email" class="form-label">Email address</label>
+    <label for="login-email" class="form-label">{{ 'auth.email' | t }}</label>
     <div class="relative">
       <svg [appIcon]="icons.Mail" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
       <input id="login-email" name="email" type="email" autocomplete="email" placeholder="name@domain.ba"
@@ -15,19 +15,19 @@
              class="form-input pl-9" [class.form-input-invalid]="emailField.invalid && (emailField.touched || form.submitted)">
     </div>
     @if (emailField.invalid && (emailField.touched || form.submitted)) {
-      <p class="form-error">{{ emailField.hasError('required') ? 'Enter your email address' : 'Enter a valid email address' }}</p>
+      <p class="form-error">{{ (emailField.hasError('required') ? 'auth.emailRequired' : 'auth.emailInvalid') | t }}</p>
     }
   </div>
 
   <div>
-    <label for="login-password" class="form-label">Password</label>
+    <label for="login-password" class="form-label">{{ 'auth.password' | t }}</label>
     <div class="relative">
       <svg [appIcon]="icons.Lock" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
       <input id="login-password" name="password" [type]="showPassword() ? 'text' : 'password'" autocomplete="current-password"
-             placeholder="Your password" [(ngModel)]="password" #passwordField="ngModel" required
+             [placeholder]="'auth.passwordPlaceholder' | t" [(ngModel)]="password" #passwordField="ngModel" required
              class="form-input pl-9 pr-10" [class.form-input-invalid]="passwordField.invalid && (passwordField.touched || form.submitted)">
       <button type="button" (click)="showPassword.set(!showPassword())"
-              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              [attr.aria-label]="(showPassword() ? 'auth.hidePassword' : 'auth.showPassword') | t"
               class="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-slate-400 hover:text-text-main hover:bg-slate-100 transition-colors">
         @if (showPassword()) {
           <svg [appIcon]="icons.EyeOff" class="w-4 h-4"></svg>
@@ -37,16 +37,16 @@
       </button>
     </div>
     @if (passwordField.invalid && (passwordField.touched || form.submitted)) {
-      <p class="form-error">Enter your password</p>
+      <p class="form-error">{{ 'auth.passwordRequired' | t }}</p>
     }
   </div>
 
   <button type="submit" class="btn-primary w-full py-3" [disabled]="submitting()">
     @if (submitting()) {
       <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg>
-      Logging in...
+      {{ 'auth.loggingIn' | t }}
     } @else {
-      Log in
+      {{ 'auth.logIn' | t }}
     }
   </button>
 </form>

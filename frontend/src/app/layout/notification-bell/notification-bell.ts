@@ -8,12 +8,14 @@ import { NotificationItem } from '../../components/notification-item/notificatio
 import { NotificationService } from '../../services/notification.service';
 import { RealtimeService } from '../../services/realtime.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { TranslatePipe } from '../../i18n/translate.pipe';
+import { t } from '../../i18n/translate';
 
 export const BELL_PREVIEW_SIZE = 5;
 
 @Component({
   selector: 'app-notification-bell',
-  imports: [Icon, NotificationItem, RouterLink],
+  imports: [Icon, NotificationItem, RouterLink, TranslatePipe],
   templateUrl: './notification-bell.html',
 })
 export class NotificationBell {
@@ -69,7 +71,7 @@ export class NotificationBell {
   markAllRead(): void {
     this.notificationService.markAllRead().subscribe({
       next: () => this.items.update((items) => items?.map((item) => ({ ...item, read: true })) ?? null),
-      error: () => this.toastService.error('Could not mark your notifications as read. Please try again.'),
+      error: () => this.toastService.error(t('notifications.markFailed')),
     });
   }
 

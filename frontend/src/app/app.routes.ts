@@ -1,24 +1,22 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard, notTaskerGuard, roleGuard } from './auth/auth.guards';
 
-const placeholder = () => import('./pages/placeholder/placeholder').then((m) => m.Placeholder);
-
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'tasks' },
   {
     path: 'tasks',
-    title: 'Browse tasks · TaskNest',
+    title: 'titles.browse',
     loadComponent: () => import('./pages/browse-tasks/browse-tasks').then((m) => m.BrowseTasks),
   },
   {
     path: 'tasks/new',
     canActivate: [roleGuard('CLIENT')],
-    title: 'Post a task · TaskNest',
+    title: 'titles.postTask',
     loadComponent: () => import('./pages/post-task/post-task').then((m) => m.PostTask),
   },
   {
     path: 'tasks/:id',
-    title: 'Task · TaskNest',
+    title: 'titles.task',
     loadComponent: () => import('./pages/task-detail/task-detail').then((m) => m.TaskDetailPage),
   },
   {
@@ -28,12 +26,12 @@ export const routes: Routes = [
     children: [
       {
         path: 'login',
-        title: 'Log in · TaskNest',
+        title: 'titles.login',
         loadComponent: () => import('./pages/login/login').then((m) => m.Login),
       },
       {
         path: 'register',
-        title: 'Sign up · TaskNest',
+        title: 'titles.register',
         loadComponent: () => import('./pages/register/register').then((m) => m.Register),
       },
     ],
@@ -41,60 +39,59 @@ export const routes: Routes = [
   {
     path: 'my-tasks',
     canActivate: [roleGuard('CLIENT')],
-    title: 'My tasks · TaskNest',
+    title: 'titles.myTasks',
     loadComponent: () => import('./pages/my-tasks/my-tasks').then((m) => m.MyTasks),
   },
   {
     path: 'tasker',
     canActivate: [roleGuard('TASKER')],
-    title: 'Tasker dashboard · TaskNest',
+    title: 'titles.taskerDashboard',
     loadComponent: () => import('./pages/tasker-dashboard/tasker-dashboard').then((m) => m.TaskerDashboard),
   },
   {
     path: 'tasker/profile',
     canActivate: [roleGuard('TASKER')],
-    title: 'Tasker profile · TaskNest',
+    title: 'titles.taskerProfile',
     loadComponent: () => import('./pages/tasker-profile/tasker-profile').then((m) => m.TaskerProfilePage),
   },
   {
     path: 'become-a-tasker',
     canActivate: [notTaskerGuard],
-    title: 'Become a tasker · TaskNest',
+    title: 'titles.becomeTasker',
     loadComponent: () => import('./pages/become-tasker/become-tasker').then((m) => m.BecomeTasker),
   },
   {
     path: 'taskers/:userId',
     canActivate: [authGuard],
-    title: 'Tasker · TaskNest',
+    title: 'titles.tasker',
     loadComponent: () => import('./pages/tasker-public/tasker-public').then((m) => m.TaskerPublic),
   },
   {
     path: 'messages',
     canActivate: [authGuard],
-    title: 'Messages · TaskNest',
+    title: 'titles.messages',
     loadComponent: () => import('./pages/messages/messages').then((m) => m.Messages),
   },
   {
     path: 'notifications',
     canActivate: [authGuard],
-    title: 'Notifications · TaskNest',
+    title: 'titles.notifications',
     loadComponent: () => import('./pages/notifications/notifications').then((m) => m.Notifications),
   },
   {
     path: 'admin',
     canActivate: [roleGuard('ADMIN')],
-    title: 'Admin · TaskNest',
-    loadComponent: placeholder,
-    data: { heading: 'Admin', phase: 5 },
+    title: 'titles.admin',
+    loadComponent: () => import('./pages/admin/admin').then((m) => m.Admin),
   },
   {
     path: 'forbidden',
-    title: 'No access · TaskNest',
+    title: 'titles.forbidden',
     loadComponent: () => import('./pages/forbidden/forbidden').then((m) => m.Forbidden),
   },
   {
     path: '**',
-    title: 'Not found · TaskNest',
+    title: 'titles.notFound',
     loadComponent: () => import('./pages/not-found/not-found').then((m) => m.NotFound),
   },
 ];

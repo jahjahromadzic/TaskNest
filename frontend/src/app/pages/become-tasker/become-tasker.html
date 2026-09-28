@@ -3,18 +3,18 @@
     <div class="absolute -right-20 -top-24 w-80 h-80 rounded-full bg-white/10 blur-2xl pointer-events-none" aria-hidden="true"></div>
     <div class="absolute -left-10 -bottom-28 w-72 h-72 rounded-full bg-accent/30 blur-3xl pointer-events-none" aria-hidden="true"></div>
     <div class="relative max-w-2xl space-y-4">
-      <p class="inline-flex text-xs font-semibold uppercase tracking-wider bg-white/15 px-3 py-1 rounded-full">For handymen and helpers</p>
-      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-balance">Earn money by helping people in your neighbourhood</h1>
+      <p class="inline-flex text-xs font-semibold uppercase tracking-wider bg-white/15 px-3 py-1 rounded-full">{{ 'becomeTasker.eyebrow' | t }}</p>
+      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-balance">{{ 'becomeTasker.title' | t }}</h1>
       <p class="text-teal-50 text-sm sm:text-base">
-        Keep your client account and add a tasker profile on top of it. It takes a minute and costs nothing.
+        {{ 'becomeTasker.text' | t }}
       </p>
       <button type="button" (click)="activate()" [disabled]="activating()"
               class="group inline-flex items-center gap-2 bg-white text-brand px-5 py-3 rounded-btn font-semibold shadow-card
                      transition-all duration-200 hover:-translate-y-0.5 hover:shadow-modal active:translate-y-0 disabled:opacity-80">
         @if (activating()) {
-          <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Activating...
+          <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'becomeTasker.activating' | t }}
         } @else {
-          Become a tasker
+          {{ 'becomeTasker.cta' | t }}
           <svg [appIcon]="icons.ArrowRight" class="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"></svg>
         }
       </button>
@@ -22,7 +22,7 @@
   </section>
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    @for (benefit of benefits; track benefit.title; let i = $index) {
+    @for (benefit of benefits; track $index; let i = $index) {
       <article class="bg-white p-5 rounded-card border border-surface-border shadow-subtle space-y-2 animate-fade-in
                       transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card"
                [style.animation-delay.ms]="100 + i * 70">
@@ -37,13 +37,13 @@
 
   <section class="bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle">
     <h2 class="font-semibold mb-4 flex items-center gap-2">
-      <svg [appIcon]="icons.UserPen" class="w-4 h-4 text-brand"></svg> How it works
+      <svg [appIcon]="icons.UserPen" class="w-4 h-4 text-brand"></svg> {{ 'becomeTasker.howItWorks' | t }}
     </h2>
     <ol class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       @for (step of steps; track step; let i = $index) {
         <li class="flex items-center gap-3">
           <span class="shrink-0 w-8 h-8 rounded-full bg-brand text-white text-sm font-bold flex items-center justify-center">{{ i + 1 }}</span>
-          <span class="text-sm font-medium">{{ step }}</span>
+          <span class="text-sm font-medium">{{ step | t }}</span>
         </li>
       }
     </ol>

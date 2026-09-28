@@ -11,10 +11,10 @@ import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.NotificationType;
 import ba.tfb.tasknest.repository.*;
 import ba.tfb.tasknest.service.AuthService;
+import ba.tfb.tasknest.service.NotificationService;
 import ba.tfb.tasknest.service.TaskService;
 import ba.tfb.tasknest.service.TaskerProfileService;
 import ba.tfb.tasknest.dto.taskerprofile.UpdateCoverageRequest;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,13 +35,10 @@ class TaskPublishedNotificationTest extends AbstractIntegrationTest {
     @Autowired private TaskService taskService;
     @Autowired private TaskerProfileService taskerProfileService;
 
-    @Autowired private UserRepository userRepository;
-    @Autowired private TaskRepository taskRepository;
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private MunicipalityRepository municipalityRepository;
-    @Autowired private TaskerProfileRepository taskerProfileRepository;
-    @Autowired private RefreshTokenRepository refreshTokenRepository;
     @Autowired private NotificationRepository notificationRepository;
+    @Autowired private NotificationService notificationService;
 
     private Category category;
     private Municipality municipality;
@@ -52,15 +49,6 @@ class TaskPublishedNotificationTest extends AbstractIntegrationTest {
         category = categoryRepository.findAll().getFirst();
         municipality = municipalityRepository.findAll().getFirst();
         clientId = register("notify.client@test.ba").userId();
-    }
-
-    @AfterEach
-    void tearDown() {
-        notificationRepository.deleteAll();
-        taskRepository.deleteAll();
-        taskerProfileRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
     }
 
     @Test
@@ -117,6 +105,28 @@ class TaskPublishedNotificationTest extends AbstractIntegrationTest {
         await().during(Duration.ofSeconds(3))
                 .atMost(Duration.ofSeconds(6))
                 .untilAsserted(() -> assertThat(notificationRepository.findAll()).isEmpty());
+    }
+
+    @Test
+    @DisplayName("An event for a task that was cancelled or deleted in the meantime notifies nobody")
+    void staleEvent_notifiesNobody() {
+        // Arrange
+        registerTaskerCovering("notify.stale@test.ba", category.getId(), municipality.getId());
+        UUID cancelled = taskService.createTask(clientId, new CreateTaskRequest(
+                "Otkazano", "Opis", category.getId(), municipality.getId(), new BigDecimal("50.00"))).id();
+        taskService.cancelTask(cancelled, clientId);
+
+        // Act
+        var forCancelled = notificationService.notifyTaskersAboutNewTask(new TaskPublishedEvent(
+                cancelled, "Otkazano", category.getId(), municipality.getId(), clientId));
+        var forDeleted = notificationService.notifyTaskersAboutNewTask(new TaskPublishedEvent(
+                UUID.randomUUID(), "Nestalo", category.getId(), municipality.getId(), clientId));
+        notificationService.notifyClientAboutExpiredTask(new TaskExpiredEvent(UUID.randomUUID(), "Nestalo", clientId));
+
+        // Assert
+        assertThat(forCancelled).isEmpty();
+        assertThat(forDeleted).isEmpty();
+        assertThat(notificationRepository.findAll()).isEmpty();
     }
 
     private UUID publishTask(String title) {

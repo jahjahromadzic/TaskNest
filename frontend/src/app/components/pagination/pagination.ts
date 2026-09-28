@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ChevronLeft, ChevronRight } from 'lucide';
 import { Icon } from '../icon/icon';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 
 export function visiblePages(current: number, total: number): (number | null)[] {
   const pages: (number | null)[] = [];
@@ -17,7 +18,7 @@ export function visiblePages(current: number, total: number): (number | null)[] 
 
 @Component({
   selector: 'app-pagination',
-  imports: [Icon],
+  imports: [Icon, TranslatePipe],
   templateUrl: './pagination.html',
 })
 export class Pagination {

@@ -12,12 +12,7 @@ import ba.tfb.tasknest.repository.CategoryRepository;
 import ba.tfb.tasknest.repository.ConversationRepository;
 import ba.tfb.tasknest.repository.MessageRepository;
 import ba.tfb.tasknest.repository.MunicipalityRepository;
-import ba.tfb.tasknest.repository.NotificationRepository;
 import ba.tfb.tasknest.repository.OfferRepository;
-import ba.tfb.tasknest.repository.RefreshTokenRepository;
-import ba.tfb.tasknest.repository.TaskRepository;
-import ba.tfb.tasknest.repository.TaskerProfileRepository;
-import ba.tfb.tasknest.repository.UserRepository;
 import ba.tfb.tasknest.service.AuthService;
 import ba.tfb.tasknest.service.ConversationService;
 import ba.tfb.tasknest.service.OfferService;
@@ -69,16 +64,11 @@ class RealtimeIntegrationTest extends AbstractIntegrationTest {
     @Autowired private SimpUserRegistry userRegistry;
     @Autowired private TransactionTemplate transactionTemplate;
 
-    @Autowired private UserRepository userRepository;
-    @Autowired private TaskRepository taskRepository;
     @Autowired private OfferRepository offerRepository;
     @Autowired private MessageRepository messageRepository;
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private MunicipalityRepository municipalityRepository;
     @Autowired private ConversationRepository conversationRepository;
-    @Autowired private NotificationRepository notificationRepository;
-    @Autowired private TaskerProfileRepository taskerProfileRepository;
-    @Autowired private RefreshTokenRepository refreshTokenRepository;
 
     private final List<StompSession> sessions = new ArrayList<>();
     private WebSocketStompClient stompClient;
@@ -102,17 +92,6 @@ class RealtimeIntegrationTest extends AbstractIntegrationTest {
     void tearDown() {
         sessions.stream().filter(StompSession::isConnected).forEach(StompSession::disconnect);
         stompClient.stop();
-
-        messageRepository.deleteAll();
-        notificationRepository.deleteAll();
-        conversationRepository.deleteAll();
-        transactionTemplate.executeWithoutResult(status ->
-                taskRepository.findAll().forEach(task -> task.setAcceptedOffer(null)));
-        offerRepository.deleteAll();
-        taskRepository.deleteAll();
-        taskerProfileRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
     }
 
     @Test

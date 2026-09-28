@@ -12,13 +12,15 @@ import { TaskService } from '../../services/task.service';
 import { TaskerProfileService } from '../../services/tasker-profile.service';
 import { formatBudget, timeAgo } from '../../shared/format/format';
 import { OFFER_STATUS, OfferStatus } from '../../shared/task-status/task-status';
+import { TranslatePipe } from '../../i18n/translate.pipe';
+import { t, translated } from '../../i18n/translate';
 
 export type DashboardTab = 'matching' | 'offers' | 'jobs';
 
-export const DASHBOARD_TABS: { key: DashboardTab; label: string }[] = [
-  { key: 'matching', label: 'Tasks for me' },
-  { key: 'offers', label: 'My offers' },
-  { key: 'jobs', label: 'My jobs' },
+export const DASHBOARD_TABS: { key: DashboardTab; readonly label: string }[] = [
+  translated({ key: 'matching' as DashboardTab }, { label: 'dashboard.tabMatching' }),
+  translated({ key: 'offers' as DashboardTab }, { label: 'dashboard.tabOffers' }),
+  translated({ key: 'jobs' as DashboardTab }, { label: 'dashboard.tabJobs' }),
 ];
 
 interface DashboardQuery {
@@ -57,7 +59,7 @@ export function sortOffersNewestFirst(offers: Offer[]): Offer[] {
 
 @Component({
   selector: 'app-tasker-dashboard',
-  imports: [AsyncPipe, RouterLink, Icon, Pagination, TaskCard],
+  imports: [AsyncPipe, RouterLink, Icon, Pagination, TaskCard, TranslatePipe],
   templateUrl: './tasker-dashboard.html',
 })
 export class TaskerDashboard {
@@ -131,7 +133,7 @@ export class TaskerDashboard {
 
   offerNote(taskId: string | undefined, offers: Offer[] | null): string | null {
     const offer = offers?.find((candidate) => candidate.taskId === taskId);
-    return offer ? `Offer sent · ${formatBudget(offer.price)}` : null;
+    return offer ? t('card.offerSent', { price: formatBudget(offer.price) }) : null;
   }
 
   offerStyle(status: Offer['status']) {

@@ -6,10 +6,11 @@ import { Icon } from '../../components/icon/icon';
 import { AuthService } from '../../auth/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { ConversationService } from '../../services/conversation.service';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 
 @Component({
   selector: 'app-bottom-nav',
-  imports: [Icon, AsyncPipe, RouterLink, RouterLinkActive],
+  imports: [Icon, AsyncPipe, RouterLink, RouterLinkActive, TranslatePipe],
   templateUrl: './bottom-nav.html',
 })
 export class BottomNav {

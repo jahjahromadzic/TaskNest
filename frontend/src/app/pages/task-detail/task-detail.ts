@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
@@ -16,6 +16,7 @@ import {
   MapPin,
   RotateCcw,
   SearchX,
+  ShieldAlert,
   UserRound,
 } from 'lucide';
 import { Icon } from '../../components/icon/icon';
@@ -28,11 +29,14 @@ import { TaskActions } from '../../components/task-actions/task-actions';
 import { TaskOffers } from '../../components/task-offers/task-offers';
 import { TaskReviews } from '../../components/task-reviews/task-reviews';
 import { TaskerPanel } from '../../components/tasker-panel/tasker-panel';
+import { RemoveTaskDialog } from '../../components/remove-task-dialog/remove-task-dialog';
 import { TaskTimeline } from '../../components/task-timeline/task-timeline';
 import { TaskService } from '../../services/task.service';
 import { daysLeft, formatBudget, formatDate, timeAgo } from '../../shared/format/format';
 import { isStopped } from '../../shared/task-status/task-status';
 import { ToastService } from '../../shared/toast/toast.service';
+import { CategoryPipe, TranslatePipe } from '../../i18n/translate.pipe';
+import { t } from '../../i18n/translate';
 
 interface DetailState {
   loading: boolean;
@@ -58,6 +62,9 @@ const FAILED: DetailState = { loading: false, notFound: false, failed: true, tas
     TaskReviews,
     TaskTimeline,
     TaskerPanel,
+    RemoveTaskDialog,
+    TranslatePipe,
+    CategoryPipe,
   ],
   templateUrl: './task-detail.html',
 })
@@ -74,6 +81,7 @@ export class TaskDetailPage {
     MapPin,
     RotateCcw,
     SearchX,
+    ShieldAlert,
     UserRound,
   };
 
@@ -85,6 +93,8 @@ export class TaskDetailPage {
   readonly timeAgo = timeAgo;
   readonly daysLeft = daysLeft;
   readonly isStopped = isStopped;
+
+  readonly removing = signal(false);
 
   private readonly retry$ = new BehaviorSubject<void>(undefined);
 
@@ -137,14 +147,24 @@ export class TaskDetailPage {
   async share(): Promise<void> {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      this.toastService.success('Link copied. Paste it anywhere to share this task.');
+      this.toastService.success(t('detail.linkCopied'));
     } catch {
-      this.toastService.error('The link could not be copied. Copy it from the address bar instead.');
+      this.toastService.error(t('detail.linkFailed'));
     }
   }
 
   retry(): void {
     this.retry$.next();
+  }
+
+  canModerate(task: TaskDetail, user: CurrentUser | null): boolean {
+    return !!user?.roles.includes('ADMIN') && (task.status === 'PUBLISHED' || task.status === 'ASSIGNED');
+  }
+
+  onRemoved(): void {
+    this.removing.set(false);
+    this.toastService.success(t('detail.removed'));
+    this.retry();
   }
 }
 

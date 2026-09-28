@@ -11,6 +11,8 @@ public record AdminUserRow(
         String firstName,
         String lastName,
         AccountStatus accountStatus,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        UUID taskerProfileId,
+        Boolean taskerVerified
 ) {
 }

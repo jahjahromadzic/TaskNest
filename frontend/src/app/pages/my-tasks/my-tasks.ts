@@ -9,30 +9,28 @@ import { Pagination } from '../../components/pagination/pagination';
 import { TaskCard } from '../../components/task-card/task-card';
 import { TaskService } from '../../services/task.service';
 import { TaskStatus } from '../../shared/task-status/task-status';
+import { translated } from '../../i18n/translate';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 
 export interface MyTasksTab {
   key: string;
-  label: string;
+  readonly label: string;
   statuses: TaskStatus[];
-  empty: string;
+  readonly empty: string;
 }
 
 export const MY_TASKS_TABS: MyTasksTab[] = [
-  { key: 'all', label: 'All', statuses: [], empty: 'You have not posted any tasks yet.' },
-  { key: 'open', label: 'Open', statuses: ['PUBLISHED'], empty: 'None of your tasks is waiting for offers.' },
-  {
-    key: 'active',
-    label: 'In progress',
-    statuses: ['ASSIGNED', 'IN_PROGRESS', 'COMPLETED'],
-    empty: 'No tasker is working for you right now.',
-  },
-  { key: 'drafts', label: 'Drafts', statuses: ['DRAFT'], empty: 'You have no drafts.' },
-  {
-    key: 'history',
-    label: 'History',
-    statuses: ['CLOSED', 'CANCELLED', 'EXPIRED', 'REMOVED'],
-    empty: 'Finished and cancelled tasks will appear here.',
-  },
+  translated({ key: 'all', statuses: [] as TaskStatus[] }, { label: 'myTasks.tabAll', empty: 'myTasks.emptyAll' }),
+  translated({ key: 'open', statuses: ['PUBLISHED'] as TaskStatus[] }, { label: 'myTasks.tabOpen', empty: 'myTasks.emptyOpen' }),
+  translated(
+    { key: 'active', statuses: ['ASSIGNED', 'IN_PROGRESS', 'COMPLETED'] as TaskStatus[] },
+    { label: 'myTasks.tabActive', empty: 'myTasks.emptyActive' },
+  ),
+  translated({ key: 'drafts', statuses: ['DRAFT'] as TaskStatus[] }, { label: 'myTasks.tabDrafts', empty: 'myTasks.emptyDrafts' }),
+  translated(
+    { key: 'history', statuses: ['CLOSED', 'CANCELLED', 'EXPIRED', 'REMOVED'] as TaskStatus[] },
+    { label: 'myTasks.tabHistory', empty: 'myTasks.emptyHistory' },
+  ),
 ];
 
 interface MyTasksQuery {
@@ -65,7 +63,7 @@ export function countFor(tab: MyTasksTab, counts: Partial<Record<TaskStatus, num
 
 @Component({
   selector: 'app-my-tasks',
-  imports: [AsyncPipe, RouterLink, Icon, Pagination, TaskCard],
+  imports: [AsyncPipe, RouterLink, Icon, Pagination, TaskCard, TranslatePipe],
   templateUrl: './my-tasks.html',
 })
 export class MyTasks {

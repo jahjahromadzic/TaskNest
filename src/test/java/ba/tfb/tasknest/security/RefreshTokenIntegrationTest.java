@@ -13,7 +13,6 @@ import ba.tfb.tasknest.security.RefreshTokenCookie;
 import jakarta.servlet.http.Cookie;
 import org.springframework.http.HttpHeaders;
 import ba.tfb.tasknest.service.RefreshTokenService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,12 +42,6 @@ class RefreshTokenIntegrationTest extends AbstractIntegrationTest {
     @Autowired private AuthService authService;
     @Autowired private UserRepository userRepository;
     @Autowired private RefreshTokenRepository refreshTokenRepository;
-
-    @AfterEach
-    void tearDown() {
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
-    }
 
     @Test
     @DisplayName("Registration issues both an access token and a refresh token")

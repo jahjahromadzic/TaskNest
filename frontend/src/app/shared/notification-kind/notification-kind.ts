@@ -16,9 +16,10 @@ import {
   UserMinus,
 } from 'lucide';
 import { AppNotification, NotificationType } from '../../api/models';
+import { t, translated } from '../../i18n/translate';
 
 export interface NotificationKind {
-  title: string;
+  readonly title: string;
   icon: IconNode;
   tone: string;
 }
@@ -31,25 +32,25 @@ const DANGER = 'bg-red-50 text-red-600';
 const NEUTRAL = 'bg-slate-100 text-slate-500';
 
 export const NOTIFICATION_KINDS: Record<NotificationType, NotificationKind> = {
-  NEW_TASK_IN_AREA: { title: 'New task near you', icon: MapPin, tone: BRAND },
-  NEW_OFFER: { title: 'New offer', icon: Tag, tone: BRAND },
-  OFFER_ACCEPTED: { title: 'You were hired', icon: BadgeCheck, tone: SUCCESS },
-  NEW_MESSAGE: { title: 'New message', icon: MessageSquare, tone: INFO },
-  TASK_STARTED: { title: 'Work started', icon: Hammer, tone: INFO },
-  TASK_COMPLETED: { title: 'Work completed', icon: CircleCheck, tone: SUCCESS },
-  TASK_CLOSED: { title: 'Task closed', icon: CircleCheck, tone: SUCCESS },
-  TASK_EXPIRED: { title: 'Task expired', icon: Hourglass, tone: WARNING },
-  REVIEW_RECEIVED: { title: 'New review', icon: Star, tone: WARNING },
-  TASK_REMOVED: { title: 'Task removed', icon: ShieldAlert, tone: DANGER },
-  TASKER_WITHDREW: { title: 'Tasker backed out', icon: UserMinus, tone: DANGER },
-  ASSIGNMENT_RELEASED: { title: 'Task reopened by the client', icon: Undo2, tone: NEUTRAL },
-  OFFER_REACTIVATED: { title: 'Offer active again', icon: RotateCcw, tone: BRAND },
-  ASSIGNMENT_EXPIRED: { title: 'Task reopened', icon: TimerOff, tone: WARNING },
-  TASK_AUTO_CLOSED: { title: 'Task closed automatically', icon: Archive, tone: NEUTRAL },
+  NEW_TASK_IN_AREA: translated({ icon: MapPin, tone: BRAND }, { title: 'notifications.kinds.NEW_TASK_IN_AREA' }),
+  NEW_OFFER: translated({ icon: Tag, tone: BRAND }, { title: 'notifications.kinds.NEW_OFFER' }),
+  OFFER_ACCEPTED: translated({ icon: BadgeCheck, tone: SUCCESS }, { title: 'notifications.kinds.OFFER_ACCEPTED' }),
+  NEW_MESSAGE: translated({ icon: MessageSquare, tone: INFO }, { title: 'notifications.kinds.NEW_MESSAGE' }),
+  TASK_STARTED: translated({ icon: Hammer, tone: INFO }, { title: 'notifications.kinds.TASK_STARTED' }),
+  TASK_COMPLETED: translated({ icon: CircleCheck, tone: SUCCESS }, { title: 'notifications.kinds.TASK_COMPLETED' }),
+  TASK_CLOSED: translated({ icon: CircleCheck, tone: SUCCESS }, { title: 'notifications.kinds.TASK_CLOSED' }),
+  TASK_EXPIRED: translated({ icon: Hourglass, tone: WARNING }, { title: 'notifications.kinds.TASK_EXPIRED' }),
+  REVIEW_RECEIVED: translated({ icon: Star, tone: WARNING }, { title: 'notifications.kinds.REVIEW_RECEIVED' }),
+  TASK_REMOVED: translated({ icon: ShieldAlert, tone: DANGER }, { title: 'notifications.kinds.TASK_REMOVED' }),
+  TASKER_WITHDREW: translated({ icon: UserMinus, tone: DANGER }, { title: 'notifications.kinds.TASKER_WITHDREW' }),
+  ASSIGNMENT_RELEASED: translated({ icon: Undo2, tone: NEUTRAL }, { title: 'notifications.kinds.ASSIGNMENT_RELEASED' }),
+  OFFER_REACTIVATED: translated({ icon: RotateCcw, tone: BRAND }, { title: 'notifications.kinds.OFFER_REACTIVATED' }),
+  ASSIGNMENT_EXPIRED: translated({ icon: TimerOff, tone: WARNING }, { title: 'notifications.kinds.ASSIGNMENT_EXPIRED' }),
+  TASK_AUTO_CLOSED: translated({ icon: Archive, tone: NEUTRAL }, { title: 'notifications.kinds.TASK_AUTO_CLOSED' }),
 };
 
 export function notificationKind(type: AppNotification['type']): NotificationKind {
-  return NOTIFICATION_KINDS[type as NotificationType] ?? { title: 'Notification', icon: MapPin, tone: NEUTRAL };
+  return NOTIFICATION_KINDS[type as NotificationType] ?? translated({ icon: MapPin, tone: NEUTRAL }, { title: 'notifications.kinds.fallback' });
 }
 
 export function notificationLink(notification: AppNotification): string | null {
@@ -69,10 +70,10 @@ export function groupByDay(notifications: AppNotification[], now = new Date()): 
   const day = 24 * 60 * 60 * 1000;
   const labelOf = (date: string | undefined): string => {
     const created = date ? new Date(date).getTime() : 0;
-    if (created >= today) return 'Today';
-    if (created >= today - day) return 'Yesterday';
-    if (created >= today - 6 * day) return 'This week';
-    return 'Earlier';
+    if (created >= today) return t('common.today');
+    if (created >= today - day) return t('common.yesterday');
+    if (created >= today - 6 * day) return t('time.thisWeek');
+    return t('time.earlier');
   };
   const groups: NotificationGroup[] = [];
   for (const notification of notifications) {

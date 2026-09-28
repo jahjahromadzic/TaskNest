@@ -56,8 +56,7 @@ class TaskBrowseIntegrationTest extends AbstractIntegrationTest {
 
     @AfterEach
     void tearDown() {
-        taskRepository.deleteAll();
-        userRepository.deleteAll();
+        truncateApplicationTables();
         categoryRepository.delete(category);
         municipalityRepository.delete(municipality);
     }

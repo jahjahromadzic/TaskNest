@@ -9,21 +9,21 @@
       <div class="p-3.5 rounded-btn bg-brand-50 border border-brand/20 space-y-2 animate-fade-in">
         <div class="flex items-center justify-between gap-2">
           <span class="text-xs font-semibold uppercase tracking-wide text-brand flex items-center gap-1.5">
-            <svg [appIcon]="icons.Clock" class="w-3.5 h-3.5"></svg> Your offer
+            <svg [appIcon]="icons.Clock" class="w-3.5 h-3.5"></svg> {{ 'panel.yourOffer' | t }}
           </span>
           <span class="text-lg font-bold text-brand">{{ formatBudget(offer.price) }}</span>
         </div>
         @if (offer.message) {
           <p class="text-sm text-text-main">{{ offer.message }}</p>
         }
-        <p class="text-xs text-text-sub">Sent {{ timeAgo(offer.createdAt) }}. Waiting for {{ client }} to choose.</p>
+        <p class="text-xs text-text-sub">{{ 'panel.waiting' | t: { time: timeAgo(offer.createdAt), name: client } }}</p>
       </div>
       <button type="button" (click)="withdraw()" [disabled]="running() !== null"
               class="btn-ghost w-full text-status-error hover:bg-red-50 disabled:opacity-60">
         @if (running() === 'withdraw') {
-          <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Withdrawing...
+          <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'panel.withdrawing' | t }}
         } @else {
-          <svg [appIcon]="icons.Undo2" class="w-4 h-4"></svg> Withdraw offer
+          <svg [appIcon]="icons.Undo2" class="w-4 h-4"></svg> {{ 'panel.withdraw' | t }}
         }
       </button>
     }
@@ -32,109 +32,113 @@
         @case ('ASSIGNED') {
           <div class="p-3.5 rounded-btn bg-green-50 border border-green-200 text-sm text-green-900 animate-slide-in">
             <p class="font-semibold flex items-center gap-1.5">
-              <svg [appIcon]="icons.Handshake" class="w-4 h-4"></svg> You're hired for {{ formatBudget(offer.price) }}!
+              <svg [appIcon]="icons.Handshake" class="w-4 h-4"></svg> {{ 'panel.hiredFor' | t: { price: formatBudget(offer.price) } }}
             </p>
-            <p class="mt-0.5">Agree on the details with {{ client }} and start when you are there.</p>
+            <p class="mt-0.5">{{ 'panel.agree' | t: { name: client } }}</p>
           </div>
           <button type="button" (click)="start()" [disabled]="running() !== null" class="btn-primary w-full">
             @if (running() === 'start') {
-              <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Starting...
+              <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'panel.starting' | t }}
             } @else {
-              <svg [appIcon]="icons.Play" class="w-4 h-4"></svg> Start work
+              <svg [appIcon]="icons.Play" class="w-4 h-4"></svg> {{ 'panel.start' | t }}
             }
           </button>
           <button type="button" (click)="withdraw()" [disabled]="running() !== null"
                   class="btn-ghost w-full text-status-error hover:bg-red-50 disabled:opacity-60">
-            <svg [appIcon]="icons.LogOut" class="w-4 h-4"></svg> Back out of the job
+            <svg [appIcon]="icons.LogOut" class="w-4 h-4"></svg> {{ 'panel.backOut' | t }}
           </button>
         }
         @case ('IN_PROGRESS') {
           <div class="p-3.5 rounded-btn bg-indigo-50 border border-indigo-200 text-sm text-indigo-900">
-            You started {{ timeAgo(task.startedAt) }}. Tell {{ client }} when you are finished.
+            {{ 'panel.startedAgo' | t: { time: timeAgo(task.startedAt), name: client } }}
           </div>
           <button type="button" (click)="complete()" [disabled]="running() !== null" class="btn-primary w-full">
             @if (running() === 'complete') {
-              <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Saving...
+              <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'common.saving' | t }}
             } @else {
-              <svg [appIcon]="icons.CircleCheckBig" class="w-4 h-4"></svg> Mark as done
+              <svg [appIcon]="icons.CircleCheckBig" class="w-4 h-4"></svg> {{ 'panel.markDone' | t }}
             }
           </button>
         }
         @case ('COMPLETED') {
           <div class="p-3.5 rounded-btn bg-accent-light/60 border border-amber-300 text-sm text-amber-950">
-            Waiting for {{ client }} to confirm the job.
-            @if (autoCloseIn !== null) {
-              It closes by itself {{ autoCloseIn === 0 ? 'today' : autoCloseIn === 1 ? 'tomorrow' : 'in ' + autoCloseIn + ' days' }}.
+            {{ 'panel.waitingConfirm' | t: { name: client } }}
+            @if (autoCloseIn === 0) {
+              {{ 'panel.closesToday' | t }}
+            } @else if (autoCloseIn === 1) {
+              {{ 'panel.closesTomorrow' | t }}
+            } @else if (autoCloseIn !== null) {
+              {{ 'panel.closesIn' | t: { count: autoCloseIn } }}
             }
           </div>
         }
         @case ('CLOSED') {
           <div class="p-3.5 rounded-btn bg-green-50 border border-green-200 text-sm text-green-900">
-            <span class="font-semibold">Job done.</span> It now counts on your profile.
+            <span class="font-semibold">{{ 'panel.jobDone' | t }}</span> {{ 'panel.jobDoneText' | t }}
           </div>
         }
       }
     }
     @case ('REJECTED') {
       <p class="p-3.5 rounded-btn bg-slate-50 border border-slate-200 text-sm text-text-sub">
-        {{ client }} chose another tasker for this job.
+        {{ 'panel.chosenOther' | t: { name: client } }}
       </p>
     }
     @case ('WITHDRAWN') {
       <p class="p-3.5 rounded-btn bg-slate-50 border border-slate-200 text-sm text-text-sub">
-        You withdrew your offer of {{ formatBudget(offer.price) }}.
+        {{ 'panel.youWithdrew' | t: { price: formatBudget(offer.price) } }}
       </p>
     }
   }
   <a routerLink="/messages" [queryParams]="{ offer: offer.id }"
      class="btn-ghost w-full border border-surface-border bg-white">
     <svg [appIcon]="icons.MessageSquare" class="w-4 h-4 text-brand"></svg>
-    {{ offer.status === 'PENDING' || offer.status === 'ACCEPTED' ? 'Message ' + client : 'View conversation' }}
+    {{ offer.status === 'PENDING' || offer.status === 'ACCEPTED' ? ('panel.message' | t: { name: client }) : ('panel.viewConversation' | t) }}
   </a>
 } @else if (task.status === 'PUBLISHED') {
   <form #form="ngForm" (ngSubmit)="sendOffer(form)" novalidate class="space-y-3 animate-fade-in">
     <p class="font-semibold flex items-center gap-1.5">
-      <svg [appIcon]="icons.Send" class="w-4 h-4 text-brand"></svg> Make an offer
+      <svg [appIcon]="icons.Send" class="w-4 h-4 text-brand"></svg> {{ 'panel.makeOffer' | t }}
     </p>
     <div>
       <label for="offer-price" class="form-label flex items-center justify-between">
-        Your price
+        {{ 'panel.yourPrice' | t }}
         @if (task.budget != null) {
           <button type="button" (click)="matchBudget()" class="font-medium text-brand hover:underline">
-            Match budget ({{ formatBudget(task.budget) }})
+            {{ 'panel.matchBudget' | t: { price: formatBudget(task.budget) } }}
           </button>
         }
       </label>
       <div class="relative">
         <input id="offer-price" name="price" type="number" inputmode="decimal" min="1" step="1" required
-               [(ngModel)]="price" #priceField="ngModel" placeholder="e.g. 50"
+               [(ngModel)]="price" #priceField="ngModel" [placeholder]="'panel.pricePlaceholder' | t"
                class="form-input pr-12 text-lg font-semibold"
                [class.form-input-invalid]="attempted() && (priceField.invalid || price === null || price <= 0)">
         <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400 pointer-events-none">KM</span>
       </div>
       @if (attempted() && (priceField.invalid || price === null || price <= 0)) {
-        <p class="form-error">Enter a price above 0 KM</p>
+        <p class="form-error">{{ 'panel.priceInvalid' | t }}</p>
       }
     </div>
     <div>
       <label for="offer-message" class="form-label flex justify-between">
-        <span>Message <span class="font-normal text-text-sub">(optional)</span></span>
+        <span>{{ 'panel.message2' | t }} <span class="font-normal text-text-sub">{{ 'common.optional' | t }}</span></span>
         <span class="font-normal text-slate-400 tabular-nums">{{ message.length }}/{{ messageMax }}</span>
       </label>
       <textarea id="offer-message" name="message" rows="3" [(ngModel)]="message" [maxlength]="messageMax"
-                placeholder="When can you come? What does the price include?"
+                [placeholder]="'panel.messagePlaceholder' | t"
                 class="form-input resize-none"></textarea>
     </div>
     <button type="submit" [disabled]="running() !== null" class="btn-primary w-full">
       @if (running() === 'offer') {
-        <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Sending...
+        <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'panel.sending' | t }}
       } @else {
-        <svg [appIcon]="icons.Send" class="w-4 h-4"></svg> Send offer
+        <svg [appIcon]="icons.Send" class="w-4 h-4"></svg> {{ 'panel.send' | t }}
       }
     </button>
   </form>
 } @else {
   <p class="p-3.5 rounded-btn bg-slate-50 border border-slate-200 text-sm text-text-sub">
-    This task no longer takes offers.
+    {{ 'panel.closed' | t }}
   </p>
 }

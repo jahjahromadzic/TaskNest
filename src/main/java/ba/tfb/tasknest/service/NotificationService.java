@@ -8,11 +8,13 @@ import ba.tfb.tasknest.entity.Review;
 import ba.tfb.tasknest.entity.Task;
 import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.NotificationType;
+import ba.tfb.tasknest.entity.enums.TaskStatus;
 import ba.tfb.tasknest.exception.NotResourceOwnerException;
 import ba.tfb.tasknest.exception.ResourceNotFoundException;
 import ba.tfb.tasknest.messaging.TaskExpiredEvent;
 import ba.tfb.tasknest.messaging.TaskPublishedEvent;
 import ba.tfb.tasknest.repository.NotificationRepository;
+import ba.tfb.tasknest.repository.TaskRepository;
 import ba.tfb.tasknest.repository.TaskerProfileRepository;
 import ba.tfb.tasknest.repository.UserRepository;
 import ba.tfb.tasknest.repository.projection.TaskerNotificationTarget;
@@ -35,11 +37,21 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final TaskerProfileRepository taskerProfileRepository;
+    private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public List<TaskerNotificationTarget> notifyTaskersAboutNewTask(TaskPublishedEvent event) {
+        boolean stillPublished = taskRepository.findById(event.taskId())
+                .map(task -> task.getStatus() == TaskStatus.PUBLISHED)
+                .orElse(false);
+
+        if (!stillPublished) {
+            log.debug("Task {} is no longer published, so nobody is notified", event.taskId());
+            return List.of();
+        }
+
         List<TaskerNotificationTarget> targets = taskerProfileRepository.findNotificationTargets(
                 event.categoryId(), event.municipalityId(), event.clientId());
 
@@ -60,6 +72,11 @@ public class NotificationService {
 
     @Transactional
     public void notifyClientAboutExpiredTask(TaskExpiredEvent event) {
+        if (!taskRepository.existsById(event.taskId())) {
+            log.debug("Task {} no longer exists, so its expiry is not announced", event.taskId());
+            return;
+        }
+
         Notification notification = new Notification();
         notification.setRecipient(userReference(event.clientId()));
         notification.setType(NotificationType.TASK_EXPIRED);

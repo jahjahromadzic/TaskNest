@@ -10,6 +10,8 @@ import { ReferenceService } from '../../services/reference.service';
 import { TaskerProfileService } from '../../services/tasker-profile.service';
 import { readApiError } from '../../shared/api-error';
 import { ToastService } from '../../shared/toast/toast.service';
+import { CategoryPipe, TranslatePipe } from '../../i18n/translate.pipe';
+import { t, translated } from '../../i18n/translate';
 
 export const HEADLINE_MAX = 150;
 export const BIO_MAX = 2000;
@@ -27,7 +29,7 @@ function sameIds(a: string[], b: string[]): boolean {
 
 @Component({
   selector: 'app-tasker-profile',
-  imports: [FormsModule, CategoryIcon, Icon],
+  imports: [FormsModule, CategoryIcon, Icon, TranslatePipe, CategoryPipe],
   templateUrl: './tasker-profile.html',
 })
 export class TaskerProfilePage implements OnInit {
@@ -50,10 +52,10 @@ export class TaskerProfilePage implements OnInit {
   private readonly saved = signal<Snapshot>({ headline: '', bio: '', categoryIds: [], municipalityIds: [] });
 
   readonly checklist = computed(() => [
-    { label: 'A short headline', done: this.headline().trim().length > 0 },
-    { label: 'A few words about you', done: this.bio().trim().length > 0 },
-    { label: 'At least one category', done: this.categoryIds().length > 0 },
-    { label: 'At least one municipality', done: this.municipalityIds().length > 0 },
+    translated({ done: this.headline().trim().length > 0 }, { label: 'profile.checkHeadline' }),
+    translated({ done: this.bio().trim().length > 0 }, { label: 'profile.checkBio' }),
+    translated({ done: this.categoryIds().length > 0 }, { label: 'profile.checkCategory' }),
+    translated({ done: this.municipalityIds().length > 0 }, { label: 'profile.checkMunicipality' }),
   ]);
 
   readonly completeness = computed(() => {
@@ -124,7 +126,7 @@ export class TaskerProfilePage implements OnInit {
     const categoriesChanged = !sameIds(this.categoryIds(), saved.categoryIds);
     const municipalitiesChanged = !sameIds(this.municipalityIds(), saved.municipalityIds);
     if ((categoriesChanged && this.categoryIds().length === 0) || (municipalitiesChanged && this.municipalityIds().length === 0)) {
-      this.toastService.error('Keep at least one category and one municipality, or clients will not find you.');
+      this.toastService.error(t('profile.keepCoverage'));
       return;
     }
 
@@ -146,7 +148,7 @@ export class TaskerProfilePage implements OnInit {
         next: (profile) => {
           this.saving.set(false);
           this.apply(profile);
-          this.toastService.success('Profile saved.');
+          this.toastService.success(t('profile.saved'));
         },
         error: (error) => {
           this.saving.set(false);

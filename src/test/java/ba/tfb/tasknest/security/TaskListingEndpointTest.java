@@ -8,12 +8,9 @@ import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
 import ba.tfb.tasknest.repository.CategoryRepository;
 import ba.tfb.tasknest.repository.MunicipalityRepository;
-import ba.tfb.tasknest.repository.RefreshTokenRepository;
 import ba.tfb.tasknest.repository.TaskRepository;
-import ba.tfb.tasknest.repository.TaskerProfileRepository;
 import ba.tfb.tasknest.repository.UserRepository;
 import ba.tfb.tasknest.service.AuthService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,18 +32,8 @@ class TaskListingEndpointTest extends AbstractIntegrationTest {
     @Autowired private AuthService authService;
     @Autowired private UserRepository userRepository;
     @Autowired private TaskRepository taskRepository;
-    @Autowired private TaskerProfileRepository taskerProfileRepository;
-    @Autowired private RefreshTokenRepository refreshTokenRepository;
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private MunicipalityRepository municipalityRepository;
-
-    @AfterEach
-    void tearDown() {
-        taskRepository.deleteAll();
-        taskerProfileRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
-    }
 
     @Test
     @DisplayName("The public listing stays reachable without a token")

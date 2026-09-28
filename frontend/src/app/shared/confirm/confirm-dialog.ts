@@ -2,10 +2,11 @@ import { Component, ElementRef, HostListener, ViewChild, effect } from '@angular
 import { CircleAlert, CircleHelp } from 'lucide';
 import { Icon } from '../../components/icon/icon';
 import { ConfirmService } from './confirm.service';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 
 @Component({
   selector: 'app-confirm-dialog',
-  imports: [Icon],
+  imports: [Icon, TranslatePipe],
   templateUrl: './confirm-dialog.html',
 })
 export class ConfirmDialog {

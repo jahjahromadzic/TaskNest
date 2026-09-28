@@ -202,6 +202,12 @@ browser sees one origin. That matters because the refresh token travels in a
   every live event and after every reconnect, so an event missed while offline
   cannot leave a wrong badge behind. In development the Angular proxy forwards
   `/ws` to the backend.
+- **Two languages** — the whole interface is available in English and Bosnian, switched from the header
+  without a reload. Texts live in two dictionaries, `i18n/en.ts` and `i18n/bs.ts`; the Bosnian one must have
+  exactly the same keys, and every key used in a template is type-checked, so a missing or misspelled
+  translation fails the build. Plurals follow the Bosnian rules (1 dan, 2 dana, 5 dana), dates and prices are
+  formatted per language, and the choice is remembered. The API stays in English: the frontend translates the
+  fixed set of server messages and notification texts, and passes anything unknown through unchanged.
 - **Icons** — Lucide icon data is drawn by one small component, so an icon costs a
   few hundred bytes and loads only with the page that uses it.
 
@@ -212,6 +218,7 @@ frontend/src/app/
 ├── api/          Generated OpenAPI types and short aliases
 ├── auth/         Session service, interceptor, guards, login and sign-up layout
 ├── components/   Reusable pieces: task card, pagination, dropdown, category icon
+├── i18n/         Dictionaries, translate pipe, language switch, server message translation
 ├── layout/       Header and mobile bottom navigation
 ├── pages/        One folder per route
 ├── services/     HTTP services per backend area
@@ -226,7 +233,7 @@ frontend/src/app/
 | 2 | Client flow: post tasks, review offers, accept, confirm and close, review | Done |
 | 3 | Tasker flow: profile, matching tasks, offers, work execution, public profile | Done |
 | 4 | Messages and notifications, delivered live over WebSocket | Done |
-| 5 | Administration | Planned |
+| 5 | Administration: overview, users, tasker verification, task moderation | Done |
 
 ## Configuration
 
@@ -391,7 +398,9 @@ All endpoints require the `ADMIN` role.
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/users` | Users, newest first. Filters: `status`, `email` (substring) |
+| GET | `/stats` | Overview for the panel: users, suspended users, taskers, taskers not yet verified, open and removed tasks |
+| GET | `/users` | Users, newest first, with their tasker profile id and verified mark. Filters: `status`, `role`, `search` (email or name) |
+| GET | `/tasks` | Tasks for moderation, newest first, with the owner's name and email. Drafts are never shown. Filters: `status`, `search` (title, owner name or email) |
 | POST | `/users/{id}/suspend` | Suspend an account and revoke its refresh tokens |
 | POST | `/users/{id}/reactivate` | Restore a suspended account |
 | POST | `/tasker-profiles/{id}/verify` | Mark a tasker as verified |
@@ -615,7 +624,7 @@ then write the notification row and send the email.
 
 | Event | Routing key | Consumer writes |
 |---|---|---|
-| Task published | `task.published` | One notification per tasker covering the task's category and municipality |
+| Task published | `task.published` | One notification per tasker covering the task's category and municipality, unless the task was cancelled or removed before the event arrived |
 | Task expired | `task.expired` | One notification to the task owner |
 
 Offer, work-execution and review notifications (`NEW_OFFER`, `OFFER_ACCEPTED`, `TASK_STARTED`, `TASK_COMPLETED`,
@@ -666,19 +675,26 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **319 tests** and requires no manual setup — Testcontainers
+The suite contains **323 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 138 | Service business rules and the task state machine |
-| Integration | 181 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
+| Integration | 185 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
 
-The frontend has its own suite of **185 tests** (Vitest), covering the session
+Every integration test starts from an empty database: one `TRUNCATE ... CASCADE` after each test
+clears all application tables at once. Clearing them table by table left a window in which the
+RabbitMQ listener, which runs on its own thread, could still write a notification for a user that was
+about to be deleted. The listener also ignores events for tasks that are no longer published, so an event
+left over from an earlier test cannot reach the next one. The suite passes in random class order
+(`./mvnw verify -Dsurefire.runOrder=random`).
+
+The frontend has its own suite of **205 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
 header, the task list and task details, posting a task, the client's own tasks, offers
 and hiring, cancelling, reopening and closing a task, reviews, becoming a tasker and editing the tasker profile, sending and withdrawing offers,
-starting and finishing a job, the tasker dashboard, the public tasker profile, the notification bell and page, the messages page and chat helpers, live updates over WebSocket, the confirmation dialog, the dropdown, the progress
+starting and finishing a job, the tasker dashboard, the public tasker profile, the notification bell and page, the messages page and chat helpers, live updates over WebSocket, the admin panel, translations and plural rules, the confirmation dialog, the dropdown, the progress
 timeline, date helpers and the category icons. The server is simulated with Angular's
 `HttpTestingController`.
 
@@ -720,7 +736,7 @@ frontend/           Angular application, see Frontend
 
 - [x] Real-time message delivery over WebSocket
 - [ ] Email verification, password reset, rate limiting
-- [ ] Angular frontend phase 5 (administration)
+- [x] Angular frontend: client, tasker, messaging and administration
 - [ ] Application Dockerfile
 
 ## License

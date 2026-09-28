@@ -21,6 +21,8 @@ import { Select, SelectOption } from '../../components/select/select';
 import { TaskCard } from '../../components/task-card/task-card';
 import { ReferenceService } from '../../services/reference.service';
 import { TASK_SORTS, TaskFilters, TaskService, TaskSort } from '../../services/task.service';
+import { CategoryPipe, TranslatePipe } from '../../i18n/translate.pipe';
+import { t, tOptional } from '../../i18n/translate';
 
 interface ListState {
   loading: boolean;
@@ -53,6 +55,8 @@ export function readFilters(params: ParamMap): TaskFilters {
     Pagination,
     Select,
     TaskCard,
+    TranslatePipe,
+    CategoryPipe,
   ],
   templateUrl: './browse-tasks.html',
 })
@@ -68,7 +72,12 @@ export class BrowseTasks {
     SlidersHorizontal,
   };
 
-  readonly sortOptions: SelectOption[] = Object.entries(TASK_SORTS).map(([value, sort]) => ({ value, label: sort.label }));
+  readonly sortOptions: SelectOption[] = Object.entries(TASK_SORTS).map(([value, sort]) => ({
+    value,
+    get label() {
+      return sort.label;
+    },
+  }));
   readonly skeletonCards = [1, 2, 3];
 
   readonly categories$: Observable<Category[]>;
@@ -97,7 +106,12 @@ export class BrowseTasks {
     );
     this.municipalityOptions$ = this.municipalities$.pipe(
       map((municipalities) => [
-        { value: '', label: 'All municipalities' },
+        {
+          value: '',
+          get label() {
+            return t('browse.allMunicipalities');
+          },
+        },
         ...municipalities.map((municipality) => ({ value: municipality.id ?? '', label: municipality.name ?? '' })),
       ]),
     );
@@ -115,6 +129,11 @@ export class BrowseTasks {
 
   nameOf(items: { id?: string; name?: string }[] | null, id: string | null): string | undefined {
     return items?.find((item) => item.id === id)?.name;
+  }
+
+  categoryLabel(categories: Category[] | null, id: string | null): string | undefined {
+    const category = categories?.find((item) => item.id === id);
+    return category ? (tOptional(`categories.${category.slug}`) ?? category.name) : undefined;
   }
 
   setCategory(categoryId: string | null): void {

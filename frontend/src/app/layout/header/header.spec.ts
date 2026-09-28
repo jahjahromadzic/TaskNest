@@ -63,6 +63,7 @@ describe('Header', () => {
   it('shows the tasker and admin links only to those roles', async () => {
     logIn(['CLIENT', 'TASKER', 'ADMIN']);
     await fixture.whenStable();
+    expect(text()).toContain('Administrator');
 
     await openMenu();
     expect(text()).toContain('Tasker dashboard');

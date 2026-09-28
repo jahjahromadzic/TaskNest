@@ -15,20 +15,15 @@ import ba.tfb.tasknest.entity.enums.NotificationType;
 import ba.tfb.tasknest.entity.enums.OfferStatus;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
 import ba.tfb.tasknest.repository.CategoryRepository;
-import ba.tfb.tasknest.repository.ConversationRepository;
-import ba.tfb.tasknest.repository.MessageRepository;
 import ba.tfb.tasknest.repository.MunicipalityRepository;
 import ba.tfb.tasknest.repository.NotificationRepository;
 import ba.tfb.tasknest.repository.OfferRepository;
-import ba.tfb.tasknest.repository.RefreshTokenRepository;
-import ba.tfb.tasknest.repository.ReviewRepository;
 import ba.tfb.tasknest.repository.TaskRepository;
 import ba.tfb.tasknest.repository.TaskerProfileRepository;
 import ba.tfb.tasknest.repository.UserRepository;
 import ba.tfb.tasknest.service.AuthService;
 import ba.tfb.tasknest.service.OfferService;
 import ba.tfb.tasknest.service.TaskService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,13 +53,9 @@ class TaskDeadlineIntegrationTest extends AbstractIntegrationTest {
     @Autowired private UserRepository userRepository;
     @Autowired private TaskRepository taskRepository;
     @Autowired private OfferRepository offerRepository;
-    @Autowired private MessageRepository messageRepository;
-    @Autowired private ReviewRepository reviewRepository;
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private MunicipalityRepository municipalityRepository;
     @Autowired private TaskerProfileRepository taskerProfileRepository;
-    @Autowired private ConversationRepository conversationRepository;
-    @Autowired private RefreshTokenRepository refreshTokenRepository;
     @Autowired private NotificationRepository notificationRepository;
 
     private TaskDeadlineSchedule schedule;
@@ -85,21 +76,6 @@ class TaskDeadlineIntegrationTest extends AbstractIntegrationTest {
         mirzaId = register("deadline.mirza@test.ba");
         authService.activateTaskerRole(emirId);
         authService.activateTaskerRole(mirzaId);
-    }
-
-    @AfterEach
-    void tearDown() {
-        messageRepository.deleteAll();
-        reviewRepository.deleteAll();
-        notificationRepository.deleteAll();
-        conversationRepository.deleteAll();
-        transactionTemplate.executeWithoutResult(status ->
-                taskRepository.findAll().forEach(task -> task.setAcceptedOffer(null)));
-        offerRepository.deleteAll();
-        taskRepository.deleteAll();
-        taskerProfileRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
     }
 
     @Test

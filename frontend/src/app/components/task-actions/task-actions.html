@@ -1,29 +1,34 @@
 @switch (task.status) {
   @case ('ASSIGNED') {
     <div class="p-3 rounded-btn bg-sky-50 border border-sky-200 text-sm text-sky-900">
-      <span class="font-semibold">{{ tasker }}</span> is hired. Agree on the details and wait for them to start.
+      {{ 'actions.hired' | t: { name: tasker } }}
     </div>
   }
   @case ('IN_PROGRESS') {
     <div class="p-3 rounded-btn bg-indigo-50 border border-indigo-200 text-sm text-indigo-900">
-      <span class="font-semibold">{{ tasker }}</span> started the work {{ timeAgo(task.startedAt) }}.
+      {{ 'actions.started' | t: { name: tasker, time: timeAgo(task.startedAt) } }}
     </div>
   }
   @case ('COMPLETED') {
     <div class="p-3.5 rounded-btn bg-accent-light/60 border border-amber-300 text-sm text-amber-950 space-y-1 animate-fade-in">
-      <p><span class="font-semibold">{{ tasker }}</span> says the job is done. Check the work and confirm it.</p>
+      <p>{{ 'actions.done' | t: { name: tasker } }}</p>
       @if (autoCloseIn !== null) {
         <p class="text-xs text-amber-800">
-          If you do nothing, the task closes by itself
-          {{ autoCloseIn === 0 ? 'today' : autoCloseIn === 1 ? 'tomorrow' : 'in ' + autoCloseIn + ' days' }}.
+          @if (autoCloseIn === 0) {
+            {{ 'actions.autoCloseToday' | t }}
+          } @else if (autoCloseIn === 1) {
+            {{ 'actions.autoCloseTomorrow' | t }}
+          } @else {
+            {{ 'actions.autoCloseIn' | t: { count: autoCloseIn } }}
+          }
         </p>
       }
     </div>
     <button type="button" (click)="close()" [disabled]="running() !== null" class="btn-primary w-full">
       @if (running() === 'close') {
-        <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Closing...
+        <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'actions.closing' | t }}
       } @else {
-        <svg [appIcon]="icons.CircleCheckBig" class="w-4 h-4"></svg> Confirm and close
+        <svg [appIcon]="icons.CircleCheckBig" class="w-4 h-4"></svg> {{ 'actions.confirmClose' | t }}
       }
     </button>
   }
@@ -32,9 +37,9 @@
 @if (task.status === 'DRAFT') {
   <button type="button" (click)="publish()" [disabled]="running() !== null" class="btn-primary w-full">
     @if (running() === 'publish') {
-      <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Publishing...
+      <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'actions.publishing' | t }}
     } @else {
-      <svg [appIcon]="icons.Send" class="w-4 h-4"></svg> Publish task
+      <svg [appIcon]="icons.Send" class="w-4 h-4"></svg> {{ 'actions.publish' | t }}
     }
   </button>
 }
@@ -42,9 +47,9 @@
 @if (task.status === 'ASSIGNED') {
   <button type="button" (click)="reopen()" [disabled]="running() !== null" class="btn-ghost w-full border border-surface-border">
     @if (running() === 'reopen') {
-      <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Reopening...
+      <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'actions.reopening' | t }}
     } @else {
-      <svg [appIcon]="icons.Undo2" class="w-4 h-4"></svg> Tasker can't make it? Reopen
+      <svg [appIcon]="icons.Undo2" class="w-4 h-4"></svg> {{ 'actions.reopen' | t }}
     }
   </button>
 }
@@ -53,9 +58,9 @@
   <button type="button" (click)="cancel()" [disabled]="running() !== null"
           class="btn-ghost w-full text-status-error hover:bg-red-50 disabled:opacity-60">
     @if (running() === 'cancel') {
-      <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Cancelling...
+      <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'actions.cancelling' | t }}
     } @else {
-      <svg [appIcon]="icons.Ban" class="w-4 h-4"></svg> {{ task.status === 'DRAFT' ? 'Discard draft' : 'Cancel task' }}
+      <svg [appIcon]="icons.Ban" class="w-4 h-4"></svg> {{ (task.status === 'DRAFT' ? 'actions.discardDraft' : 'actions.cancelTask') | t }}
     }
   </button>
 }

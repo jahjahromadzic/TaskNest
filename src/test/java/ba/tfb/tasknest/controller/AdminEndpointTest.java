@@ -22,7 +22,6 @@ import ba.tfb.tasknest.service.AuthService;
 import jakarta.servlet.http.Cookie;
 import ba.tfb.tasknest.service.OfferService;
 import ba.tfb.tasknest.service.TaskService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -60,8 +59,6 @@ class AdminEndpointTest extends AbstractIntegrationTest {
     @Autowired private MunicipalityRepository municipalityRepository;
     @Autowired private TaskerProfileRepository taskerProfileRepository;
     @Autowired private ConversationRepository conversationRepository;
-    @Autowired private MessageRepository messageRepository;
-    @Autowired private RefreshTokenRepository refreshTokenRepository;
     @Autowired private NotificationRepository notificationRepository;
 
     private Category category;
@@ -83,20 +80,6 @@ class AdminEndpointTest extends AbstractIntegrationTest {
         promoteToAdmin("admin@test.ba");
     }
 
-    @AfterEach
-    void tearDown() {
-        messageRepository.deleteAll();
-        notificationRepository.deleteAll();
-        conversationRepository.deleteAll();
-        transactionTemplate.executeWithoutResult(status ->
-                taskRepository.findAll().forEach(task -> task.setAcceptedOffer(null)));
-        offerRepository.deleteAll();
-        taskRepository.deleteAll();
-        taskerProfileRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
-    }
-
     @Nested
     class Access {
 
@@ -104,6 +87,10 @@ class AdminEndpointTest extends AbstractIntegrationTest {
         @DisplayName("A non-admin gets 403 on every admin endpoint")
         void nonAdmin_isForbidden() throws Exception {
             mockMvc.perform(get("/api/admin/users").header("Authorization", bearer(client)))
+                    .andExpect(status().isForbidden());
+            mockMvc.perform(get("/api/admin/stats").header("Authorization", bearer(client)))
+                    .andExpect(status().isForbidden());
+            mockMvc.perform(get("/api/admin/tasks").header("Authorization", bearer(client)))
                     .andExpect(status().isForbidden());
             mockMvc.perform(post("/api/admin/users/{id}/suspend", tasker.userId())
                             .header("Authorization", bearer(client)))
@@ -121,12 +108,86 @@ class AdminEndpointTest extends AbstractIntegrationTest {
         @DisplayName("The configured admin can list users, with roles attached")
         void admin_canListUsers() throws Exception {
             mockMvc.perform(get("/api/admin/users")
-                            .param("email", "MOD.TASKER")
+                            .param("search", "MOD.TASKER")
                             .header("Authorization", bearer(admin)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(1))
                     .andExpect(jsonPath("$.content[0].email").value("mod.tasker@test.ba"))
-                    .andExpect(jsonPath("$.content[0].roles.length()").value(2));
+                    .andExpect(jsonPath("$.content[0].roles.length()").value(2))
+                    .andExpect(jsonPath("$.content[0].taskerProfileId").isNotEmpty())
+                    .andExpect(jsonPath("$.content[0].taskerVerified").value(false));
+        }
+
+        @Test
+        @DisplayName("Users can be found by name and narrowed to taskers")
+        void admin_canSearchByNameAndRole() throws Exception {
+            authService.register(new RegisterRequest("selma@test.ba", "password123", "Selma", "Karić", null));
+
+            mockMvc.perform(get("/api/admin/users")
+                            .param("search", "selma kar")
+                            .header("Authorization", bearer(admin)))
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(jsonPath("$.content[0].fullName").value("Selma Karić"))
+                    .andExpect(jsonPath("$.content[0].taskerProfileId").doesNotExist());
+
+            mockMvc.perform(get("/api/admin/users")
+                            .param("role", "TASKER")
+                            .header("Authorization", bearer(admin)))
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(jsonPath("$.content[0].email").value("mod.tasker@test.ba"));
+        }
+
+        @Test
+        @DisplayName("The overview counts users, taskers waiting for verification and tasks")
+        void admin_seesTheOverview() throws Exception {
+            publishedTask();
+            UUID removed = publishedTask();
+            taskService.removeTask(removed, "Spam");
+
+            mockMvc.perform(post("/api/admin/users/{id}/suspend", client.userId())
+                    .header("Authorization", bearer(admin)));
+
+            mockMvc.perform(get("/api/admin/stats").header("Authorization", bearer(admin)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.users").value(3))
+                    .andExpect(jsonPath("$.suspendedUsers").value(1))
+                    .andExpect(jsonPath("$.taskers").value(1))
+                    .andExpect(jsonPath("$.unverifiedTaskers").value(1))
+                    .andExpect(jsonPath("$.openTasks").value(1))
+                    .andExpect(jsonPath("$.removedTasks").value(1));
+        }
+
+        @Test
+        @DisplayName("The task list for moderation hides drafts and filters by status and text")
+        void admin_canListTasksForModeration() throws Exception {
+            UUID open = publishedTask();
+            UUID removed = publishedTask();
+            taskService.removeTask(removed, "Spam");
+            taskService.createTask(client.userId(), new CreateTaskRequest(
+                    "Draft only", "Opis", category.getId(), municipality.getId(), null));
+
+            mockMvc.perform(get("/api/admin/tasks").header("Authorization", bearer(admin)))
+                    .andExpect(jsonPath("$.totalElements").value(2))
+                    .andExpect(jsonPath("$.content[0].clientEmail").value("mod.client@test.ba"))
+                    .andExpect(jsonPath("$.content[0].categoryName").isNotEmpty());
+
+            mockMvc.perform(get("/api/admin/tasks")
+                            .param("status", "REMOVED")
+                            .header("Authorization", bearer(admin)))
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(jsonPath("$.content[0].id").value(removed.toString()));
+
+            mockMvc.perform(get("/api/admin/tasks")
+                            .param("status", "PUBLISHED")
+                            .param("search", "SLAVINE")
+                            .header("Authorization", bearer(admin)))
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(jsonPath("$.content[0].id").value(open.toString()));
+
+            mockMvc.perform(get("/api/admin/tasks")
+                            .param("search", "nothing like this")
+                            .header("Authorization", bearer(admin)))
+                    .andExpect(jsonPath("$.totalElements").value(0));
         }
 
         @Test

@@ -63,8 +63,7 @@ class TaskerMatchingIntegrationTest extends AbstractIntegrationTest {
 
     @AfterEach
     void tearDown() {
-        taskerProfileRepository.deleteAll();
-        userRepository.deleteAll();
+        truncateApplicationTables();
         categoryRepository.delete(category);
         municipalityRepository.delete(municipality);
     }

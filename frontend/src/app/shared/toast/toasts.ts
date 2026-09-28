@@ -2,10 +2,11 @@ import { Component } from '@angular/core';
 import { CircleCheck, CircleAlert, Info, X } from 'lucide';
 import { Icon } from '../../components/icon/icon';
 import { ToastService } from './toast.service';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 
 @Component({
   selector: 'app-toasts',
-  imports: [Icon],
+  imports: [Icon, TranslatePipe],
   templateUrl: './toasts.html',
 })
 export class Toasts {

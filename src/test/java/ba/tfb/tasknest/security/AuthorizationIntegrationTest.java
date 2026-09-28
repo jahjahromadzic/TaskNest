@@ -10,7 +10,6 @@ import ba.tfb.tasknest.entity.enums.RoleName;
 import ba.tfb.tasknest.repository.*;
 import ba.tfb.tasknest.service.AuthService;
 import ba.tfb.tasknest.service.TaskService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,12 +36,6 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
     @Autowired private RoleRepository roleRepository;
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private MunicipalityRepository municipalityRepository;
-    @Autowired private TaskRepository taskRepository;
-    @Autowired private OfferRepository offerRepository;
-    @Autowired private ConversationRepository conversationRepository;
-    @Autowired private NotificationRepository notificationRepository;
-    @Autowired private TaskerProfileRepository taskerProfileRepository;
-    @Autowired private RefreshTokenRepository refreshTokenRepository;
 
     private String clientToken;
     private String taskerToken;
@@ -68,17 +61,6 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
         taskerToken = tasker.token();
 
         publishedTaskId = createPublishedTask(client.userId());
-    }
-
-    @AfterEach
-    void tearDown() {
-        notificationRepository.deleteAll();
-        conversationRepository.deleteAll();
-        offerRepository.deleteAll();
-        taskRepository.deleteAll();
-        taskerProfileRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
     }
 
     @Test

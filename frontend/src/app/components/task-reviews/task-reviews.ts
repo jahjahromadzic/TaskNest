@@ -7,10 +7,12 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { Icon } from '../icon/icon';
 import { ReviewDialog } from '../review-dialog/review-dialog';
 import { Stars } from '../stars/stars';
+import { TranslatePipe } from '../../i18n/translate.pipe';
+import { t } from '../../i18n/translate';
 
 @Component({
   selector: 'app-task-reviews',
-  imports: [Icon, ReviewDialog, Stars],
+  imports: [Icon, ReviewDialog, Stars, TranslatePipe],
   templateUrl: './task-reviews.html',
 })
 export class TaskReviews implements OnChanges {
@@ -49,6 +51,6 @@ export class TaskReviews implements OnChanges {
   onSubmitted(review: Review): void {
     this.writing.set(false);
     this.reviews.update((reviews) => [...(reviews ?? []), review]);
-    this.toastService.success('Thank you! Your review is posted.');
+    this.toastService.success(t('reviews.posted'));
   }
 }

@@ -6,21 +6,21 @@
     <div class="relative shrink-0 overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle">
       <div class="absolute -right-16 -top-20 w-64 h-64 rounded-full bg-accent-light/60 blur-3xl pointer-events-none" aria-hidden="true"></div>
       <div class="relative">
-        <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">Tasker dashboard</h1>
+        <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">{{ 'dashboard.title' | t }}</h1>
         <p class="text-text-sub text-sm mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
           @if (vm.profile; as profile) {
             <span class="flex items-center gap-1 font-semibold text-text-main">
               <svg [appIcon]="icons.Star" class="w-4 h-4 text-accent fill-accent"></svg>
-              {{ profile.averageRating != null ? profile.averageRating.toFixed(1) : 'No ratings yet' }}
+              {{ profile.averageRating != null ? profile.averageRating.toFixed(1) : ('dashboard.noRatings' | t) }}
             </span>
-            <span>{{ profile.completedJobsCount }} jobs done</span>
+            <span>{{ 'common.jobsDone' | t: { count: profile.completedJobsCount ?? 0 } }}</span>
           } @else {
-            Find jobs, follow your offers and finish your work
+            {{ 'dashboard.subtitle' | t }}
           }
         </p>
       </div>
       <a routerLink="/tasker/profile" class="btn-ghost relative self-start md:self-auto border border-surface-border bg-white">
-        <svg [appIcon]="icons.UserPen" class="w-4 h-4"></svg> Edit profile
+        <svg [appIcon]="icons.UserPen" class="w-4 h-4"></svg> {{ 'dashboard.editProfile' | t }}
       </a>
     </div>
 
@@ -29,13 +29,13 @@
          class="shrink-0 group flex items-center justify-between gap-3 p-3.5 rounded-card bg-accent-light/60 border border-amber-300 text-sm text-amber-950 hover:bg-accent-light transition-colors">
         <span class="flex items-center gap-2">
           <svg [appIcon]="icons.TriangleAlert" class="w-4 h-4 shrink-0"></svg>
-          Choose at least one category and one municipality, or no tasks will match you.
+          {{ 'dashboard.incomplete' | t }}
         </span>
         <svg [appIcon]="icons.ArrowRight" class="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"></svg>
       </a>
     }
 
-    <div role="tablist" aria-label="Dashboard sections"
+    <div role="tablist" [attr.aria-label]="'dashboard.sections' | t"
          class="shrink-0 flex gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto [scrollbar-width:none] w-full sm:w-fit">
       @for (tab of tabs; track tab.key) {
         <button type="button" role="tab" (click)="selectTab(tab.key)" [attr.aria-selected]="tab.key === vm.query?.tab"
@@ -64,12 +64,12 @@
               <svg [appIcon]="vm.query?.tab === 'jobs' ? icons.Briefcase : icons.Search" class="w-7 h-7"></svg>
             </div>
             @if (vm.query?.tab === 'jobs') {
-              <h2 class="text-lg font-semibold">No jobs yet</h2>
-              <p class="text-sm text-text-sub">When a client hires you, the job shows up here.</p>
+              <h2 class="text-lg font-semibold">{{ 'dashboard.noJobsTitle' | t }}</h2>
+              <p class="text-sm text-text-sub">{{ 'dashboard.noJobsText' | t }}</p>
             } @else {
-              <h2 class="text-lg font-semibold">No matching tasks right now</h2>
-              <p class="text-sm text-text-sub">New tasks in your categories and municipalities appear here. You can also cover more areas.</p>
-              <a routerLink="/tasker/profile" class="btn-primary py-2">Edit what I cover</a>
+              <h2 class="text-lg font-semibold">{{ 'dashboard.noMatchesTitle' | t }}</h2>
+              <p class="text-sm text-text-sub">{{ 'dashboard.noMatchesText' | t }}</p>
+              <a routerLink="/tasker/profile" class="btn-primary py-2">{{ 'dashboard.editCoverage' | t }}</a>
             }
           </div>
         }
@@ -87,7 +87,7 @@
                 </span>
                 <h2 class="font-semibold group-hover:text-brand transition-colors truncate">{{ offer.taskTitle }}</h2>
                 <p class="text-xs text-text-sub">
-                  Sent {{ timeAgo(offer.createdAt) }}@if (offer.message) {<span> · "{{ offer.message }}"</span>}
+                  {{ 'dashboard.sent' | t: { time: timeAgo(offer.createdAt) } }}@if (offer.message) {<span> · "{{ offer.message }}"</span>}
                 </p>
               </div>
               <span class="shrink-0 text-xl font-bold text-brand">{{ formatBudget(offer.price) }}</span>
@@ -98,9 +98,9 @@
             <div class="mx-auto w-14 h-14 rounded-full bg-brand-50 text-brand flex items-center justify-center">
               <svg [appIcon]="icons.Inbox" class="w-7 h-7"></svg>
             </div>
-            <h2 class="text-lg font-semibold">You have not sent any offers yet</h2>
-            <p class="text-sm text-text-sub">Open a task that fits you and send your price.</p>
-            <button type="button" (click)="selectTab('matching')" class="btn-primary py-2">See tasks for me</button>
+            <h2 class="text-lg font-semibold">{{ 'dashboard.noOffersTitle' | t }}</h2>
+            <p class="text-sm text-text-sub">{{ 'dashboard.noOffersText' | t }}</p>
+            <button type="button" (click)="selectTab('matching')" class="btn-primary py-2">{{ 'dashboard.seeMatching' | t }}</button>
           </div>
         }
       } @else if (vm.state?.failed) {
@@ -108,10 +108,10 @@
           <div class="mx-auto w-14 h-14 rounded-full bg-red-50 text-status-error flex items-center justify-center">
             <svg [appIcon]="icons.CircleAlert" class="w-7 h-7"></svg>
           </div>
-          <h2 class="text-lg font-semibold">Something went wrong</h2>
-          <p class="text-sm text-text-sub">This list could not be loaded. Check your connection and try again.</p>
+          <h2 class="text-lg font-semibold">{{ 'common.somethingWrong' | t }}</h2>
+          <p class="text-sm text-text-sub">{{ 'dashboard.failedText' | t }}</p>
           <button type="button" (click)="retry()" class="btn-primary py-2">
-            <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> Try again
+            <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> {{ 'common.tryAgain' | t }}
           </button>
         </div>
       } @else {

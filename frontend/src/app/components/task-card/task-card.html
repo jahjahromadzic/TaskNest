@@ -7,7 +7,7 @@
       <div class="flex flex-wrap items-center gap-2">
         <span class="inline-flex items-center gap-1.5 bg-brand-50 text-brand border border-brand/20 px-2.5 py-0.5 rounded-full text-xs font-medium">
           <app-category-icon [slug]="task.categorySlug" size="w-3 h-3" />
-          {{ task.categoryName }}
+          {{ task.categorySlug | category: task.categoryName }}
         </span>
         @if (showStatus) {
           <app-status-badge [status]="task.status" />
@@ -29,13 +29,13 @@
         </span>
         <span class="flex items-center gap-1">
           <svg [appIcon]="icons.Clock" class="w-3.5 h-3.5 text-slate-400"></svg>
-          {{ task.publishedAt ? 'Posted ' + postedAgo : 'Not published yet' }}
+          {{ task.publishedAt ? ('card.posted' | t: { time: postedAgo }) : ('card.notPublished' | t) }}
         </span>
         @if (daysLeft !== null) {
           <span class="flex items-center gap-1 px-2 py-0.5 rounded"
                 [class]="daysLeft <= 3 ? 'text-red-700 bg-red-50' : 'text-amber-700 bg-amber-50'">
             <svg [appIcon]="icons.Hourglass" class="w-3.5 h-3.5"></svg>
-            {{ daysLeft === 0 ? 'Ends today' : daysLeft === 1 ? '1 day left' : daysLeft + ' days left' }}
+            {{ daysLeft === 0 ? ('card.endsToday' | t) : ('card.daysLeft' | t: { count: daysLeft }) }}
           </span>
         }
       </div>
@@ -43,12 +43,12 @@
 
     <div class="flex sm:flex-col justify-between items-center sm:items-end gap-2 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100 shrink-0">
       <div class="sm:text-right">
-        <span class="text-[11px] uppercase tracking-wide text-slate-400 block">Budget</span>
+        <span class="text-[11px] uppercase tracking-wide text-slate-400 block">{{ 'common.budget' | t }}</span>
         <span class="font-bold" [class]="task.budget == null ? 'text-base text-slate-500' : 'text-xl text-brand'">{{ budget }}</span>
       </div>
       <span class="inline-flex items-center gap-1 text-xs font-semibold text-brand bg-brand-light/60 px-3 py-1.5 rounded-btn
                    transition-all duration-200 group-hover:bg-brand group-hover:text-white">
-        View details
+        {{ 'card.viewDetails' | t }}
         <svg [appIcon]="icons.ArrowRight" class="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"></svg>
       </span>
     </div>

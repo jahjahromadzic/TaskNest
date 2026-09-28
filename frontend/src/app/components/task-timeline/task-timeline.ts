@@ -4,6 +4,8 @@ import { Icon } from '../icon/icon';
 import { TaskDetail } from '../../api/models';
 import { formatDate } from '../../shared/format/format';
 import { LIFECYCLE, TaskStatus } from '../../shared/task-status/task-status';
+import { TranslationKey, t } from '../../i18n/translate';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 
 type StepState = 'done' | 'current' | 'upcoming';
 
@@ -14,17 +16,17 @@ interface Step {
   state: StepState;
 }
 
-const LABELS: Record<string, string> = {
-  PUBLISHED: 'Published',
-  ASSIGNED: 'Assigned',
-  IN_PROGRESS: 'In progress',
-  COMPLETED: 'Completed',
-  CLOSED: 'Closed',
+const LABELS: Record<string, TranslationKey> = {
+  PUBLISHED: 'timeline.PUBLISHED',
+  ASSIGNED: 'timeline.ASSIGNED',
+  IN_PROGRESS: 'timeline.IN_PROGRESS',
+  COMPLETED: 'timeline.COMPLETED',
+  CLOSED: 'timeline.CLOSED',
 };
 
 @Component({
   selector: 'app-task-timeline',
-  imports: [Icon],
+  imports: [Icon, TranslatePipe],
   templateUrl: './task-timeline.html',
 })
 export class TaskTimeline {
@@ -42,7 +44,7 @@ export class TaskTimeline {
     };
     return LIFECYCLE.map((status, index) => ({
       status,
-      label: LABELS[status],
+      label: t(LABELS[status]),
       date: formatDate(dates[status]),
       state: this.stateOf(index, current),
     }));

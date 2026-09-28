@@ -1,4 +1,6 @@
 import { ChatMessage } from '../../api/models';
+import { formatClock, formatWeekdayDate } from '../../i18n/formats';
+import { t } from '../../i18n/translate';
 
 export interface PendingMessage extends ChatMessage {
   state?: 'sending' | 'failed';
@@ -10,8 +12,6 @@ export type ThreadItem =
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const GROUP_GAP_MS = 5 * 60 * 1000;
-const dayFormat = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
-const timeFormat = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' });
 
 function startOfDay(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
@@ -19,17 +19,17 @@ function startOfDay(date: Date): number {
 
 export function dayLabel(date: string | undefined, now = new Date()): string {
   if (!date) {
-    return 'Today';
+    return t('common.today');
   }
   const day = startOfDay(new Date(date));
   const today = startOfDay(now);
-  if (day === today) return 'Today';
-  if (day === today - DAY_MS) return 'Yesterday';
-  return dayFormat.format(new Date(date));
+  if (day === today) return t('common.today');
+  if (day === today - DAY_MS) return t('common.yesterday');
+  return formatWeekdayDate(new Date(date));
 }
 
 export function clockTime(date: string | undefined): string {
-  return date ? timeFormat.format(new Date(date)) : '';
+  return date ? formatClock(new Date(date)) : '';
 }
 
 export function buildThread(messages: PendingMessage[], myId: string | undefined, now = new Date()): ThreadItem[] {
@@ -71,7 +71,7 @@ export function preview(content: string | undefined, mine: boolean): string {
   if (!content) {
     return '';
   }
-  return mine ? `You: ${content}` : content;
+  return mine ? t('messages.you', { text: content }) : content;
 }
 
 const AVATAR_TONES = [

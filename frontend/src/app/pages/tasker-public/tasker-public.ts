@@ -12,12 +12,13 @@ import { Stars } from '../../components/stars/stars';
 import { ReviewService } from '../../services/review.service';
 import { TaskerProfileService } from '../../services/tasker-profile.service';
 import { timeAgo } from '../../shared/format/format';
+import { CategoryPipe, TranslatePipe } from '../../i18n/translate.pipe';
 
 export const REVIEWS_PER_PAGE = 10;
 
 @Component({
   selector: 'app-tasker-public',
-  imports: [CategoryIcon, Icon, Stars],
+  imports: [CategoryIcon, Icon, Stars, TranslatePipe, CategoryPipe],
   templateUrl: './tasker-public.html',
 })
 export class TaskerPublic implements OnInit {

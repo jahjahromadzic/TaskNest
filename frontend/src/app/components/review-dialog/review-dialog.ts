@@ -5,13 +5,25 @@ import { Review } from '../../api/models';
 import { ReviewService } from '../../services/review.service';
 import { readApiError } from '../../shared/api-error';
 import { Icon } from '../icon/icon';
+import { TranslatePipe } from '../../i18n/translate.pipe';
+import { TranslationKey, t } from '../../i18n/translate';
 
-export const RATING_LABELS = ['', 'Terrible', 'Poor', 'Okay', 'Good', 'Excellent'];
+export const RATING_KEYS: TranslationKey[] = [
+  'reviews.labels.one',
+  'reviews.labels.two',
+  'reviews.labels.three',
+  'reviews.labels.four',
+  'reviews.labels.five',
+];
+
+export function ratingLabel(rating: number): string {
+  return rating > 0 ? t(RATING_KEYS[rating - 1]) : '';
+}
 export const COMMENT_MAX = 1000;
 
 @Component({
   selector: 'app-review-dialog',
-  imports: [FormsModule, Icon],
+  imports: [FormsModule, Icon, TranslatePipe],
   templateUrl: './review-dialog.html',
 })
 export class ReviewDialog implements AfterViewInit {
@@ -23,7 +35,7 @@ export class ReviewDialog implements AfterViewInit {
   @Output() submitted = new EventEmitter<Review>();
   @Output() dismissed = new EventEmitter<void>();
 
-  readonly labels = RATING_LABELS;
+  readonly ratingLabel = ratingLabel;
   readonly commentMax = COMMENT_MAX;
   readonly rating = signal(0);
   readonly hovered = signal(0);
@@ -60,7 +72,7 @@ export class ReviewDialog implements AfterViewInit {
 
   submit(): void {
     if (this.rating() === 0 || this.sending()) {
-      this.error.set(this.rating() === 0 ? 'Choose from one to five stars.' : null);
+      this.error.set(this.rating() === 0 ? t('reviews.chooseStars') : null);
       return;
     }
     this.sending.set(true);

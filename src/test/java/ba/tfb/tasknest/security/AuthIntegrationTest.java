@@ -7,10 +7,8 @@ import ba.tfb.tasknest.dto.auth.RegisterRequest;
 import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.AccountStatus;
 import ba.tfb.tasknest.exception.BusinessRuleException;
-import ba.tfb.tasknest.repository.RefreshTokenRepository;
 import ba.tfb.tasknest.repository.UserRepository;
 import ba.tfb.tasknest.service.AuthService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,20 +35,12 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private AuthService authService;
-    @Autowired private JwtService jwtService;
 
     @MockitoSpyBean private UserRepository userRepository;
 
     @Value("${app.jwt.secret}")
     private String jwtSecret;
 
-    @Autowired private RefreshTokenRepository refreshTokenRepository;
-
-    @AfterEach
-    void tearDown() {
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
-    }
 
     @Test
     @DisplayName("Login with a wrong password is rejected")

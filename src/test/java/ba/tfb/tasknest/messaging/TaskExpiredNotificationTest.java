@@ -13,12 +13,9 @@ import ba.tfb.tasknest.entity.enums.TaskStatus;
 import ba.tfb.tasknest.repository.CategoryRepository;
 import ba.tfb.tasknest.repository.MunicipalityRepository;
 import ba.tfb.tasknest.repository.NotificationRepository;
-import ba.tfb.tasknest.repository.RefreshTokenRepository;
 import ba.tfb.tasknest.repository.TaskRepository;
-import ba.tfb.tasknest.repository.UserRepository;
 import ba.tfb.tasknest.service.AuthService;
 import ba.tfb.tasknest.service.TaskService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,11 +37,9 @@ class TaskExpiredNotificationTest extends AbstractIntegrationTest {
     @Autowired private TaskService taskService;
     @Autowired private TransactionTemplate transactionTemplate;
 
-    @Autowired private UserRepository userRepository;
     @Autowired private TaskRepository taskRepository;
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private MunicipalityRepository municipalityRepository;
-    @Autowired private RefreshTokenRepository refreshTokenRepository;
     @Autowired private NotificationRepository notificationRepository;
 
     private Category category;
@@ -56,14 +51,6 @@ class TaskExpiredNotificationTest extends AbstractIntegrationTest {
         category = categoryRepository.findAll().getFirst();
         municipality = municipalityRepository.findAll().getFirst();
         clientId = register("expiry.client@test.ba").userId();
-    }
-
-    @AfterEach
-    void tearDown() {
-        notificationRepository.deleteAll();
-        taskRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
     }
 
     @Test

@@ -4,12 +4,13 @@ import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterOutlet } from 
 import { filter, map } from 'rxjs';
 import { SquareCheck } from 'lucide';
 import { Icon } from '../../components/icon/icon';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 
 type AuthMode = 'login' | 'register';
 
 @Component({
   selector: 'app-auth-layout',
-  imports: [Icon, RouterLink, RouterOutlet],
+  imports: [Icon, RouterLink, RouterOutlet, TranslatePipe],
   templateUrl: './auth-layout.html',
 })
 export class AuthLayout {

@@ -1,5 +1,7 @@
 package ba.tfb.tasknest.service;
 
+import ba.tfb.tasknest.dto.admin.AdminStatsResponse;
+import ba.tfb.tasknest.dto.admin.AdminTaskResponse;
 import ba.tfb.tasknest.dto.admin.AdminUserResponse;
 import ba.tfb.tasknest.dto.task.TaskResponse;
 import ba.tfb.tasknest.dto.taskerprofile.TaskerProfileResponse;
@@ -7,9 +9,11 @@ import ba.tfb.tasknest.entity.TaskerProfile;
 import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.AccountStatus;
 import ba.tfb.tasknest.entity.enums.RoleName;
+import ba.tfb.tasknest.entity.enums.TaskStatus;
 import ba.tfb.tasknest.exception.BusinessRuleException;
 import ba.tfb.tasknest.exception.ResourceNotFoundException;
 import ba.tfb.tasknest.repository.RefreshTokenRepository;
+import ba.tfb.tasknest.repository.TaskRepository;
 import ba.tfb.tasknest.repository.TaskerProfileRepository;
 import ba.tfb.tasknest.repository.UserRepository;
 import ba.tfb.tasknest.repository.projection.AdminUserRow;
@@ -40,12 +44,12 @@ public class AdminService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final TaskerProfileRepository taskerProfileRepository;
     private final TaskService taskService;
+    private final TaskRepository taskRepository;
     private final Clock clock;
 
     @Transactional(readOnly = true)
-    public Page<AdminUserResponse> listUsers(AccountStatus status, String email, Pageable pageable) {
-        String emailFilter = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
-        Page<AdminUserRow> page = userRepository.findForAdmin(status, emailFilter, pageable);
+    public Page<AdminUserResponse> listUsers(AccountStatus status, RoleName role, String search, Pageable pageable) {
+        Page<AdminUserRow> page = userRepository.findForAdmin(status, role, normalize(search), pageable);
 
         if (page.isEmpty()) {
             return page.map(row -> toResponse(row, Set.of()));
@@ -58,6 +62,22 @@ public class AdminService {
                                 Collectors.toCollection(() -> EnumSet.noneOf(RoleName.class)))));
 
         return page.map(row -> toResponse(row, roles.getOrDefault(row.id(), Set.of())));
+    }
+
+    @Transactional(readOnly = true)
+    public AdminStatsResponse stats() {
+        return new AdminStatsResponse(
+                userRepository.count(),
+                userRepository.countByAccountStatus(AccountStatus.SUSPENDED),
+                taskerProfileRepository.count(),
+                taskerProfileRepository.countByVerifiedFalse(),
+                taskRepository.countByStatus(TaskStatus.PUBLISHED),
+                taskRepository.countByStatus(TaskStatus.REMOVED));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AdminTaskResponse> listTasks(TaskStatus status, String search, Pageable pageable) {
+        return taskRepository.findForAdmin(status, normalize(search), pageable);
     }
 
     @Transactional
@@ -112,6 +132,10 @@ public class AdminService {
         return removed;
     }
 
+    private static String normalize(String search) {
+        return search == null ? "" : search.trim().toLowerCase(Locale.ROOT);
+    }
+
     private User loadUser(UUID userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
@@ -121,19 +145,23 @@ public class AdminService {
         return user.getRoles().stream().anyMatch(role -> role.getName() == RoleName.ADMIN);
     }
 
-    private static AdminUserResponse toResponse(User user) {
+    private AdminUserResponse toResponse(User user) {
         Set<RoleName> roles = user.getRoles().stream()
                 .map(role -> role.getName())
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(RoleName.class)));
+        var profile = taskerProfileRepository.findByUser(user);
 
         return new AdminUserResponse(user.getId(), user.getEmail(),
                 user.getFirstName() + " " + user.getLastName(),
-                user.getAccountStatus(), roles, user.getCreatedAt());
+                user.getAccountStatus(), roles, user.getCreatedAt(),
+                profile.map(TaskerProfile::getId).orElse(null),
+                profile.map(TaskerProfile::isVerified).orElse(null));
     }
 
     private static AdminUserResponse toResponse(AdminUserRow row, Set<RoleName> roles) {
         return new AdminUserResponse(row.id(), row.email(),
                 row.firstName() + " " + row.lastName(),
-                row.accountStatus(), roles, row.createdAt());
+                row.accountStatus(), roles, row.createdAt(),
+                row.taskerProfileId(), row.taskerVerified());
     }
 }

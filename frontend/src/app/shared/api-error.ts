@@ -1,4 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { t } from '../i18n/translate';
+import { translateServerMessage } from '../i18n/server-messages';
 
 export interface ApiError {
   message: string;
@@ -9,15 +11,15 @@ const FIELD_ERROR = /^(\w+): (.+)$/;
 
 export function readApiError(error: unknown): ApiError {
   if (!(error instanceof HttpErrorResponse)) {
-    return { message: 'Something went wrong. Please try again.', fieldErrors: {} };
+    return { message: t('errors.generic'), fieldErrors: {} };
   }
   if (error.status === 0) {
-    return { message: 'Cannot reach the server. Check your connection and try again.', fieldErrors: {} };
+    return { message: t('errors.offline'), fieldErrors: {} };
   }
 
   const detail: string | undefined = error.error?.detail;
   if (!detail) {
-    return { message: 'Something went wrong. Please try again.', fieldErrors: {} };
+    return { message: t('errors.generic'), fieldErrors: {} };
   }
 
   const fieldErrors: Record<string, string> = {};
@@ -25,14 +27,14 @@ export function readApiError(error: unknown): ApiError {
     for (const part of detail.split('; ')) {
       const match = FIELD_ERROR.exec(part);
       if (!match) {
-        return { message: detail, fieldErrors: {} };
+        return { message: translateServerMessage(detail), fieldErrors: {} };
       }
-      fieldErrors[match[1]] ??= capitalize(match[2]);
+      fieldErrors[match[1]] ??= capitalize(translateServerMessage(match[2]));
     }
-    return { message: 'Please fix the highlighted fields.', fieldErrors };
+    return { message: t('errors.fixFields'), fieldErrors };
   }
 
-  return { message: detail, fieldErrors };
+  return { message: translateServerMessage(detail), fieldErrors };
 }
 
 function capitalize(text: string): string {

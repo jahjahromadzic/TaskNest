@@ -17,6 +17,8 @@ public interface TaskerProfileRepository extends JpaRepository<TaskerProfile, UU
 
     Optional<TaskerProfile> findByUser(User user);
 
+    long countByVerifiedFalse();
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<TaskerProfile> findWithWriteLockByUser(User user);
 

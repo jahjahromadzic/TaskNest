@@ -5,10 +5,12 @@ import { AuthService } from '../../auth/auth.service';
 import { Icon } from '../../components/icon/icon';
 import { readApiError } from '../../shared/api-error';
 import { ToastService } from '../../shared/toast/toast.service';
+import { TranslatePipe } from '../../i18n/translate.pipe';
+import { TranslationKey, t, translated } from '../../i18n/translate';
 
 @Component({
   selector: 'app-become-tasker',
-  imports: [Icon],
+  imports: [Icon, TranslatePipe],
   templateUrl: './become-tasker.html',
 })
 export class BecomeTasker {
@@ -17,12 +19,12 @@ export class BecomeTasker {
   readonly activating = signal(false);
 
   readonly benefits = [
-    { icon: Target, title: 'Only jobs that fit you', text: 'You see tasks in the categories and municipalities you choose.' },
-    { icon: Wallet, title: 'You set the price', text: 'Send your own offer on any open task and explain what it includes.' },
-    { icon: Star, title: 'Grow your reputation', text: 'Every finished job and review makes clients trust you more.' },
+    translated({ icon: Target }, { title: 'becomeTasker.benefit1Title', text: 'becomeTasker.benefit1Text' }),
+    translated({ icon: Wallet }, { title: 'becomeTasker.benefit2Title', text: 'becomeTasker.benefit2Text' }),
+    translated({ icon: Star }, { title: 'becomeTasker.benefit3Title', text: 'becomeTasker.benefit3Text' }),
   ];
 
-  readonly steps = ['Activate your tasker account', 'Choose your categories and areas', 'Send offers and get hired'];
+  readonly steps: TranslationKey[] = ['becomeTasker.step1', 'becomeTasker.step2', 'becomeTasker.step3'];
 
   constructor(
     private authService: AuthService,
@@ -37,7 +39,7 @@ export class BecomeTasker {
     this.activating.set(true);
     this.authService.becomeTasker().subscribe({
       next: () => {
-        this.toastService.success('Welcome aboard! Now tell clients what you do.');
+        this.toastService.success(t('becomeTasker.welcome'));
         this.router.navigate(['/tasker/profile'], { queryParams: { welcome: true } });
       },
       error: (error) => {

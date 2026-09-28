@@ -1,9 +1,13 @@
+import { formatNumber, formatShortDate } from '../../i18n/formats';
+import { t } from '../../i18n/translate';
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const budgetFormat = new Intl.NumberFormat('en', { maximumFractionDigits: 2 });
-
 export function formatBudget(budget: number | null | undefined): string {
-  return budget == null ? 'Open budget' : `${budgetFormat.format(budget)} KM`;
+  if (budget == null) {
+    return t('format.openBudget');
+  }
+  return `${formatNumber(budget)} KM`;
 }
 
 export function timeAgo(date: string | undefined, now = new Date()): string {
@@ -11,14 +15,13 @@ export function timeAgo(date: string | undefined, now = new Date()): string {
     return '';
   }
   const minutes = Math.floor((now.getTime() - new Date(date).getTime()) / 60_000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 1) return t('time.justNow');
+  if (minutes < 60) return t('time.minutesAgo', { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+  if (hours < 24) return t('time.hoursAgo', { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 30) return days === 1 ? 'yesterday' : `${days} days ago`;
-  const months = Math.floor(days / 30);
-  return months === 1 ? '1 month ago' : `${months} months ago`;
+  if (days < 30) return days === 1 ? t('time.yesterday') : t('time.daysAgo', { count: days });
+  return t('time.monthsAgo', { count: Math.floor(days / 30) });
 }
 
 export function daysLeft(date: string | undefined, now = new Date()): number | null {
@@ -33,8 +36,6 @@ function startOfDay(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 }
 
-const dateFormat = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-
 export function formatDate(date: string | undefined): string {
-  return date ? dateFormat.format(new Date(date)) : '';
+  return date ? formatShortDate(new Date(date)) : '';
 }

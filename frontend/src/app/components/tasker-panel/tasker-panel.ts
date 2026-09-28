@@ -12,6 +12,8 @@ import { daysLeft, formatBudget, timeAgo } from '../../shared/format/format';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Icon } from '../icon/icon';
 import { AUTO_CLOSE_DAYS } from '../task-actions/task-actions';
+import { TranslatePipe } from '../../i18n/translate.pipe';
+import { t } from '../../i18n/translate';
 
 export const MESSAGE_MAX = 1000;
 
@@ -19,7 +21,7 @@ type TaskerAction = 'offer' | 'withdraw' | 'start' | 'complete';
 
 @Component({
   selector: 'app-tasker-panel',
-  imports: [FormsModule, RouterLink, Icon],
+  imports: [FormsModule, RouterLink, Icon, TranslatePipe],
   templateUrl: './tasker-panel.html',
 })
 export class TaskerPanel implements OnChanges {
@@ -55,7 +57,7 @@ export class TaskerPanel implements OnChanges {
   }
 
   get client(): string {
-    return this.task.clientName?.split(' ')[0] ?? 'the client';
+    return this.task.clientName?.split(' ')[0] ?? t('panel.theClient');
   }
 
   get hired(): boolean {
@@ -83,7 +85,7 @@ export class TaskerPanel implements OnChanges {
       price: this.price,
       message: this.message.trim() || undefined,
     });
-    this.run('offer', request, `Offer sent. ${this.client} will see it right away.`, () => {
+    this.run('offer', request, t('panel.sent', { name: this.client }), () => {
       this.attempted.set(false);
       this.price = null;
       this.message = '';
@@ -98,44 +100,44 @@ export class TaskerPanel implements OnChanges {
     const confirmed = await this.ask(
       this.hired
         ? {
-            title: 'Back out of this job?',
-            message: `${this.client} has to find someone else and the task opens for offers again. It is shown on your profile as a withdrawn job.`,
-            confirmLabel: 'Back out',
-            cancelLabel: 'Stay on the job',
+            title: t('panel.backOutTitle'),
+            message: t('panel.backOutText', { name: this.client }),
+            confirmLabel: t('panel.backOutConfirm'),
+            cancelLabel: t('panel.stay'),
             tone: 'danger',
           }
         : {
-            title: 'Withdraw your offer?',
-            message: `${this.client} will no longer see your offer of ${formatBudget(offer.price)}. You cannot send a new one on this task.`,
-            confirmLabel: 'Withdraw offer',
-            cancelLabel: 'Keep it',
+            title: t('panel.withdrawTitle'),
+            message: t('panel.withdrawText', { name: this.client, price: formatBudget(offer.price) }),
+            confirmLabel: t('panel.withdraw'),
+            cancelLabel: t('common.keepIt'),
             tone: 'danger',
           },
     );
     if (confirmed) {
-      this.run('withdraw', this.offerService.withdraw(offer.id!), this.hired ? 'You backed out of the job.' : 'Offer withdrawn.');
+      this.run('withdraw', this.offerService.withdraw(offer.id!), t(this.hired ? 'panel.backedOut' : 'panel.withdrawn'));
     }
   }
 
   async start(): Promise<void> {
     const confirmed = await this.ask({
-      title: 'Start the work now?',
-      message: `${this.client} gets a notification that you have started.`,
-      confirmLabel: 'Start work',
+      title: t('panel.startTitle'),
+      message: t('panel.startText', { name: this.client }),
+      confirmLabel: t('panel.start'),
     });
     if (confirmed) {
-      this.run('start', this.taskService.startTask(this.task.id!), 'Good luck with the job!');
+      this.run('start', this.taskService.startTask(this.task.id!), t('panel.goodLuck'));
     }
   }
 
   async complete(): Promise<void> {
     const confirmed = await this.ask({
-      title: 'Is the job done?',
-      message: `${this.client} is asked to check the work and confirm it. If they do nothing, the task closes by itself after ${AUTO_CLOSE_DAYS} days.`,
-      confirmLabel: 'Mark as done',
+      title: t('panel.doneTitle'),
+      message: t('panel.doneText', { name: this.client, days: AUTO_CLOSE_DAYS }),
+      confirmLabel: t('panel.markDone'),
     });
     if (confirmed) {
-      this.run('complete', this.taskService.completeTask(this.task.id!), `Great work! ${this.client} has been asked to confirm.`);
+      this.run('complete', this.taskService.completeTask(this.task.id!), t('panel.greatWork', { name: this.client }));
     }
   }
 

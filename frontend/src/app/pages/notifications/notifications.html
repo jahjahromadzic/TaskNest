@@ -6,12 +6,12 @@
         <svg [appIcon]="icons.Bell" class="w-5 h-5"></svg>
       </span>
       <div>
-        <h1 class="text-2xl font-semibold tracking-tight">Notifications</h1>
+        <h1 class="text-2xl font-semibold tracking-tight">{{ 'notifications.title' | t }}</h1>
         <p class="text-sm text-text-sub">
           @if (notificationService.unreadCount() > 0) {
-            <span class="font-semibold text-brand">{{ notificationService.unreadCount() }} unread</span> · offers, messages and task updates
+            <span class="font-semibold text-brand">{{ 'notifications.unread' | t: { count: notificationService.unreadCount() } }}</span> · {{ 'notifications.unreadHint' | t }}
           } @else {
-            You are all caught up
+            {{ 'notifications.caughtUp' | t }}
           }
         </p>
       </div>
@@ -19,7 +19,7 @@
     <button type="button" (click)="markAllRead()" [disabled]="notificationService.unreadCount() === 0 || markingAll()"
             class="btn-ghost relative self-start sm:self-auto border border-surface-border bg-white disabled:opacity-50 disabled:pointer-events-none">
       <svg [appIcon]="markingAll() ? icons.LoaderCircle : icons.CheckCheck" class="w-4 h-4" [class.animate-spin]="markingAll()"></svg>
-      Mark all as read
+      {{ 'notifications.markAll' | t }}
     </button>
   </div>
 
@@ -40,16 +40,16 @@
           <div class="mx-auto w-14 h-14 rounded-full bg-brand-50 text-brand flex items-center justify-center">
             <svg [appIcon]="icons.BellOff" class="w-7 h-7"></svg>
           </div>
-          <h2 class="text-lg font-semibold">No notifications yet</h2>
-          <p class="text-sm text-text-sub">When someone sends you an offer, a message or updates your task, you will see it here.</p>
+          <h2 class="text-lg font-semibold">{{ 'notifications.emptyTitle' | t }}</h2>
+          <p class="text-sm text-text-sub">{{ 'notifications.emptyText' | t }}</p>
         </div>
       }
       @if (hasMore()) {
         <button type="button" (click)="showMore()" [disabled]="loadingMore()" class="btn-ghost w-full border border-surface-border bg-white">
           @if (loadingMore()) {
-            <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Loading...
+            <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'common.loading' | t }}
           } @else {
-            Show older notifications
+            {{ 'notifications.showOlder' | t }}
           }
         </button>
       }
@@ -58,10 +58,10 @@
         <div class="mx-auto w-14 h-14 rounded-full bg-red-50 text-status-error flex items-center justify-center">
           <svg [appIcon]="icons.CircleAlert" class="w-7 h-7"></svg>
         </div>
-        <h2 class="text-lg font-semibold">Something went wrong</h2>
-        <p class="text-sm text-text-sub">Your notifications could not be loaded. Check your connection and try again.</p>
+        <h2 class="text-lg font-semibold">{{ 'common.somethingWrong' | t }}</h2>
+        <p class="text-sm text-text-sub">{{ 'notifications.failedText' | t }}</p>
         <button type="button" (click)="load()" class="btn-primary py-2">
-          <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> Try again
+          <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> {{ 'common.tryAgain' | t }}
         </button>
       </div>
     } @else {

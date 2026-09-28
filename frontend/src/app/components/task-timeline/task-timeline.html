@@ -1,4 +1,4 @@
-<ol class="relative grid grid-cols-5 text-center" aria-label="Task progress">
+<ol class="relative grid grid-cols-5 text-center" [attr.aria-label]="'timeline.label' | t">
   <span class="absolute top-4 left-[10%] right-[10%] h-0.5 bg-slate-200" aria-hidden="true"></span>
   <span class="absolute top-4 left-[10%] h-0.5 bg-brand transition-[width] duration-700 ease-out-soft" aria-hidden="true"
         [style.width.%]="progress * 0.8"></span>

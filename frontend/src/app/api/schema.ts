@@ -740,6 +740,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tasks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["stats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -931,6 +963,9 @@ export interface components {
             roles?: ("CLIENT" | "TASKER" | "ADMIN")[];
             /** Format: date-time */
             createdAt?: string;
+            /** Format: uuid */
+            taskerProfileId?: string;
+            taskerVerified?: boolean;
         };
         RemoveTaskRequest: {
             reason: string;
@@ -1079,6 +1114,52 @@ export interface components {
             totalPages?: number;
             first?: boolean;
             last?: boolean;
+        };
+        AdminTaskResponse: {
+            /** Format: uuid */
+            id?: string;
+            title?: string;
+            /** @enum {string} */
+            status?: "DRAFT" | "PUBLISHED" | "ASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CLOSED" | "CANCELLED" | "EXPIRED" | "REMOVED";
+            categorySlug?: string;
+            categoryName?: string;
+            municipalityName?: string;
+            /** Format: uuid */
+            clientId?: string;
+            clientName?: string;
+            clientEmail?: string;
+            budget?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            publishedAt?: string;
+        };
+        PagedResponseAdminTaskResponse: {
+            content?: components["schemas"]["AdminTaskResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            first?: boolean;
+            last?: boolean;
+        };
+        AdminStatsResponse: {
+            /** Format: int64 */
+            users?: number;
+            /** Format: int64 */
+            suspendedUsers?: number;
+            /** Format: int64 */
+            taskers?: number;
+            /** Format: int64 */
+            unverifiedTaskers?: number;
+            /** Format: int64 */
+            openTasks?: number;
+            /** Format: int64 */
+            removedTasks?: number;
         };
     };
     responses: never;
@@ -2214,7 +2295,8 @@ export interface operations {
         parameters: {
             query: {
                 status?: "ACTIVE" | "SUSPENDED" | "DEACTIVATED";
-                email?: string;
+                role?: "CLIENT" | "TASKER" | "ADMIN";
+                search?: string;
                 pageable: components["schemas"]["Pageable"];
             };
             header?: never;
@@ -2230,6 +2312,50 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PagedResponseAdminUserResponse"];
+                };
+            };
+        };
+    };
+    tasks: {
+        parameters: {
+            query: {
+                status?: "DRAFT" | "PUBLISHED" | "ASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CLOSED" | "CANCELLED" | "EXPIRED" | "REMOVED";
+                search?: string;
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PagedResponseAdminTaskResponse"];
+                };
+            };
+        };
+    };
+    stats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminStatsResponse"];
                 };
             };
         };

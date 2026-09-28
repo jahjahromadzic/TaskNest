@@ -16,7 +16,7 @@
       </div>
       <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
         <button type="button" (click)="confirmService.answer(false)" class="btn-ghost border border-surface-border">
-          {{ dialog.cancelLabel ?? 'Cancel' }}
+          {{ dialog.cancelLabel ?? ('common.cancel' | t) }}
         </button>
         <button #confirmButton type="button" (click)="confirmService.answer(true)"
                 [class]="dialog.tone === 'danger' ? 'btn-primary bg-status-error hover:bg-red-700 focus-visible:ring-red-500/25' : 'btn-primary'">

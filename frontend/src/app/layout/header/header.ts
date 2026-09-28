@@ -8,6 +8,9 @@ import { CurrentUser } from '../../auth/current-user';
 import { ToastService } from '../../shared/toast/toast.service';
 import { NotificationBell } from '../notification-bell/notification-bell';
 import { ConversationService } from '../../services/conversation.service';
+import { TranslatePipe } from '../../i18n/translate.pipe';
+import { t } from '../../i18n/translate';
+import { LangSwitch } from '../../i18n/lang-switch';
 
 @Component({
   selector: 'app-header',
@@ -17,6 +20,8 @@ import { ConversationService } from '../../services/conversation.service';
     RouterLink,
     RouterLinkActive,
     NotificationBell,
+    LangSwitch,
+    TranslatePipe,
   ],
   templateUrl: './header.html',
 })
@@ -43,6 +48,13 @@ export class Header {
       .join('');
   }
 
+  roleLabel(user: CurrentUser): string {
+    if (user.roles.includes('ADMIN')) {
+      return t('nav.roleAdmin');
+    }
+    return user.roles.includes('TASKER') ? t('nav.roleTasker') : t('nav.roleClient');
+  }
+
   toggleMenu(): void {
     this.menuOpen.update((open) => !open);
   }
@@ -54,7 +66,7 @@ export class Header {
   logout(): void {
     this.closeMenu();
     this.authService.logout().subscribe();
-    this.toastService.info('You have been logged out.');
+    this.toastService.info(t('nav.loggedOut'));
     this.router.navigateByUrl('/tasks');
   }
 

@@ -10,6 +10,8 @@ import { formatBudget, timeAgo } from '../../shared/format/format';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Icon } from '../icon/icon';
 import { Select, SelectOption } from '../select/select';
+import { CategoryPipe, TranslatePipe } from '../../i18n/translate.pipe';
+import { t, translated } from '../../i18n/translate';
 
 export type OfferSort = 'price' | 'rating' | 'newest';
 
@@ -28,7 +30,7 @@ export function sortOffers(offers: TaskOffer[], sort: OfferSort): TaskOffer[] {
 
 @Component({
   selector: 'app-task-offers',
-  imports: [FormsModule, RouterLink, Icon, Select],
+  imports: [FormsModule, RouterLink, Icon, Select, TranslatePipe, CategoryPipe],
   templateUrl: './task-offers.html',
 })
 export class TaskOffers implements OnChanges {
@@ -38,9 +40,9 @@ export class TaskOffers implements OnChanges {
   @Output() accepted = new EventEmitter<void>();
 
   readonly sortOptions: SelectOption[] = [
-    { value: 'price', label: 'Lowest price' },
-    { value: 'rating', label: 'Best rated' },
-    { value: 'newest', label: 'Newest' },
+    translated({ value: 'price' }, { label: 'offers.sortPrice' }),
+    translated({ value: 'rating' }, { label: 'offers.sortRating' }),
+    translated({ value: 'newest' }, { label: 'offers.sortNewest' }),
   ];
 
   readonly offers = signal<TaskOffer[] | null>(null);
@@ -102,12 +104,12 @@ export class TaskOffers implements OnChanges {
   async accept(offer: TaskOffer): Promise<void> {
     const others = (this.offers() ?? []).filter((item) => item.status === 'PENDING' && item.id !== offer.id).length;
     const confirmed = await this.confirmService.ask({
-      title: `Hire ${offer.taskerName} for ${formatBudget(offer.price)}?`,
+      title: t('offers.hireTitle', { name: offer.taskerName, price: formatBudget(offer.price) }),
       message:
         others > 0
-          ? `The task is assigned to ${offer.taskerName} and the other ${others === 1 ? 'offer is' : `${others} offers are`} declined automatically. This cannot be undone.`
-          : `The task is assigned to ${offer.taskerName} and stops taking new offers.`,
-      confirmLabel: 'Hire',
+          ? t('offers.hireOthers', { name: offer.taskerName, count: others })
+          : t('offers.hireOnly', { name: offer.taskerName }),
+      confirmLabel: t('offers.hireConfirm'),
     });
     if (!confirmed) {
       return;
@@ -117,7 +119,7 @@ export class TaskOffers implements OnChanges {
     this.offerService.accept(offer.id!).subscribe({
       next: () => {
         this.accepting.set(null);
-        this.toastService.success(`You hired ${offer.taskerName}. Agree on the details in Messages.`);
+        this.toastService.success(t('offers.hiredToast', { name: offer.taskerName }));
         this.accepted.emit();
       },
       error: (error) => {

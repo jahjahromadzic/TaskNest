@@ -3,13 +3,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CreateTaskRequest, TaskDetail, TaskPage } from '../api/models';
 import { TaskStatus } from '../shared/task-status/task-status';
+import { translated } from '../i18n/translate';
 
 export const TASK_SORTS = {
-  newest: { label: 'Newest first', value: 'publishedAt,desc' },
-  ending: { label: 'Ending soon', value: 'expiresAt,asc' },
-  budgetHigh: { label: 'Budget: high to low', value: 'budget,desc' },
-  budgetLow: { label: 'Budget: low to high', value: 'budget,asc' },
-} as const;
+  newest: translated({ value: 'publishedAt,desc' }, { label: 'browse.sortNewest' }),
+  ending: translated({ value: 'expiresAt,asc' }, { label: 'browse.sortEnding' }),
+  budgetHigh: translated({ value: 'budget,desc' }, { label: 'browse.sortBudgetHigh' }),
+  budgetLow: translated({ value: 'budget,asc' }, { label: 'browse.sortBudgetLow' }),
+};
 
 export type TaskSort = keyof typeof TASK_SORTS;
 

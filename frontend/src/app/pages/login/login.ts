@@ -7,10 +7,12 @@ import { AuthService } from '../../auth/auth.service';
 import { safeReturnUrl } from '../../auth/return-url';
 import { ApiError, readApiError } from '../../shared/api-error';
 import { ToastService } from '../../shared/toast/toast.service';
+import { TranslatePipe } from '../../i18n/translate.pipe';
+import { t } from '../../i18n/translate';
 
 @Component({
   selector: 'app-login',
-  imports: [Icon, FormsModule],
+  imports: [Icon, FormsModule, TranslatePipe],
   templateUrl: './login.html',
 })
 export class Login {
@@ -40,7 +42,7 @@ export class Login {
 
     this.authService.login({ email: this.email.trim(), password: this.password }).subscribe({
       next: (user) => {
-        this.toastService.success(`Welcome back, ${user.fullName.split(' ')[0]}!`);
+        this.toastService.success(t('auth.welcomeBack', { name: user.fullName.split(' ')[0] }));
         this.router.navigateByUrl(safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')));
       },
       error: (error) => {

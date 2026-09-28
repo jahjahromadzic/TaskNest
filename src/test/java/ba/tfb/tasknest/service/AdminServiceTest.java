@@ -7,6 +7,7 @@ import ba.tfb.tasknest.entity.enums.AccountStatus;
 import ba.tfb.tasknest.entity.enums.RoleName;
 import ba.tfb.tasknest.exception.BusinessRuleException;
 import ba.tfb.tasknest.repository.RefreshTokenRepository;
+import ba.tfb.tasknest.repository.TaskRepository;
 import ba.tfb.tasknest.repository.TaskerProfileRepository;
 import ba.tfb.tasknest.repository.UserRepository;
 import ba.tfb.tasknest.repository.projection.AdminUserRow;
@@ -48,6 +49,7 @@ class AdminServiceTest {
     @Mock private RefreshTokenRepository refreshTokenRepository;
     @Mock private TaskerProfileRepository taskerProfileRepository;
     @Mock private TaskService taskService;
+    @Mock private TaskRepository taskRepository;
 
     private AdminService adminService;
 
@@ -55,7 +57,7 @@ class AdminServiceTest {
     void setUp() {
         Clock clock = Clock.fixed(NOW.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
         adminService = new AdminService(userRepository, refreshTokenRepository,
-                taskerProfileRepository, taskService, clock);
+                taskerProfileRepository, taskService, taskRepository, clock);
     }
 
     @Nested
@@ -136,7 +138,7 @@ class AdminServiceTest {
         void listUsers_attachesRolesFromASingleQuery() {
             // Arrange
             UUID second = UUID.randomUUID();
-            when(userRepository.findForAdmin(eq(null), eq(""), any()))
+            when(userRepository.findForAdmin(eq(null), eq(null), eq(""), any()))
                     .thenReturn(new PageImpl<>(List.of(aRow(USER_ID), aRow(second))));
             when(userRepository.findRolesFor(anyCollection())).thenReturn(List.of(
                     new UserRoleRow(USER_ID, RoleName.CLIENT),
@@ -145,7 +147,7 @@ class AdminServiceTest {
 
             // Act
             List<AdminUserResponse> users =
-                    adminService.listUsers(null, null, PageRequest.of(0, 20)).getContent();
+                    adminService.listUsers(null, null, null, PageRequest.of(0, 20)).getContent();
 
             // Assert
             assertThat(users.get(0).roles()).containsExactlyInAnyOrder(RoleName.CLIENT, RoleName.TASKER);
@@ -153,13 +155,13 @@ class AdminServiceTest {
         }
 
         @Test
-        void listUsers_normalizesTheEmailFilter() {
+        void listUsers_normalizesTheSearch() {
             // Arrange
-            when(userRepository.findForAdmin(eq(AccountStatus.SUSPENDED), eq("amra@test"), any()))
+            when(userRepository.findForAdmin(eq(AccountStatus.SUSPENDED), eq(RoleName.TASKER), eq("amra@test"), any()))
                     .thenReturn(Page.empty());
 
             // Act
-            var page = adminService.listUsers(AccountStatus.SUSPENDED, "  Amra@Test ", PageRequest.of(0, 20));
+            var page = adminService.listUsers(AccountStatus.SUSPENDED, RoleName.TASKER, "  Amra@Test ", PageRequest.of(0, 20));
 
             // Assert
             assertThat(page).isEmpty();
@@ -182,6 +184,6 @@ class AdminServiceTest {
     }
 
     private AdminUserRow aRow(UUID id) {
-        return new AdminUserRow(id, id + "@test.ba", "Test", "User", AccountStatus.ACTIVE, NOW);
+        return new AdminUserRow(id, id + "@test.ba", "Test", "User", AccountStatus.ACTIVE, NOW, null, null);
     }
 }

@@ -20,16 +20,12 @@ import ba.tfb.tasknest.exception.BusinessRuleException;
 import ba.tfb.tasknest.exception.NotResourceOwnerException;
 import ba.tfb.tasknest.repository.CategoryRepository;
 import ba.tfb.tasknest.repository.ConversationRepository;
-import ba.tfb.tasknest.repository.MessageRepository;
 import ba.tfb.tasknest.repository.MunicipalityRepository;
 import ba.tfb.tasknest.repository.NotificationRepository;
 import ba.tfb.tasknest.repository.OfferRepository;
-import ba.tfb.tasknest.repository.RefreshTokenRepository;
-import ba.tfb.tasknest.repository.ReviewRepository;
 import ba.tfb.tasknest.repository.TaskRepository;
 import ba.tfb.tasknest.repository.TaskerProfileRepository;
 import ba.tfb.tasknest.repository.UserRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -62,13 +58,10 @@ class TaskReopenIntegrationTest extends AbstractIntegrationTest {
     @Autowired private UserRepository userRepository;
     @Autowired private TaskRepository taskRepository;
     @Autowired private OfferRepository offerRepository;
-    @Autowired private MessageRepository messageRepository;
-    @Autowired private ReviewRepository reviewRepository;
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private MunicipalityRepository municipalityRepository;
     @Autowired private TaskerProfileRepository taskerProfileRepository;
     @Autowired private ConversationRepository conversationRepository;
-    @Autowired private RefreshTokenRepository refreshTokenRepository;
     @Autowired private NotificationRepository notificationRepository;
 
     private Category category;
@@ -99,21 +92,6 @@ class TaskReopenIntegrationTest extends AbstractIntegrationTest {
         emirOfferId = submitOffer(emirId);
         mirzaOfferId = submitOffer(mirzaId);
         offerService.acceptOffer(emirOfferId, clientId);
-    }
-
-    @AfterEach
-    void tearDown() {
-        messageRepository.deleteAll();
-        reviewRepository.deleteAll();
-        notificationRepository.deleteAll();
-        conversationRepository.deleteAll();
-        transactionTemplate.executeWithoutResult(status ->
-                taskRepository.findAll().forEach(task -> task.setAcceptedOffer(null)));
-        offerRepository.deleteAll();
-        taskRepository.deleteAll();
-        taskerProfileRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
     }
 
     @Test

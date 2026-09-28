@@ -1,6 +1,6 @@
 @if (totalPages > 1) {
-  <nav aria-label="Pages" class="flex items-center justify-center gap-1.5 pt-2">
-    <button type="button" (click)="go(page - 1)" [disabled]="page === 0" aria-label="Previous page"
+  <nav [attr.aria-label]="'common.pages' | t" class="flex items-center justify-center gap-1.5 pt-2">
+    <button type="button" (click)="go(page - 1)" [disabled]="page === 0" [attr.aria-label]="'common.previousPage' | t"
             class="icon-btn border border-surface-border bg-white disabled:opacity-40 disabled:pointer-events-none">
       <svg [appIcon]="icons.ChevronLeft" class="w-4 h-4"></svg>
     </button>
@@ -19,7 +19,7 @@
       }
     }
 
-    <button type="button" (click)="go(page + 1)" [disabled]="page >= totalPages - 1" aria-label="Next page"
+    <button type="button" (click)="go(page + 1)" [disabled]="page >= totalPages - 1" [attr.aria-label]="'common.nextPage' | t"
             class="icon-btn border border-surface-border bg-white disabled:opacity-40 disabled:pointer-events-none">
       <svg [appIcon]="icons.ChevronRight" class="w-4 h-4"></svg>
     </button>

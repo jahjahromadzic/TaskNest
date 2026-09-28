@@ -8,12 +8,14 @@ import { NotificationService } from '../../services/notification.service';
 import { RealtimeService } from '../../services/realtime.service';
 import { groupByDay } from '../../shared/notification-kind/notification-kind';
 import { ToastService } from '../../shared/toast/toast.service';
+import { TranslatePipe } from '../../i18n/translate.pipe';
+import { t } from '../../i18n/translate';
 
 export const NOTIFICATIONS_PER_PAGE = 20;
 
 @Component({
   selector: 'app-notifications',
-  imports: [Icon, NotificationItem],
+  imports: [Icon, NotificationItem, TranslatePipe],
   templateUrl: './notifications.html',
 })
 export class Notifications implements OnInit {
@@ -76,7 +78,7 @@ export class Notifications implements OnInit {
       },
       error: () => {
         this.loadingMore.set(false);
-        this.toastService.error('Could not load more notifications.');
+        this.toastService.error(t('notifications.loadMoreFailed'));
       },
     });
   }
@@ -92,11 +94,11 @@ export class Notifications implements OnInit {
       next: () => {
         this.markingAll.set(false);
         this.items.update((items) => items?.map((item) => ({ ...item, read: true })) ?? null);
-        this.toastService.success('All notifications are marked as read.');
+        this.toastService.success(t('notifications.allRead'));
       },
       error: () => {
         this.markingAll.set(false);
-        this.toastService.error('Could not mark your notifications as read. Please try again.');
+        this.toastService.error(t('notifications.markFailed'));
       },
     });
   }

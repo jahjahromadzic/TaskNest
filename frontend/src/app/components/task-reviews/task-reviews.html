@@ -1,14 +1,14 @@
 <section class="bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-4">
-  <h2 class="font-semibold">Reviews</h2>
+  <h2 class="font-semibold">{{ 'reviews.title' | t }}</h2>
 
   @if (canReview) {
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-card bg-accent-light/50 border border-amber-200 animate-fade-in">
       <div>
-        <p class="font-semibold text-amber-950">How did it go with {{ counterpartName }}?</p>
-        <p class="text-sm text-amber-900/80">Your review helps other people choose.</p>
+        <p class="font-semibold text-amber-950">{{ 'reviews.howDidItGo' | t: { name: counterpartName } }}</p>
+        <p class="text-sm text-amber-900/80">{{ 'reviews.helps' | t }}</p>
       </div>
       <button type="button" (click)="writing.set(true)" class="btn-primary bg-accent hover:bg-amber-700 shrink-0">
-        <svg [appIcon]="icons.Star" class="w-4 h-4 fill-white"></svg> Leave a review
+        <svg [appIcon]="icons.Star" class="w-4 h-4 fill-white"></svg> {{ 'reviews.leave' | t }}
       </button>
     </div>
   }
@@ -17,7 +17,7 @@
     <article class="p-4 rounded-card border border-surface-border space-y-2 animate-fade-in">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <p class="text-sm">
-          <span class="font-semibold">{{ review.reviewerId === viewerId ? 'You' : review.reviewerName }}</span>
+          <span class="font-semibold">{{ review.reviewerId === viewerId ? ('common.you' | t) : review.reviewerName }}</span>
           <span class="text-text-sub"> · {{ timeAgo(review.createdAt) }}</span>
         </p>
         <app-stars [rating]="review.rating ?? 0" />
@@ -28,7 +28,7 @@
     </article>
   } @empty {
     @if (reviews() !== null && !canReview) {
-      <p class="text-sm text-text-sub">No reviews yet.</p>
+      <p class="text-sm text-text-sub">{{ 'reviews.none' | t }}</p>
     }
   }
 </section>

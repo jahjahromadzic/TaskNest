@@ -13,6 +13,8 @@ import { ReferenceService } from '../../services/reference.service';
 import { TaskService } from '../../services/task.service';
 import { ApiError, readApiError } from '../../shared/api-error';
 import { ToastService } from '../../shared/toast/toast.service';
+import { CategoryPipe, TranslatePipe } from '../../i18n/translate.pipe';
+import { t } from '../../i18n/translate';
 
 export const TITLE_MAX = 200;
 export const DESCRIPTION_MAX = 5000;
@@ -21,7 +23,7 @@ type SubmitMode = 'draft' | 'publish';
 
 @Component({
   selector: 'app-post-task',
-  imports: [AsyncPipe, FormsModule, RouterLink, CategoryIcon, Icon, Select, TaskCard],
+  imports: [AsyncPipe, FormsModule, RouterLink, CategoryIcon, Icon, Select, TaskCard, TranslatePipe, CategoryPipe],
   templateUrl: './post-task.html',
 })
 export class PostTask {
@@ -66,12 +68,12 @@ export class PostTask {
     const category = categories?.find((candidate) => candidate.id === this.categoryId);
     return {
       id: 'preview',
-      title: this.title.trim() || 'Your task title',
+      title: this.title.trim() || t('postTask.previewTitle'),
       budget: this.budget ?? undefined,
       status: 'PUBLISHED',
       categorySlug: category?.slug,
-      categoryName: category?.name ?? 'Category',
-      municipalityName: municipalities?.find((item) => item.id === this.municipalityId)?.name ?? 'Municipality',
+      categoryName: category?.name ?? t('postTask.previewCategory'),
+      municipalityName: municipalities?.find((item) => item.id === this.municipalityId)?.name ?? t('postTask.previewMunicipality'),
       publishedAt: this.previewPublished,
       expiresAt: this.previewExpiry,
     };
@@ -128,11 +130,11 @@ export class PostTask {
 
   private finish(task: TaskDetail, published: boolean, publishFailed: boolean): void {
     if (publishFailed) {
-      this.toastService.error('Your task was saved as a draft, but publishing failed. Try publishing it again.');
+      this.toastService.error(t('postTask.publishFailed'));
     } else if (published) {
-      this.toastService.success('Your task is live. Taskers nearby can now send offers.');
+      this.toastService.success(t('postTask.published'));
     } else {
-      this.toastService.success('Draft saved. Publish it whenever you are ready.');
+      this.toastService.success(t('postTask.draftSaved'));
     }
     this.router.navigate(['/tasks', task.id]);
   }

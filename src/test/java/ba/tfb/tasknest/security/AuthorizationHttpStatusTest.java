@@ -7,7 +7,6 @@ import ba.tfb.tasknest.dto.task.CreateTaskRequest;
 import ba.tfb.tasknest.repository.*;
 import ba.tfb.tasknest.service.AuthService;
 import ba.tfb.tasknest.service.TaskService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,15 +38,8 @@ class AuthorizationHttpStatusTest extends AbstractIntegrationTest {
     private int port;
     @Autowired private AuthService authService;
     @Autowired private TaskService taskService;
-    @Autowired private UserRepository userRepository;
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private MunicipalityRepository municipalityRepository;
-    @Autowired private TaskRepository taskRepository;
-    @Autowired private OfferRepository offerRepository;
-    @Autowired private ConversationRepository conversationRepository;
-    @Autowired private NotificationRepository notificationRepository;
-    @Autowired private TaskerProfileRepository taskerProfileRepository;
-    @Autowired private RefreshTokenRepository refreshTokenRepository;
 
     @org.junit.jupiter.api.BeforeEach
     void doNotThrowOnErrorStatus() {
@@ -57,17 +49,6 @@ class AuthorizationHttpStatusTest extends AbstractIntegrationTest {
                 return false;
             }
         });
-    }
-
-    @AfterEach
-    void tearDown() {
-        notificationRepository.deleteAll();
-        conversationRepository.deleteAll();
-        offerRepository.deleteAll();
-        taskRepository.deleteAll();
-        taskerProfileRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
     }
 
     @Test

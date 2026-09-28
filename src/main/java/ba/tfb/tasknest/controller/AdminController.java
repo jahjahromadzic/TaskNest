@@ -1,11 +1,15 @@
 package ba.tfb.tasknest.controller;
 
+import ba.tfb.tasknest.dto.admin.AdminStatsResponse;
+import ba.tfb.tasknest.dto.admin.AdminTaskResponse;
 import ba.tfb.tasknest.dto.admin.AdminUserResponse;
 import ba.tfb.tasknest.dto.admin.RemoveTaskRequest;
 import ba.tfb.tasknest.dto.common.PagedResponse;
 import ba.tfb.tasknest.dto.task.TaskResponse;
 import ba.tfb.tasknest.dto.taskerprofile.TaskerProfileResponse;
 import ba.tfb.tasknest.entity.enums.AccountStatus;
+import ba.tfb.tasknest.entity.enums.RoleName;
+import ba.tfb.tasknest.entity.enums.TaskStatus;
 import ba.tfb.tasknest.security.UserPrincipal;
 import ba.tfb.tasknest.service.AdminService;
 import jakarta.validation.Valid;
@@ -27,12 +31,27 @@ public class AdminController {
 
     private final AdminService adminService;
 
+    @GetMapping("/stats")
+    public AdminStatsResponse stats() {
+        return adminService.stats();
+    }
+
     @GetMapping("/users")
     public PagedResponse<AdminUserResponse> users(
             @RequestParam(required = false) AccountStatus status,
-            @RequestParam(required = false) String email,
+            @RequestParam(required = false) RoleName role,
+            @RequestParam(required = false) String search,
             @PageableDefault(size = 20) Pageable pageable) {
-        return PagedResponse.from(adminService.listUsers(status, email,
+        return PagedResponse.from(adminService.listUsers(status, role, search,
+                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())));
+    }
+
+    @GetMapping("/tasks")
+    public PagedResponse<AdminTaskResponse> tasks(
+            @RequestParam(required = false) TaskStatus status,
+            @RequestParam(required = false) String search,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return PagedResponse.from(adminService.listTasks(status, search,
                 PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())));
     }
 

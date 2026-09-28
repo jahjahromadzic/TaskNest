@@ -9,7 +9,6 @@ import ba.tfb.tasknest.entity.enums.RoleName;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
 import ba.tfb.tasknest.exception.BusinessRuleException;
 import ba.tfb.tasknest.repository.*;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,8 +43,6 @@ class OfferConcurrencyTest extends AbstractIntegrationTest {
     @Autowired private RoleRepository roleRepository;
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private MunicipalityRepository municipalityRepository;
-    @Autowired private ConversationRepository conversationRepository;
-    @Autowired private NotificationRepository notificationRepository;
 
     private User client;
     private User taskerOne;
@@ -74,19 +71,6 @@ class OfferConcurrencyTest extends AbstractIntegrationTest {
         task.setPublishedAt(LocalDateTime.now());
         task.setExpiresAt(LocalDateTime.now().plusDays(30));
         task = taskRepository.save(task);
-    }
-
-    @AfterEach
-    void tearDown() {
-        notificationRepository.deleteAll();
-        conversationRepository.deleteAll();
-        taskRepository.findAll().forEach(t -> {
-            t.setAcceptedOffer(null);
-            taskRepository.save(t);
-        });
-        offerRepository.deleteAll();
-        taskRepository.deleteAll();
-        userRepository.deleteAll();
     }
 
     @Test

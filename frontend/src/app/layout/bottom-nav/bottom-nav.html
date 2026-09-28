@@ -3,11 +3,11 @@
               grid grid-cols-4 text-[11px] font-medium animate-fade-in">
     <a routerLink="/tasks" routerLinkActive="active" class="bottom-nav-item group">
       <svg [appIcon]="icons.House" class="w-5 h-5"></svg>
-      Browse
+      {{ 'nav.browse' | t }}
     </a>
     <a routerLink="/my-tasks" routerLinkActive="active" class="bottom-nav-item group">
       <svg [appIcon]="icons.ListTodo" class="w-5 h-5"></svg>
-      My tasks
+      {{ 'nav.myTasks' | t }}
     </a>
     <a routerLink="/messages" routerLinkActive="active" class="bottom-nav-item group">
       <span class="relative">
@@ -20,7 +20,7 @@
           }
         }
       </span>
-      Messages
+      {{ 'nav.messages' | t }}
     </a>
     <a routerLink="/notifications" routerLinkActive="active" class="bottom-nav-item group">
       <span class="relative">
@@ -33,7 +33,7 @@
           }
         }
       </span>
-      Alerts
+      {{ 'nav.alerts' | t }}
     </a>
   </nav>
 }

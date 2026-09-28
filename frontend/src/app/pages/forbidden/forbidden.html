@@ -2,9 +2,9 @@
   <div class="mx-auto w-12 h-12 rounded-full bg-red-50 text-status-error flex items-center justify-center">
     <svg [appIcon]="icons.ShieldAlert" class="w-6 h-6"></svg>
   </div>
-  <h1 class="text-2xl font-semibold tracking-tight">You don't have access to this page</h1>
-  <p class="text-text-sub text-sm">Your account does not have the role this page requires.</p>
+  <h1 class="text-2xl font-semibold tracking-tight">{{ 'errors.forbiddenTitle' | t }}</h1>
+  <p class="text-text-sub text-sm">{{ 'errors.forbiddenText' | t }}</p>
   <a routerLink="/tasks" class="btn-primary py-2">
-    Back to tasks
+    {{ 'errors.backToTasks' | t }}
   </a>
 </div>

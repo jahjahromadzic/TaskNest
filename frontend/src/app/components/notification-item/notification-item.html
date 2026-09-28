@@ -10,9 +10,9 @@
       <span class="font-semibold truncate" [class]="compact ? 'text-xs' : 'text-sm'">{{ kind.title }}</span>
       <span class="shrink-0 text-[11px] text-slate-400">{{ timeAgo(notification.createdAt) }}</span>
     </span>
-    <span class="block text-text-sub mt-0.5" [class]="compact ? 'text-xs line-clamp-2' : 'text-sm'">{{ notification.content }}</span>
+    <span class="block text-text-sub mt-0.5" [class]="compact ? 'text-xs line-clamp-2' : 'text-sm'">{{ content }}</span>
   </span>
   @if (!notification.read) {
-    <span class="shrink-0 mt-1.5 w-2 h-2 rounded-full bg-brand ring-4 ring-brand/15" aria-label="Unread"></span>
+    <span class="shrink-0 mt-1.5 w-2 h-2 rounded-full bg-brand ring-4 ring-brand/15" [attr.aria-label]="'common.unread' | t"></span>
   }
 </button>

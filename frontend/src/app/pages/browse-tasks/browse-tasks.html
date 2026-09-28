@@ -12,12 +12,12 @@
     <div class="relative shrink-0 overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle">
       <div class="absolute -right-16 -top-20 w-64 h-64 rounded-full bg-brand-light/50 blur-3xl pointer-events-none" aria-hidden="true"></div>
       <div class="relative">
-        <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">Browse Local Tasks</h1>
-        <p class="text-text-sub text-sm mt-0.5">Find home service jobs in your municipality or post a new request</p>
+        <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">{{ 'browse.title' | t }}</h1>
+        <p class="text-text-sub text-sm mt-0.5">{{ 'browse.subtitle' | t }}</p>
       </div>
       <a routerLink="/tasks/new" class="btn-primary relative self-start md:self-auto">
         <svg [appIcon]="icons.Plus" class="w-4 h-4"></svg>
-        Post a Task
+        {{ 'browse.postTask' | t }}
       </a>
     </div>
 
@@ -26,31 +26,31 @@
         <div class="bg-white p-4 rounded-card border border-surface-border shadow-subtle space-y-5 lg:h-full lg:overflow-y-auto scroll-area">
           <div class="flex items-center justify-between pb-3 border-b border-slate-100">
             <h2 class="font-semibold text-sm flex items-center gap-1.5">
-              <svg [appIcon]="icons.SlidersHorizontal" class="w-4 h-4 text-brand"></svg> Filters
+              <svg [appIcon]="icons.SlidersHorizontal" class="w-4 h-4 text-brand"></svg> {{ 'browse.filters' | t }}
             </h2>
             @if (vm.filters?.categoryId || vm.filters?.municipalityId) {
               <button type="button" (click)="resetFilters()"
                       class="text-xs text-brand font-semibold hover:underline flex items-center gap-1 animate-fade-in">
-                <svg [appIcon]="icons.RotateCcw" class="w-3 h-3"></svg> Reset
+                <svg [appIcon]="icons.RotateCcw" class="w-3 h-3"></svg> {{ 'browse.reset' | t }}
               </button>
             }
           </div>
 
           <div class="space-y-1.5">
             <label for="filter-municipality" class="form-label flex items-center gap-1">
-              <svg [appIcon]="icons.MapPin" class="w-3.5 h-3.5 text-brand"></svg> Municipality
+              <svg [appIcon]="icons.MapPin" class="w-3.5 h-3.5 text-brand"></svg> {{ 'browse.municipality' | t }}
             </label>
-            <app-select inputId="filter-municipality" placeholder="All municipalities"
+            <app-select inputId="filter-municipality" [placeholder]="'browse.allMunicipalities' | t"
                         [options]="vm.municipalityOptions ?? []"
                         [ngModel]="vm.filters?.municipalityId ?? ''" (ngModelChange)="setMunicipality($event)" />
           </div>
 
           <div class="space-y-2">
-            <span class="form-label">Category</span>
+            <span class="form-label">{{ 'browse.category' | t }}</span>
             <div class="flex lg:flex-col gap-1.5 overflow-x-auto -mx-1 px-1 [scrollbar-width:none]">
               <button type="button" (click)="setCategory(null)"
                       class="category-option" [class.active]="!vm.filters?.categoryId">
-                <svg [appIcon]="icons.LayoutGrid" class="w-4 h-4"></svg> All categories
+                <svg [appIcon]="icons.LayoutGrid" class="w-4 h-4"></svg> {{ 'browse.allCategories' | t }}
               </button>
               @if (vm.categories === null) {
                 @for (card of skeletonCards; track card) {
@@ -61,7 +61,7 @@
                 <button type="button" (click)="setCategory(category.id ?? null)"
                         class="category-option" [class.active]="category.id === vm.filters?.categoryId">
                   <app-category-icon [slug]="category.slug" size="w-4 h-4" />
-                  {{ category.name }}
+                  {{ category.slug | category: category.name }}
                 </button>
               }
             </div>
@@ -73,14 +73,14 @@
         <div class="relative z-10 shrink-0 bg-white px-4 py-3 rounded-card border border-surface-border shadow-subtle flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm">
           <p class="text-text-sub" aria-live="polite">
             @if (vm.state?.result; as result) {
-              <span class="text-text-main font-semibold">{{ result.totalElements }} {{ result.totalElements === 1 ? 'task' : 'tasks' }}</span>
+              <span class="text-text-main font-semibold">{{ 'common.tasksCount' | t: { count: result.totalElements ?? 0 } }}</span>
             } @else if (vm.state?.failed) {
-              Tasks could not be loaded
+              {{ 'browse.loadFailed' | t }}
             } @else {
               <span class="skeleton inline-block h-4 w-20 align-middle"></span>
             }
-            @if (nameOf(vm.categories, vm.filters?.categoryId ?? null); as categoryName) {
-              in <span class="text-brand font-semibold">{{ categoryName }}</span>
+            @if (categoryLabel(vm.categories, vm.filters?.categoryId ?? null); as categoryName) {
+              {{ 'browse.in' | t }} <span class="text-brand font-semibold">{{ categoryName }}</span>
             }
             @if (nameOf(vm.municipalities, vm.filters?.municipalityId ?? null); as municipalityName) {
               · <span class="text-brand font-semibold">{{ municipalityName }}</span>
@@ -89,7 +89,7 @@
           <div class="flex items-center gap-2 w-full sm:w-auto">
             <label for="sort-tasks" class="flex items-center">
               <svg [appIcon]="icons.ArrowUpDown" class="w-4 h-4 text-slate-400 shrink-0"></svg>
-              <span class="sr-only">Sort by</span>
+              <span class="sr-only">{{ 'browse.sortBy' | t }}</span>
             </label>
             <app-select inputId="sort-tasks" class="flex-1 sm:w-56" [compact]="true" [options]="sortOptions"
                         [ngModel]="vm.filters?.sort" (ngModelChange)="setSort($event)" />
@@ -105,11 +105,11 @@
                 <div class="mx-auto w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
                   <svg [appIcon]="icons.SearchX" class="w-7 h-7"></svg>
                 </div>
-                <h2 class="text-lg font-semibold">No tasks here yet</h2>
-                <p class="text-sm text-text-sub">Try another category or municipality.</p>
+                <h2 class="text-lg font-semibold">{{ 'browse.emptyTitle' | t }}</h2>
+                <p class="text-sm text-text-sub">{{ 'browse.emptyText' | t }}</p>
                 @if (vm.filters?.categoryId || vm.filters?.municipalityId) {
                   <button type="button" (click)="resetFilters()" class="btn-primary py-2">
-                    <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> Show all tasks
+                    <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> {{ 'browse.showAll' | t }}
                   </button>
                 }
               </div>
@@ -120,10 +120,10 @@
               <div class="mx-auto w-14 h-14 rounded-full bg-red-50 text-status-error flex items-center justify-center">
                 <svg [appIcon]="icons.CircleAlert" class="w-7 h-7"></svg>
               </div>
-              <h2 class="text-lg font-semibold">Something went wrong</h2>
-              <p class="text-sm text-text-sub">We could not load the tasks. Check your connection and try again.</p>
+              <h2 class="text-lg font-semibold">{{ 'common.somethingWrong' | t }}</h2>
+              <p class="text-sm text-text-sub">{{ 'browse.failedText' | t }}</p>
               <button type="button" (click)="retry()" class="btn-primary py-2">
-                <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> Try again
+                <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> {{ 'common.tryAgain' | t }}
               </button>
             </div>
           } @else {

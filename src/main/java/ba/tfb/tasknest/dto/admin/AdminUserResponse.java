@@ -13,6 +13,8 @@ public record AdminUserResponse(
         String fullName,
         AccountStatus accountStatus,
         Set<RoleName> roles,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        UUID taskerProfileId,
+        Boolean taskerVerified
 ) {
 }

@@ -2,6 +2,7 @@ package ba.tfb.tasknest.repository;
 
 import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.AccountStatus;
+import ba.tfb.tasknest.entity.enums.RoleName;
 import ba.tfb.tasknest.repository.projection.AdminUserRow;
 import ba.tfb.tasknest.repository.projection.UserRoleRow;
 import org.springframework.data.domain.Page;
@@ -23,20 +24,31 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     @Query(value = """
             select new ba.tfb.tasknest.repository.projection.AdminUserRow(
-                    u.id, u.email, u.firstName, u.lastName, u.accountStatus, u.createdAt)
+                    u.id, u.email, u.firstName, u.lastName, u.accountStatus, u.createdAt,
+                    p.id, p.verified)
             from User u
+            left join TaskerProfile p on p.user = u
             where (:status is null or u.accountStatus = :status)
-              and u.email like concat('%', :email, '%')
+              and (:role is null or exists (
+                      select 1 from User ru join ru.roles r where ru = u and r.name = :role))
+              and (lower(u.email) like concat('%', :search, '%')
+                   or lower(concat(u.firstName, ' ', u.lastName)) like concat('%', :search, '%'))
             order by u.createdAt desc
             """,
             countQuery = """
             select count(u) from User u
             where (:status is null or u.accountStatus = :status)
-              and u.email like concat('%', :email, '%')
+              and (:role is null or exists (
+                      select 1 from User ru join ru.roles r where ru = u and r.name = :role))
+              and (lower(u.email) like concat('%', :search, '%')
+                   or lower(concat(u.firstName, ' ', u.lastName)) like concat('%', :search, '%'))
             """)
     Page<AdminUserRow> findForAdmin(@Param("status") AccountStatus status,
-                                    @Param("email") String email,
+                                    @Param("role") RoleName role,
+                                    @Param("search") String search,
                                     Pageable pageable);
+
+    long countByAccountStatus(AccountStatus accountStatus);
 
     @Query("""
             select new ba.tfb.tasknest.repository.projection.UserRoleRow(u.id, r.name)

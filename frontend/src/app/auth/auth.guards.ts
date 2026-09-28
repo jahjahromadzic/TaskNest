@@ -4,12 +4,13 @@ import { ToastService } from '../shared/toast/toast.service';
 import { AuthService } from './auth.service';
 import { Role } from './current-user';
 import { safeReturnUrl } from './return-url';
+import { t } from '../i18n/translate';
 
 export const authGuard: CanActivateFn = (_route, state) => {
   if (inject(AuthService).currentUser) {
     return true;
   }
-  inject(ToastService).info('Please log in to continue.');
+  inject(ToastService).info(t('nav.loginRequired'));
   return inject(Router).createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
 };
 

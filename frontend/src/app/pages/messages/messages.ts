@@ -37,6 +37,8 @@ import {
 import { formatBudget, timeAgo } from '../../shared/format/format';
 import { TaskStatus } from '../../shared/task-status/task-status';
 import { ToastService } from '../../shared/toast/toast.service';
+import { TranslatePipe } from '../../i18n/translate.pipe';
+import { t } from '../../i18n/translate';
 
 export const MESSAGES_PER_PAGE = 30;
 export const MAX_MESSAGE_LENGTH = 5000;
@@ -45,7 +47,7 @@ type ThreadLoad = { id: string; page: ChatMessagePage | null };
 
 @Component({
   selector: 'app-messages',
-  imports: [Icon, RouterLink, StatusBadge],
+  imports: [Icon, RouterLink, StatusBadge, TranslatePipe],
   templateUrl: './messages.html',
 })
 export class Messages implements OnInit {
@@ -222,7 +224,7 @@ export class Messages implements OnInit {
       },
       error: () => {
         this.loadingOlder.set(false);
-        this.toastService.error('Could not load earlier messages.');
+        this.toastService.error(t('messages.olderFailed'));
       },
     });
   }
@@ -351,7 +353,7 @@ export class Messages implements OnInit {
         });
       },
       error: () => {
-        this.toastService.error('This conversation could not be opened.');
+        this.toastService.error(t('messages.openFailed'));
         this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
       },
     });

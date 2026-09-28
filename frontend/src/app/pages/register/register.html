@@ -8,7 +8,7 @@
 
   <div class="grid grid-cols-2 gap-3">
     <div>
-      <label for="register-first-name" class="form-label">First name</label>
+      <label for="register-first-name" class="form-label">{{ 'auth.firstName' | t }}</label>
       <input id="register-first-name" name="firstName" autocomplete="given-name" placeholder="Amra" maxlength="100"
              [(ngModel)]="firstName" (ngModelChange)="clearServerError('firstName')" #firstNameField="ngModel" required
              class="form-input"
@@ -16,11 +16,11 @@
       @if (serverError('firstName'); as message) {
         <p class="form-error">{{ message }}</p>
       } @else if (firstNameField.invalid && (firstNameField.touched || form.submitted)) {
-        <p class="form-error">Required</p>
+        <p class="form-error">{{ 'auth.required' | t }}</p>
       }
     </div>
     <div>
-      <label for="register-last-name" class="form-label">Last name</label>
+      <label for="register-last-name" class="form-label">{{ 'auth.lastName' | t }}</label>
       <input id="register-last-name" name="lastName" autocomplete="family-name" placeholder="Hodžić" maxlength="100"
              [(ngModel)]="lastName" (ngModelChange)="clearServerError('lastName')" #lastNameField="ngModel" required
              class="form-input"
@@ -28,13 +28,13 @@
       @if (serverError('lastName'); as message) {
         <p class="form-error">{{ message }}</p>
       } @else if (lastNameField.invalid && (lastNameField.touched || form.submitted)) {
-        <p class="form-error">Required</p>
+        <p class="form-error">{{ 'auth.required' | t }}</p>
       }
     </div>
   </div>
 
   <div>
-    <label for="register-email" class="form-label">Email address</label>
+    <label for="register-email" class="form-label">{{ 'auth.email' | t }}</label>
     <div class="relative">
       <svg [appIcon]="icons.Mail" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
       <input id="register-email" name="email" type="email" autocomplete="email" placeholder="name@domain.ba" maxlength="255"
@@ -45,13 +45,13 @@
     @if (serverError('email'); as message) {
       <p class="form-error">{{ message }}</p>
     } @else if (emailField.invalid && (emailField.touched || form.submitted)) {
-      <p class="form-error">{{ emailField.hasError('required') ? 'Enter your email address' : 'Enter a valid email address' }}</p>
+      <p class="form-error">{{ (emailField.hasError('required') ? 'auth.emailRequired' : 'auth.emailInvalid') | t }}</p>
     }
   </div>
 
   <div>
     <label for="register-phone" class="form-label">
-      Phone number <span class="font-normal text-text-sub">(optional)</span>
+      {{ 'auth.phone' | t }} <span class="font-normal text-text-sub">{{ 'common.optional' | t }}</span>
     </label>
     <div class="relative">
       <svg [appIcon]="icons.Phone" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
@@ -65,17 +65,17 @@
   </div>
 
   <div>
-    <label for="register-password" class="form-label">Password</label>
+    <label for="register-password" class="form-label">{{ 'auth.password' | t }}</label>
     <div class="relative">
       <svg [appIcon]="icons.Lock" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
       <input id="register-password" name="password" [type]="showPassword() ? 'text' : 'password'" autocomplete="new-password"
-             placeholder="Choose a password" maxlength="100"
+             [placeholder]="'auth.choosePassword' | t" maxlength="100"
              [(ngModel)]="password" (ngModelChange)="clearServerError('password')" #passwordField="ngModel"
              required [minlength]="minPasswordLength"
              class="form-input pl-9 pr-10"
              [class.form-input-invalid]="(passwordField.invalid && (passwordField.touched || form.submitted)) || serverError('password')">
       <button type="button" (click)="showPassword.set(!showPassword())"
-              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              [attr.aria-label]="(showPassword() ? 'auth.hidePassword' : 'auth.showPassword') | t"
               class="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-slate-400 hover:text-text-main hover:bg-slate-100 transition-colors">
         @if (showPassword()) {
           <svg [appIcon]="icons.EyeOff" class="w-4 h-4"></svg>
@@ -95,7 +95,7 @@
               [class]="password.length >= minPasswordLength ? 'bg-status-success text-white scale-100' : 'bg-slate-200 text-transparent scale-90'">
           <svg [appIcon]="icons.Check" class="w-3 h-3"></svg>
         </span>
-        At least {{ minPasswordLength }} characters
+        {{ 'auth.minLength' | t: { count: minPasswordLength } }}
       </p>
     }
   </div>
@@ -103,9 +103,9 @@
   <button type="submit" class="btn-primary w-full py-3" [disabled]="submitting()">
     @if (submitting()) {
       <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg>
-      Creating account...
+      {{ 'auth.creating' | t }}
     } @else {
-      Create account
+      {{ 'auth.create' | t }}
     }
   </button>
 </form>

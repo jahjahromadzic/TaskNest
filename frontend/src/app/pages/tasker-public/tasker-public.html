@@ -1,7 +1,7 @@
 @if (profile(); as profile) {
   <div class="flex flex-col gap-4 lg:h-[calc(100dvh-7rem)] animate-fade-in">
     <button type="button" (click)="back()" class="shrink-0 group self-start inline-flex items-center gap-1 text-sm text-text-sub hover:text-brand transition-colors">
-      <svg [appIcon]="icons.ArrowLeft" class="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5"></svg> Back
+      <svg [appIcon]="icons.ArrowLeft" class="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5"></svg> {{ 'common.back' | t }}
     </button>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-[minmax(0,1fr)] gap-6 lg:flex-1 lg:min-h-0">
@@ -21,7 +21,7 @@
                 {{ profile.fullName }}
                 @if (profile.verified) {
                   <span class="inline-flex items-center gap-1 text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded-full">
-                    <svg [appIcon]="icons.BadgeCheck" class="w-3.5 h-3.5"></svg> Verified
+                    <svg [appIcon]="icons.BadgeCheck" class="w-3.5 h-3.5"></svg> {{ 'common.verified' | t }}
                   </span>
                 }
               </h1>
@@ -32,18 +32,18 @@
 
             <dl class="grid grid-cols-3 gap-2 text-center">
               <div class="p-2.5 rounded-btn bg-slate-50">
-                <dt class="text-[11px] uppercase tracking-wide text-slate-400">Rating</dt>
+                <dt class="text-[11px] uppercase tracking-wide text-slate-400">{{ 'taskerPublic.rating' | t }}</dt>
                 <dd class="font-bold flex items-center justify-center gap-1">
                   <svg [appIcon]="icons.Star" class="w-4 h-4 text-accent fill-accent"></svg>
                   {{ profile.averageRating != null ? profile.averageRating.toFixed(1) : '–' }}
                 </dd>
               </div>
               <div class="p-2.5 rounded-btn bg-slate-50">
-                <dt class="text-[11px] uppercase tracking-wide text-slate-400">Jobs done</dt>
+                <dt class="text-[11px] uppercase tracking-wide text-slate-400">{{ 'taskerPublic.jobsDone' | t }}</dt>
                 <dd class="font-bold">{{ profile.completedJobsCount }}</dd>
               </div>
               <div class="p-2.5 rounded-btn bg-slate-50">
-                <dt class="text-[11px] uppercase tracking-wide text-slate-400">Backed out</dt>
+                <dt class="text-[11px] uppercase tracking-wide text-slate-400">{{ 'taskerPublic.backedOut' | t }}</dt>
                 <dd class="font-bold">{{ profile.withdrawnJobsCount }}</dd>
               </div>
             </dl>
@@ -54,11 +54,11 @@
 
             @if ((profile.categories ?? []).length > 0) {
               <div class="space-y-1.5">
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Services</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'taskerPublic.services' | t }}</p>
                 <div class="flex flex-wrap gap-1.5">
                   @for (category of profile.categories; track category.id) {
                     <span class="inline-flex items-center gap-1.5 bg-brand-50 text-brand border border-brand/20 px-2.5 py-1 rounded-full text-xs font-medium">
-                      <app-category-icon [slug]="category.slug" size="w-3.5 h-3.5" /> {{ category.name }}
+                      <app-category-icon [slug]="category.slug" size="w-3.5 h-3.5" /> {{ category.slug | category: category.name }}
                     </span>
                   }
                 </div>
@@ -67,7 +67,7 @@
 
             @if ((profile.municipalities ?? []).length > 0) {
               <div class="space-y-1.5">
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Works in</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'taskerPublic.worksIn' | t }}</p>
                 <div class="flex flex-wrap gap-1.5">
                   @for (municipality of profile.municipalities; track municipality.id) {
                     <span class="inline-flex items-center gap-1 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs">
@@ -83,12 +83,12 @@
 
       <section class="lg:col-span-2 lg:h-full flex flex-col gap-4 lg:min-h-0">
         <div class="shrink-0 bg-white px-5 py-4 rounded-card border border-surface-border shadow-subtle flex flex-wrap items-center justify-between gap-3">
-          <h2 class="font-semibold">Reviews from clients</h2>
+          <h2 class="font-semibold">{{ 'taskerPublic.reviewsTitle' | t }}</h2>
           @if (profile.averageRating != null) {
             <span class="flex items-center gap-2 text-sm">
               <app-stars [rating]="profile.averageRating" size="w-4 h-4" />
               <span class="font-semibold">{{ profile.averageRating.toFixed(1) }}</span>
-              <span class="text-text-sub">· {{ totalReviews() }} {{ totalReviews() === 1 ? 'review' : 'reviews' }}</span>
+              <span class="text-text-sub">· {{ 'common.reviewsCount' | t: { count: totalReviews() } }}</span>
             </span>
           }
         </div>
@@ -107,23 +107,23 @@
               @if (review.comment) {
                 <p class="text-sm leading-relaxed">{{ review.comment }}</p>
               }
-              <p class="text-xs text-text-sub truncate">For: {{ review.taskTitle }}</p>
+              <p class="text-xs text-text-sub truncate">{{ 'taskerPublic.for' | t: { title: review.taskTitle } }}</p>
             </article>
           } @empty {
             <div class="bg-white p-10 rounded-card border border-dashed border-slate-300 text-center space-y-3">
               <div class="mx-auto w-14 h-14 rounded-full bg-brand-50 text-brand flex items-center justify-center">
                 <svg [appIcon]="icons.MessageSquareQuote" class="w-7 h-7"></svg>
               </div>
-              <h3 class="text-lg font-semibold">No reviews yet</h3>
-              <p class="text-sm text-text-sub">{{ profile.fullName }} has not finished a job on TaskNest yet.</p>
+              <h3 class="text-lg font-semibold">{{ 'taskerPublic.noReviewsTitle' | t }}</h3>
+              <p class="text-sm text-text-sub">{{ 'taskerPublic.noReviewsText' | t: { name: profile.fullName } }}</p>
             </div>
           }
           @if (hasMore) {
             <button type="button" (click)="showMore()" [disabled]="loadingMore()" class="btn-ghost w-full border border-surface-border bg-white">
               @if (loadingMore()) {
-                <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> Loading...
+                <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'common.loading' | t }}
               } @else {
-                Show more reviews
+                {{ 'taskerPublic.showMore' | t }}
               }
             </button>
           }
@@ -136,14 +136,14 @@
     <div class="mx-auto w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
       <svg [appIcon]="icons.SearchX" class="w-7 h-7"></svg>
     </div>
-    <h1 class="text-xl font-semibold">This tasker could not be found</h1>
-    <p class="text-sm text-text-sub">The link may be wrong, or the person is not a tasker.</p>
-    <button type="button" (click)="back()" class="btn-primary py-2">Go back</button>
+    <h1 class="text-xl font-semibold">{{ 'taskerPublic.notFoundTitle' | t }}</h1>
+    <p class="text-sm text-text-sub">{{ 'taskerPublic.notFoundText' | t }}</p>
+    <button type="button" (click)="back()" class="btn-primary py-2">{{ 'common.goBack' | t }}</button>
   </div>
 } @else if (failed()) {
   <div role="alert" class="bg-white p-10 rounded-card border border-red-200 text-center space-y-3 max-w-lg mx-auto">
-    <h1 class="text-lg font-semibold">The profile could not be loaded</h1>
-    <button type="button" (click)="load()" class="btn-primary py-2">Try again</button>
+    <h1 class="text-lg font-semibold">{{ 'taskerPublic.loadFailed' | t }}</h1>
+    <button type="button" (click)="load()" class="btn-primary py-2">{{ 'common.tryAgain' | t }}</button>
   </div>
 } @else {
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" aria-hidden="true">

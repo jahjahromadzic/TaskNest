@@ -6,10 +6,11 @@ import { TaskSummary } from '../../api/models';
 import { daysLeft, formatBudget, timeAgo } from '../../shared/format/format';
 import { CategoryIcon } from '../category-icon/category-icon';
 import { StatusBadge } from '../status-badge/status-badge';
+import { CategoryPipe, TranslatePipe } from '../../i18n/translate.pipe';
 
 @Component({
   selector: 'app-task-card',
-  imports: [Icon, RouterLink, CategoryIcon, StatusBadge],
+  imports: [Icon, RouterLink, CategoryIcon, StatusBadge, TranslatePipe, CategoryPipe],
   templateUrl: './task-card.html',
 })
 export class TaskCard {

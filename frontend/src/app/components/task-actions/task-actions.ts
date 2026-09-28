@@ -8,6 +8,8 @@ import { ConfirmOptions, ConfirmService } from '../../shared/confirm/confirm.ser
 import { daysLeft, timeAgo } from '../../shared/format/format';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Icon } from '../icon/icon';
+import { TranslatePipe } from '../../i18n/translate.pipe';
+import { t } from '../../i18n/translate';
 
 export const AUTO_CLOSE_DAYS = 7;
 
@@ -15,7 +17,7 @@ type TaskAction = 'publish' | 'cancel' | 'reopen' | 'close';
 
 @Component({
   selector: 'app-task-actions',
-  imports: [Icon],
+  imports: [Icon, TranslatePipe],
   templateUrl: './task-actions.html',
 })
 export class TaskActions {
@@ -34,7 +36,7 @@ export class TaskActions {
   ) {}
 
   get tasker(): string {
-    return this.task.assignedTaskerName ?? 'The tasker';
+    return this.task.assignedTaskerName ?? t('actions.theTasker');
   }
 
   get canCancel(): boolean {
@@ -50,47 +52,47 @@ export class TaskActions {
   }
 
   publish(): void {
-    this.run('publish', this.taskService.publishTask(this.task.id!), 'Your task is live. Taskers nearby can now send offers.');
+    this.run('publish', this.taskService.publishTask(this.task.id!), t('actions.published'));
   }
 
   async cancel(): Promise<void> {
     const draft = this.task.status === 'DRAFT';
     const hired = this.task.status === 'ASSIGNED' || this.task.status === 'IN_PROGRESS';
     const confirmed = await this.ask({
-      title: draft ? 'Discard this draft?' : 'Cancel this task?',
+      title: t(draft ? 'actions.discardTitle' : 'actions.cancelTitle'),
       message: draft
-        ? 'The draft is cancelled and can no longer be published.'
+        ? t('actions.discardText')
         : hired
-          ? `${this.tasker} is no longer booked for this job. Only cancel if you have agreed on it with them.`
-          : 'Taskers can no longer send offers and every pending offer is declined.',
-      confirmLabel: draft ? 'Discard draft' : 'Cancel task',
-      cancelLabel: 'Keep it',
+          ? t('actions.cancelHiredText', { name: this.tasker })
+          : t('actions.cancelOpenText'),
+      confirmLabel: t(draft ? 'actions.discardDraft' : 'actions.cancelTask'),
+      cancelLabel: t('common.keepIt'),
       tone: 'danger',
     });
     if (confirmed) {
-      this.run('cancel', this.taskService.cancelTask(this.task.id!), draft ? 'Draft discarded.' : 'Task cancelled.');
+      this.run('cancel', this.taskService.cancelTask(this.task.id!), t(draft ? 'actions.draftDiscarded' : 'actions.taskCancelled'));
     }
   }
 
   async reopen(): Promise<void> {
     const confirmed = await this.ask({
-      title: 'Reopen the task for offers?',
-      message: `${this.tasker} is released from the job and the task takes offers again for 30 days. Earlier offers become active again, so you can hire someone else right away.`,
-      confirmLabel: 'Reopen',
+      title: t('actions.reopenTitle'),
+      message: t('actions.reopenText', { name: this.tasker }),
+      confirmLabel: t('actions.reopenConfirm'),
     });
     if (confirmed) {
-      this.run('reopen', this.taskService.reopenTask(this.task.id!), 'The task is open for offers again.');
+      this.run('reopen', this.taskService.reopenTask(this.task.id!), t('actions.reopened'));
     }
   }
 
   async close(): Promise<void> {
     const confirmed = await this.ask({
-      title: 'Confirm the job is done?',
-      message: `The task is closed and counts as a finished job for ${this.tasker}. After that you can both leave a review.`,
-      confirmLabel: 'Confirm and close',
+      title: t('actions.closeTitle'),
+      message: t('actions.closeText', { name: this.tasker }),
+      confirmLabel: t('actions.confirmClose'),
     });
     if (confirmed) {
-      this.run('close', this.taskService.closeTask(this.task.id!), `Task closed. Tell others how it went with ${this.tasker}.`);
+      this.run('close', this.taskService.closeTask(this.task.id!), t('actions.closed', { name: this.tasker }));
     }
   }
 

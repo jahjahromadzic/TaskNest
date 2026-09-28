@@ -13,23 +13,15 @@ import ba.tfb.tasknest.entity.Notification;
 import ba.tfb.tasknest.entity.enums.NotificationType;
 import ba.tfb.tasknest.entity.enums.OfferStatus;
 import ba.tfb.tasknest.repository.CategoryRepository;
-import ba.tfb.tasknest.repository.ConversationRepository;
 import ba.tfb.tasknest.repository.MunicipalityRepository;
 import ba.tfb.tasknest.repository.NotificationRepository;
-import ba.tfb.tasknest.repository.OfferRepository;
-import ba.tfb.tasknest.repository.RefreshTokenRepository;
-import ba.tfb.tasknest.repository.ReviewRepository;
-import ba.tfb.tasknest.repository.TaskRepository;
-import ba.tfb.tasknest.repository.TaskerProfileRepository;
 import ba.tfb.tasknest.repository.UserRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -49,17 +41,10 @@ class TaskOffersIntegrationTest extends AbstractIntegrationTest {
     @Autowired private TaskService taskService;
     @Autowired private OfferService offerService;
     @Autowired private ReviewService reviewService;
-    @Autowired private TransactionTemplate transactionTemplate;
 
     @Autowired private UserRepository userRepository;
-    @Autowired private TaskRepository taskRepository;
-    @Autowired private OfferRepository offerRepository;
-    @Autowired private ReviewRepository reviewRepository;
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private MunicipalityRepository municipalityRepository;
-    @Autowired private TaskerProfileRepository taskerProfileRepository;
-    @Autowired private ConversationRepository conversationRepository;
-    @Autowired private RefreshTokenRepository refreshTokenRepository;
     @Autowired private NotificationRepository notificationRepository;
 
     private Category category;
@@ -78,22 +63,6 @@ class TaskOffersIntegrationTest extends AbstractIntegrationTest {
         newTaskerId = register("offers.tarik@test.ba", "Tarik", "Tasker");
         authService.activateTaskerRole(experiencedTaskerId);
         authService.activateTaskerRole(newTaskerId);
-    }
-
-    @AfterEach
-    void tearDown() {
-        reviewRepository.deleteAll();
-        notificationRepository.deleteAll();
-        conversationRepository.deleteAll();
-
-        transactionTemplate.executeWithoutResult(status ->
-                taskRepository.findAll().forEach(task -> task.setAcceptedOffer(null)));
-
-        offerRepository.deleteAll();
-        taskRepository.deleteAll();
-        taskerProfileRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
     }
 
     @Test

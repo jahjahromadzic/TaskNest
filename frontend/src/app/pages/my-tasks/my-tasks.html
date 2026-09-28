@@ -3,16 +3,16 @@
     <div class="relative shrink-0 overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle">
       <div class="absolute -right-16 -top-20 w-64 h-64 rounded-full bg-brand-light/50 blur-3xl pointer-events-none" aria-hidden="true"></div>
       <div class="relative">
-        <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">My tasks</h1>
-        <p class="text-text-sub text-sm mt-0.5">Everything you have posted, from drafts to finished jobs</p>
+        <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">{{ 'myTasks.title' | t }}</h1>
+        <p class="text-text-sub text-sm mt-0.5">{{ 'myTasks.subtitle' | t }}</p>
       </div>
       <a routerLink="/tasks/new" class="btn-primary relative self-start md:self-auto">
         <svg [appIcon]="icons.Plus" class="w-4 h-4"></svg>
-        Post a task
+        {{ 'myTasks.postTask' | t }}
       </a>
     </div>
 
-    <div role="tablist" aria-label="Task groups"
+    <div role="tablist" [attr.aria-label]="'myTasks.groups' | t"
          class="shrink-0 flex gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto [scrollbar-width:none] w-full sm:w-fit">
       @for (tab of tabs; track tab.key) {
         <button type="button" role="tab" (click)="selectTab(tab)" [attr.aria-selected]="tab.key === vm.query?.tab?.key"
@@ -27,7 +27,7 @@
           }
           @if (tab.key === 'active' && (vm.counts?.COMPLETED ?? 0) > 0) {
             <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-accent ring-2 ring-slate-100 animate-pulse"
-                  title="A tasker finished a job and waits for your confirmation"></span>
+                  [title]="'myTasks.waitingHint' | t"></span>
           }
         </button>
       }
@@ -43,10 +43,10 @@
               <div class="mx-auto w-14 h-14 rounded-full bg-brand-50 text-brand flex items-center justify-center">
                 <svg [appIcon]="icons.ClipboardList" class="w-7 h-7"></svg>
               </div>
-              <h2 class="text-lg font-semibold">Nothing here</h2>
+              <h2 class="text-lg font-semibold">{{ 'myTasks.nothingHere' | t }}</h2>
               <p class="text-sm text-text-sub">{{ vm.query?.tab?.empty }}</p>
               <a routerLink="/tasks/new" class="btn-primary py-2">
-                <svg [appIcon]="icons.Plus" class="w-4 h-4"></svg> Post a task
+                <svg [appIcon]="icons.Plus" class="w-4 h-4"></svg> {{ 'myTasks.postTask' | t }}
               </a>
             </div>
           }
@@ -57,10 +57,10 @@
           <div class="mx-auto w-14 h-14 rounded-full bg-red-50 text-status-error flex items-center justify-center">
             <svg [appIcon]="icons.CircleAlert" class="w-7 h-7"></svg>
           </div>
-          <h2 class="text-lg font-semibold">Something went wrong</h2>
-          <p class="text-sm text-text-sub">We could not load your tasks. Check your connection and try again.</p>
+          <h2 class="text-lg font-semibold">{{ 'common.somethingWrong' | t }}</h2>
+          <p class="text-sm text-text-sub">{{ 'myTasks.failedText' | t }}</p>
           <button type="button" (click)="retry()" class="btn-primary py-2">
-            <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> Try again
+            <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> {{ 'common.tryAgain' | t }}
           </button>
         </div>
       } @else {

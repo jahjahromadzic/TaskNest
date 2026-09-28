@@ -12,13 +12,11 @@ import ba.tfb.tasknest.repository.TaskerProfileRepository;
 import ba.tfb.tasknest.repository.UserRepository;
 import ba.tfb.tasknest.service.AuthService;
 import ba.tfb.tasknest.service.TaskService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -41,29 +39,11 @@ class DemoDataSeederTest extends AbstractIntegrationTest {
     @Autowired private ReviewRepository reviewRepository;
     @Autowired private TaskService taskService;
     @Autowired private AuthService authService;
-    @Autowired private JdbcTemplate jdbcTemplate;
     @Autowired private TransactionTemplate transactionTemplate;
 
     @BeforeEach
     void seed() {
         seeder.seed();
-    }
-
-    @AfterEach
-    void tearDown() {
-        jdbcTemplate.execute("delete from messages");
-        jdbcTemplate.execute("delete from conversations");
-        jdbcTemplate.execute("delete from reviews");
-        jdbcTemplate.execute("delete from notifications");
-        jdbcTemplate.execute("update tasks set accepted_offer_id = null");
-        jdbcTemplate.execute("delete from offers");
-        jdbcTemplate.execute("delete from tasks");
-        jdbcTemplate.execute("delete from tasker_categories");
-        jdbcTemplate.execute("delete from tasker_municipalities");
-        jdbcTemplate.execute("delete from tasker_profiles");
-        jdbcTemplate.execute("delete from refresh_tokens");
-        jdbcTemplate.execute("delete from user_roles");
-        jdbcTemplate.execute("delete from users");
     }
 
     @Test
