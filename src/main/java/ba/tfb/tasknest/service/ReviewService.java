@@ -2,6 +2,7 @@ package ba.tfb.tasknest.service;
 
 import ba.tfb.tasknest.dto.review.CreateReviewRequest;
 import ba.tfb.tasknest.dto.review.ReviewResponse;
+import ba.tfb.tasknest.dto.review.ReviewedAs;
 import ba.tfb.tasknest.entity.Offer;
 import ba.tfb.tasknest.entity.Review;
 import ba.tfb.tasknest.entity.Task;
@@ -76,12 +77,16 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ReviewResponse> getReceivedReviews(UUID userId, Pageable pageable) {
+    public Page<ReviewResponse> getReceivedReviews(UUID userId, ReviewedAs as, Pageable pageable) {
         User reviewee = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
-        return reviewRepository.findByRevieweeOrderByCreatedAtDesc(reviewee, pageable)
-                .map(ReviewResponse::from);
+        Page<Review> reviews = switch (as) {
+            case null -> reviewRepository.findByRevieweeOrderByCreatedAtDesc(reviewee, pageable);
+            case CLIENT -> reviewRepository.findReceivedAsClient(userId, pageable);
+            case TASKER -> reviewRepository.findReceivedAsTasker(userId, pageable);
+        };
+        return reviews.map(ReviewResponse::from);
     }
 
     private User counterpartyOf(Task task, UUID reviewerId) {

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CreateReviewRequest, Review, ReviewPage } from '../api/models';
+import { CreateReviewRequest, Review, ReviewPage, ReviewedAs } from '../api/models';
 
 @Injectable({ providedIn: 'root' })
 export class ReviewService {
@@ -11,8 +11,11 @@ export class ReviewService {
     return this.http.get<Review[]>(`/api/tasks/${encodeURIComponent(taskId)}/reviews`);
   }
 
-  getReceived(userId: string, page: number, size = 10): Observable<ReviewPage> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  getReceived(userId: string, page: number, size = 10, as?: ReviewedAs): Observable<ReviewPage> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (as) {
+      params = params.set('as', as);
+    }
     return this.http.get<ReviewPage>(`/api/users/${encodeURIComponent(userId)}/reviews`, { params });
   }
 

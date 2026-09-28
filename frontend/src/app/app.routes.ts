@@ -67,6 +67,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/tasker-public/tasker-public').then((m) => m.TaskerPublic),
   },
   {
+    path: 'clients/:userId',
+    canActivate: [authGuard],
+    title: 'titles.client',
+    loadComponent: () => import('./pages/client-public/client-public').then((m) => m.ClientPublic),
+  },
+  {
     path: 'messages',
     canActivate: [authGuard],
     title: 'titles.messages',

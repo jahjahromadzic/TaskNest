@@ -47,7 +47,9 @@ single-page application that uses it.
 - **Messaging** — every offer opens a conversation between the tasker and the
   client, with unread counts and read receipts.
 - **Reviews and reputation** — both parties review each other after a task is
-  closed, and the tasker's average rating is kept on their profile.
+  closed, and the tasker's average rating is kept on their profile. Clients have a
+  profile too, so a tasker can check a client's rating, reviews and past hires before
+  sending an offer.
 - **Notifications** — taskers are notified when a matching task is published and
   clients when their task expires, asynchronously over RabbitMQ and by email.
   Clients hear about every new offer and taskers when they are hired.
@@ -235,7 +237,7 @@ frontend/src/app/
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Application shell, login and sign-up, session renewal, guards, public task list | Done |
-| 2 | Client flow: post tasks, review offers, accept, confirm and close, review | Done |
+| 2 | Client flow: post tasks, review offers, accept, confirm and close, review, public client profile | Done |
 | 3 | Tasker flow: profile, matching tasks, offers, work execution, public profile | Done |
 | 4 | Messages and notifications, delivered live over WebSocket | Done |
 | 5 | Administration: overview, users, tasker verification, task moderation | Done |
@@ -384,7 +386,14 @@ Paged responses use the following shape:
 |---|---|---|---|
 | POST | `/tasks/{taskId}/reviews` | Client or assigned tasker | Review the other party on a closed task |
 | GET | `/tasks/{taskId}/reviews` | Authenticated | Both reviews of a task, oldest first |
-| GET | `/users/{userId}/reviews` | Public | Reviews a user has received, newest first. The task and reviewer are fetched with the page, so the query count does not grow with the number of reviews |
+| GET | `/users/{userId}/reviews` | Public | Reviews a user has received, newest first. `as=CLIENT` or `as=TASKER` keeps only the reviews received in that role; a user who is both gets reviews from both sides. The task and reviewer are fetched with the page, so the query count does not grow with the number of reviews |
+
+### Client profiles — `/api/users/{userId}`
+
+| Method | Path | Access | Description |
+|---|---|---|---|
+| GET | `/client-profile` | Authenticated | Name, member since, average rating and number of reviews received as a client, and counts of posted tasks, hires, finished jobs and cancelled tasks. Email and phone are never included |
+| GET | `/hires` | Authenticated | Tasks where the client accepted an offer, newest assignment first, with the tasker who took the job |
 
 ### Conversations — `/api/conversations`
 
@@ -543,11 +552,14 @@ Reviews cannot be edited or deleted. A review that can be revised after seeing
 the other side's is an invitation to retaliate, so immutability is the feature.
 
 The tasker's `averageRating` is cached on the profile and recomputed after each
-new review. The recomputation takes an exclusive lock on the profile row before
+new review. Every tasker is also a client, so the average counts only the reviews
+received as a tasker, on other people's tasks; a review received as a client shows
+on the client profile and never moves the tasker rating. The recomputation takes an exclusive lock on the profile row before
 reading the average, because the operation is read-modify-write: without the lock,
 two reviews of the same tasker arriving together both read the average before
 either commits, and the second overwrites the first with the value of a single
-review. Clients have no profile, so their average is computed on request instead.
+review. Clients have no profile, so their average is computed on request, from the reviews they
+received on their own tasks, when their client profile is opened.
 
 **Known limitation:** there is no deadline for reviewing — a task closed a year
 ago can still be reviewed today.
@@ -680,13 +692,13 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **323 tests** and requires no manual setup — Testcontainers
+The suite contains **329 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 138 | Service business rules and the task state machine |
-| Integration | 185 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
+| Integration | 191 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
 
 Every integration test starts from an empty database: one `TRUNCATE ... CASCADE` after each test
 clears all application tables at once. Clearing them table by table left a window in which the
@@ -695,11 +707,11 @@ about to be deleted. The listener also ignores events for tasks that are no long
 left over from an earlier test cannot reach the next one. The suite passes in random class order
 (`./mvnw verify -Dsurefire.runOrder=random`).
 
-The frontend has its own suite of **209 tests** (Vitest), covering the session
+The frontend has its own suite of **219 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
 header, the task list and task details, posting a task, the client's own tasks, offers
 and hiring, cancelling, reopening and closing a task, reviews, becoming a tasker and editing the tasker profile, sending and withdrawing offers,
-starting and finishing a job, the tasker dashboard, the public tasker profile, the notification bell and page, the messages page and chat helpers, live updates over WebSocket, the admin panel, translations and plural rules, the theme switch, the confirmation dialog, the dropdown, the progress
+starting and finishing a job, the tasker dashboard, the public tasker and client profiles, the notification bell and page, the messages page and chat helpers, live updates over WebSocket, the admin panel, translations and plural rules, the theme switch, the confirmation dialog, the dropdown, the progress
 timeline, date helpers and the category icons. The server is simulated with Angular's
 `HttpTestingController`.
 

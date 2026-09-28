@@ -1,0 +1,200 @@
+@if (profile(); as profile) {
+  <div class="flex flex-col gap-4 lg:h-[calc(100dvh-7rem)] animate-fade-in">
+    <div class="shrink-0 flex flex-wrap items-center justify-between gap-2">
+      <button type="button" (click)="back()" class="group inline-flex items-center gap-1 text-sm text-text-sub hover:text-brand transition-colors">
+        <svg [appIcon]="icons.ArrowLeft" class="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5"></svg> {{ 'common.back' | t }}
+      </button>
+      @if (isOwn) {
+        <p class="inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-xs bg-brand-50 text-brand border border-brand/20 px-3 py-1.5 rounded-full animate-fade-in">
+          <span class="inline-flex items-center gap-1.5 font-medium">
+            <svg [appIcon]="icons.Eye" class="w-3.5 h-3.5"></svg> {{ 'clientPublic.ownView' | t }}
+          </span>
+          @if (isTasker) {
+            <a [routerLink]="['/taskers', profile.userId]" class="font-semibold underline underline-offset-2 hover:text-brand-hover">{{ 'clientPublic.ownTaskerLink' | t }}</a>
+          }
+        </p>
+      }
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-[minmax(0,1fr)] gap-6 lg:flex-1 lg:min-h-0">
+      <aside class="lg:h-full lg:overflow-y-auto scroll-area lg:-mx-1 lg:px-1 lg:-mt-1 lg:pt-1">
+        <section class="bg-surface-card rounded-card border border-surface-border shadow-subtle overflow-hidden">
+          <div class="h-20 bg-gradient-to-br from-sky-600 to-brand relative" aria-hidden="true">
+            <div class="absolute -right-8 -top-10 w-32 h-32 rounded-full bg-white/10 blur-xl"></div>
+          </div>
+          <div class="px-5 pb-5 -mt-10 space-y-4">
+            <span class="relative w-20 h-20 rounded-full bg-surface-card p-1 shadow-card flex">
+              <span class="w-full h-full rounded-full bg-gradient-to-br from-sky-600 to-brand text-white text-2xl font-bold flex items-center justify-center">
+                {{ initials(profile.fullName) }}
+              </span>
+            </span>
+            <div class="space-y-1">
+              <h1 class="text-xl font-bold tracking-tight flex flex-wrap items-center gap-2">
+                {{ profile.fullName }}
+                <span class="text-xs font-semibold bg-brand-50 text-brand border border-brand/20 px-2 py-0.5 rounded-full">{{ 'clientPublic.badge' | t }}</span>
+              </h1>
+              <p class="text-sm text-text-sub flex items-center gap-1.5">
+                <svg [appIcon]="icons.CalendarDays" class="w-4 h-4 text-slate-400"></svg>
+                {{ 'clientPublic.memberSince' | t: { date: formatDate(profile.memberSince) } }}
+              </p>
+              <p class="text-sm text-text-sub flex items-center gap-1.5">
+                <svg [appIcon]="icons.BriefcaseBusiness" class="w-4 h-4 text-slate-400"></svg>
+                {{ 'clientPublic.posted' | t: { count: profile.postedTasksCount ?? 0 } }}
+              </p>
+            </div>
+
+            <dl class="grid grid-cols-2 gap-2 text-center">
+              <div class="p-2.5 rounded-btn bg-slate-50">
+                <dt class="text-[11px] uppercase tracking-wide text-slate-400">{{ 'clientPublic.rating' | t }}</dt>
+                <dd class="font-bold flex items-center justify-center gap-1">
+                  <svg [appIcon]="icons.Star" class="w-4 h-4 text-accent fill-accent"></svg>
+                  {{ profile.averageRating != null ? profile.averageRating.toFixed(1) : '–' }}
+                </dd>
+              </div>
+              <div class="p-2.5 rounded-btn bg-slate-50">
+                <dt class="text-[11px] uppercase tracking-wide text-slate-400">{{ 'clientPublic.hires' | t }}</dt>
+                <dd class="font-bold">{{ profile.hiresCount }}</dd>
+              </div>
+              <div class="p-2.5 rounded-btn bg-slate-50">
+                <dt class="text-[11px] uppercase tracking-wide text-slate-400">{{ 'clientPublic.completed' | t }}</dt>
+                <dd class="font-bold">{{ profile.completedJobsCount }}</dd>
+              </div>
+              <div class="p-2.5 rounded-btn bg-slate-50">
+                <dt class="text-[11px] uppercase tracking-wide text-slate-400">{{ 'clientPublic.cancelled' | t }}</dt>
+                <dd class="font-bold">{{ profile.cancelledTasksCount }}</dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+      </aside>
+
+      <section class="lg:col-span-2 lg:h-full flex flex-col gap-4 lg:min-h-0">
+        <div class="shrink-0 bg-surface-card px-4 py-3 rounded-card border border-surface-border shadow-subtle flex flex-wrap items-center justify-between gap-3">
+          <div role="tablist" class="flex gap-1 p-1 bg-slate-100 rounded-xl w-full sm:w-fit">
+            <button type="button" role="tab" (click)="tab.set('reviews')" [attr.aria-selected]="tab() === 'reviews'"
+                    class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
+                    [class]="tab() === 'reviews' ? 'bg-surface-card text-text-main shadow-subtle' : 'text-slate-500 hover:text-text-main'">
+              {{ 'clientPublic.reviewsTab' | t }}
+              <span class="min-w-5 h-5 px-1.5 rounded-full text-[11px] flex items-center justify-center tabular-nums"
+                    [class]="tab() === 'reviews' ? 'bg-brand text-white' : 'bg-slate-200 text-slate-600'">{{ totalReviews() }}</span>
+            </button>
+            <button type="button" role="tab" (click)="tab.set('hires')" [attr.aria-selected]="tab() === 'hires'"
+                    class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
+                    [class]="tab() === 'hires' ? 'bg-surface-card text-text-main shadow-subtle' : 'text-slate-500 hover:text-text-main'">
+              {{ 'clientPublic.hiresTab' | t }}
+              <span class="min-w-5 h-5 px-1.5 rounded-full text-[11px] flex items-center justify-center tabular-nums"
+                    [class]="tab() === 'hires' ? 'bg-brand text-white' : 'bg-slate-200 text-slate-600'">{{ totalHires() }}</span>
+            </button>
+          </div>
+          @if (tab() === 'reviews' && profile.averageRating != null) {
+            <span class="flex items-center gap-2 text-sm">
+              <app-stars [rating]="profile.averageRating" size="w-4 h-4" />
+              <span class="font-semibold">{{ profile.averageRating.toFixed(1) }}</span>
+              <span class="text-text-sub">· {{ 'common.reviewsCount' | t: { count: totalReviews() } }}</span>
+            </span>
+          }
+        </div>
+
+        <div class="space-y-3 lg:flex-1 lg:min-h-0 lg:overflow-y-auto scroll-area lg:-mx-1 lg:px-1 lg:-mt-1 lg:pt-1 lg:pb-2">
+          @if (tab() === 'reviews') {
+            @for (review of reviews(); track review.id; let i = $index) {
+              <article class="bg-surface-card p-4 sm:p-5 rounded-card border border-surface-border shadow-subtle space-y-2 animate-fade-in"
+                       [style.animation-delay.ms]="(i % 10) * 40">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <p class="text-sm">
+                    <a [routerLink]="['/taskers', review.reviewerId]" class="font-semibold hover:text-brand hover:underline underline-offset-2 transition-colors">{{ review.reviewerName }}</a>
+                    <span class="text-text-sub"> · {{ timeAgo(review.createdAt) }}</span>
+                  </p>
+                  <app-stars [rating]="review.rating ?? 0" />
+                </div>
+                @if (review.comment) {
+                  <p class="text-sm leading-relaxed">{{ review.comment }}</p>
+                }
+                <p class="text-xs text-text-sub truncate">{{ 'taskerPublic.for' | t: { title: review.taskTitle } }}</p>
+              </article>
+            } @empty {
+              <div class="bg-surface-card p-10 rounded-card border border-dashed border-slate-300 text-center space-y-3 animate-fade-in">
+                <div class="mx-auto w-14 h-14 rounded-full bg-brand-50 text-brand flex items-center justify-center">
+                  <svg [appIcon]="icons.MessageSquareQuote" class="w-7 h-7"></svg>
+                </div>
+                <h3 class="text-lg font-semibold">{{ 'clientPublic.noReviewsTitle' | t }}</h3>
+                <p class="text-sm text-text-sub">{{ 'clientPublic.noReviewsText' | t }}</p>
+              </div>
+            }
+            @if (hasMoreReviews) {
+              <button type="button" (click)="showMoreReviews()" [disabled]="loadingMore()" class="btn-ghost w-full border border-surface-border bg-surface-card">
+                @if (loadingMore()) {
+                  <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'common.loading' | t }}
+                } @else {
+                  {{ 'clientPublic.showMoreReviews' | t }}
+                }
+              </button>
+            }
+          } @else {
+            @for (hire of hires(); track hire.taskId; let i = $index) {
+              <article class="bg-surface-card p-4 sm:p-5 rounded-card border border-surface-border shadow-subtle flex flex-wrap items-start justify-between gap-3 animate-fade-in"
+                       [style.animation-delay.ms]="(i % 10) * 40">
+                <div class="min-w-0 space-y-1.5">
+                  <span class="inline-flex items-center gap-1.5 text-xs font-medium text-brand">
+                    <app-category-icon [slug]="hire.categorySlug" /> {{ hire.categorySlug | category: hire.categoryName }}
+                  </span>
+                  <a [routerLink]="['/tasks', hire.taskId]" class="block font-semibold truncate hover:text-brand transition-colors">{{ hire.title }}</a>
+                  <p class="text-sm text-text-sub">
+                    {{ 'clientPublic.tasker' | t }}:
+                    <a [routerLink]="['/taskers', hire.taskerId]" class="font-medium text-text-main hover:text-brand hover:underline underline-offset-2 transition-colors">{{ hire.taskerName }}</a>
+                    <span> · {{ 'clientPublic.assigned' | t: { date: formatDate(hire.assignedAt) } }}</span>
+                  </p>
+                </div>
+                <app-status-badge [status]="hire.status" />
+              </article>
+            } @empty {
+              <div class="bg-surface-card p-10 rounded-card border border-dashed border-slate-300 text-center space-y-3 animate-fade-in">
+                <div class="mx-auto w-14 h-14 rounded-full bg-brand-50 text-brand flex items-center justify-center">
+                  <svg [appIcon]="icons.BriefcaseBusiness" class="w-7 h-7"></svg>
+                </div>
+                <h3 class="text-lg font-semibold">{{ 'clientPublic.noHiresTitle' | t }}</h3>
+                <p class="text-sm text-text-sub">{{ 'clientPublic.noHiresText' | t }}</p>
+              </div>
+            }
+            @if (hasMoreHires) {
+              <button type="button" (click)="showMoreHires()" [disabled]="loadingMore()" class="btn-ghost w-full border border-surface-border bg-surface-card">
+                @if (loadingMore()) {
+                  <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'common.loading' | t }}
+                } @else {
+                  {{ 'clientPublic.showMoreHires' | t }}
+                }
+              </button>
+            }
+          }
+        </div>
+      </section>
+    </div>
+  </div>
+} @else if (notFound()) {
+  <div class="bg-surface-card p-10 rounded-card border border-surface-border shadow-subtle text-center space-y-3 max-w-lg mx-auto animate-slide-in">
+    <div class="mx-auto w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+      <svg [appIcon]="icons.SearchX" class="w-7 h-7"></svg>
+    </div>
+    <h1 class="text-xl font-semibold">{{ 'clientPublic.notFoundTitle' | t }}</h1>
+    <p class="text-sm text-text-sub">{{ 'clientPublic.notFoundText' | t }}</p>
+    <button type="button" (click)="back()" class="btn-primary py-2">{{ 'common.goBack' | t }}</button>
+  </div>
+} @else if (failed()) {
+  <div role="alert" class="bg-surface-card p-10 rounded-card border border-red-200 text-center space-y-3 max-w-lg mx-auto">
+    <h1 class="text-lg font-semibold">{{ 'clientPublic.loadFailed' | t }}</h1>
+    <button type="button" (click)="load()" class="btn-primary py-2">{{ 'common.tryAgain' | t }}</button>
+  </div>
+} @else {
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" aria-hidden="true">
+    <div class="bg-surface-card rounded-card border border-surface-border p-5 space-y-3">
+      <span class="skeleton block w-20 h-20 rounded-full"></span>
+      <span class="skeleton block h-6 w-40"></span>
+      <span class="skeleton block h-16 w-full"></span>
+    </div>
+    <div class="lg:col-span-2 space-y-3">
+      <span class="skeleton block h-14 w-full rounded-card"></span>
+      <span class="skeleton block h-24 w-full rounded-card"></span>
+      <span class="skeleton block h-24 w-full rounded-card"></span>
+    </div>
+  </div>
+}

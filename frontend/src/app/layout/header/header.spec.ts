@@ -54,6 +54,9 @@ describe('Header', () => {
 
     await openMenu();
     expect(text()).toContain('amra@test.ba');
+    const myProfile = Array.from<HTMLAnchorElement>(fixture.nativeElement.querySelectorAll('a[role=menuitem]'))
+      .find((link) => link.textContent?.includes('My profile'));
+    expect(myProfile?.getAttribute('href')).toBe('/clients/u1');
     expect(text()).toContain('My tasks');
     expect(text()).not.toContain('Tasker dashboard');
     expect(text()).toContain('Become a tasker');

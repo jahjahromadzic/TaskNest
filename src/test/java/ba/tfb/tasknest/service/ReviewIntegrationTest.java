@@ -6,6 +6,7 @@ import ba.tfb.tasknest.dto.auth.RegisterRequest;
 import ba.tfb.tasknest.dto.offer.CreateOfferRequest;
 import ba.tfb.tasknest.dto.review.CreateReviewRequest;
 import ba.tfb.tasknest.dto.review.ReviewResponse;
+import ba.tfb.tasknest.dto.review.ReviewedAs;
 import ba.tfb.tasknest.dto.task.CreateTaskRequest;
 import ba.tfb.tasknest.entity.Category;
 import ba.tfb.tasknest.entity.Municipality;
@@ -89,7 +90,7 @@ class ReviewIntegrationTest extends AbstractIntegrationTest {
         statistics.clear();
 
         // Act
-        List<ReviewResponse> reviews = reviewService.getReceivedReviews(taskerId, PageRequest.of(0, 20)).getContent();
+        List<ReviewResponse> reviews = reviewService.getReceivedReviews(taskerId, null, PageRequest.of(0, 20)).getContent();
 
         // Assert
         assertThat(reviews).hasSize(3).allMatch(review -> review.taskTitle() != null && review.reviewerName() != null);
@@ -208,9 +209,30 @@ class ReviewIntegrationTest extends AbstractIntegrationTest {
         reviewService.createReview(taskId, taskerId, new CreateReviewRequest(3, "Kasnio je"));
 
         // Assert
-        assertThat(reviewRepository.findAverageRatingByReviewee(clientId)).contains(3.0);
+        assertThat(reviewRepository.summarizeReceivedAsClient(clientId).average()).isEqualTo(3.0);
         assertThat(taskerProfileRepository.findByUser(user(clientId))).isEmpty();
         assertThat(cachedAverage()).isNull();
+    }
+
+    @Test
+    @DisplayName("A review a tasker receives as a client leaves their tasker rating and profile reviews untouched")
+    void createReview_asClient_doesNotChangeTheTaskerRating() {
+        // Arrange
+        reviewService.createReview(closedTask(), clientId, new CreateReviewRequest(5, "Odlično"));
+        authService.activateTaskerRole(clientId);
+        UUID ownTask = closedTask();
+        reassignClient(ownTask, taskerId);
+        reassignTasker(ownTask, clientId);
+
+        // Act
+        reviewService.createReview(ownTask, clientId, new CreateReviewRequest(1, "Nije platio na vrijeme"));
+
+        // Assert
+        assertThat(cachedAverage()).isEqualByComparingTo("5.00");
+        assertThat(reviewService.getReceivedReviews(taskerId, ReviewedAs.TASKER, PageRequest.of(0, 20)))
+                .extracting(ReviewResponse::rating).containsExactly(5);
+        assertThat(reviewService.getReceivedReviews(taskerId, ReviewedAs.CLIENT, PageRequest.of(0, 20)))
+                .extracting(ReviewResponse::rating).containsExactly(1);
     }
 
     @Test
@@ -240,7 +262,7 @@ class ReviewIntegrationTest extends AbstractIntegrationTest {
         reviewService.createReview(second, clientId, new CreateReviewRequest(3, "Druga"));
 
         // Act
-        var page = reviewService.getReceivedReviews(taskerId, PageRequest.of(0, 20));
+        var page = reviewService.getReceivedReviews(taskerId, null, PageRequest.of(0, 20));
 
         // Assert
         assertThat(page.getTotalElements()).isEqualTo(2);
@@ -291,6 +313,11 @@ class ReviewIntegrationTest extends AbstractIntegrationTest {
     private void reassignClient(UUID taskId, UUID newClientId) {
         transactionTemplate.executeWithoutResult(status ->
                 taskRepository.findById(taskId).orElseThrow().setClient(user(newClientId)));
+    }
+
+    private void reassignTasker(UUID taskId, UUID newTaskerId) {
+        transactionTemplate.executeWithoutResult(status ->
+                taskRepository.findById(taskId).orElseThrow().getAcceptedOffer().setTasker(user(newTaskerId)));
     }
 
     private Queue<Throwable> runInParallel(Runnable first, Runnable second) throws Exception {

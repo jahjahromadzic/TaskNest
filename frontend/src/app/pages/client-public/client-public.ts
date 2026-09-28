@@ -4,40 +4,48 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { ArrowLeft, BadgeCheck, Eye, LoaderCircle, MapPin, MessageSquareQuote, SearchX, Star } from 'lucide';
-import { Review, TaskerProfile } from '../../api/models';
+import { ArrowLeft, BriefcaseBusiness, CalendarDays, Eye, LoaderCircle, MessageSquareQuote, SearchX, Star } from 'lucide';
+import { ClientHire, ClientProfile, Review } from '../../api/models';
 import { CategoryIcon } from '../../components/category-icon/category-icon';
 import { Icon } from '../../components/icon/icon';
 import { Stars } from '../../components/stars/stars';
+import { StatusBadge } from '../../components/status-badge/status-badge';
+import { ClientProfileService } from '../../services/client-profile.service';
 import { ReviewService } from '../../services/review.service';
 import { AuthService } from '../../auth/auth.service';
-import { TaskerProfileService } from '../../services/tasker-profile.service';
-import { timeAgo } from '../../shared/format/format';
+import { formatDate, timeAgo } from '../../shared/format/format';
 import { CategoryPipe, TranslatePipe } from '../../i18n/translate.pipe';
 
-export const REVIEWS_PER_PAGE = 10;
+export const CLIENT_PAGE_SIZE = 10;
+
+export type ClientTab = 'reviews' | 'hires';
 
 @Component({
-  selector: 'app-tasker-public',
-  imports: [RouterLink, CategoryIcon, Icon, Stars, TranslatePipe, CategoryPipe],
-  templateUrl: './tasker-public.html',
+  selector: 'app-client-public',
+  imports: [RouterLink, CategoryIcon, Icon, Stars, StatusBadge, TranslatePipe, CategoryPipe],
+  templateUrl: './client-public.html',
 })
-export class TaskerPublic implements OnInit {
-  protected readonly icons = { ArrowLeft, BadgeCheck, Eye, LoaderCircle, MapPin, MessageSquareQuote, SearchX, Star };
+export class ClientPublic implements OnInit {
+  protected readonly icons = { ArrowLeft, BriefcaseBusiness, CalendarDays, Eye, LoaderCircle, MessageSquareQuote, SearchX, Star };
 
-  readonly profile = signal<TaskerProfile | null>(null);
+  readonly profile = signal<ClientProfile | null>(null);
   readonly reviews = signal<Review[]>([]);
   readonly totalReviews = signal(0);
+  readonly hires = signal<ClientHire[]>([]);
+  readonly totalHires = signal(0);
+  readonly tab = signal<ClientTab>('reviews');
   readonly notFound = signal(false);
   readonly failed = signal(false);
   readonly loadingMore = signal(false);
   readonly timeAgo = timeAgo;
+  readonly formatDate = formatDate;
 
-  private page = 0;
+  private reviewsPage = 0;
+  private hiresPage = 0;
   private userId = '';
 
   constructor(
-    private taskerProfileService: TaskerProfileService,
+    private clientProfileService: ClientProfileService,
     private reviewService: ReviewService,
     private route: ActivatedRoute,
     private location: Location,
@@ -58,8 +66,12 @@ export class TaskerPublic implements OnInit {
     this.load();
   }
 
-  get hasMore(): boolean {
+  get hasMoreReviews(): boolean {
     return this.reviews().length < this.totalReviews();
+  }
+
+  get hasMoreHires(): boolean {
+    return this.hires().length < this.totalHires();
   }
 
   initials(name: string | undefined): string {
@@ -74,14 +86,18 @@ export class TaskerPublic implements OnInit {
   load(): void {
     this.failed.set(false);
     forkJoin({
-      profile: this.taskerProfileService.getOfUser(this.userId),
-      reviews: this.reviewService.getReceived(this.userId, 0, REVIEWS_PER_PAGE, 'TASKER'),
+      profile: this.clientProfileService.get(this.userId),
+      reviews: this.reviewService.getReceived(this.userId, 0, CLIENT_PAGE_SIZE, 'CLIENT'),
+      hires: this.clientProfileService.hires(this.userId, 0, CLIENT_PAGE_SIZE),
     }).subscribe({
-      next: ({ profile, reviews }) => {
+      next: ({ profile, reviews, hires }) => {
         this.profile.set(profile);
         this.reviews.set(reviews.content ?? []);
         this.totalReviews.set(reviews.totalElements ?? 0);
-        this.page = 0;
+        this.hires.set(hires.content ?? []);
+        this.totalHires.set(hires.totalElements ?? 0);
+        this.reviewsPage = 0;
+        this.hiresPage = 0;
         this.title.setTitle(`${profile.fullName} · TaskNest`);
       },
       error: (error) => {
@@ -94,15 +110,30 @@ export class TaskerPublic implements OnInit {
     });
   }
 
-  showMore(): void {
-    if (this.loadingMore() || !this.hasMore) {
+  showMoreReviews(): void {
+    if (this.loadingMore() || !this.hasMoreReviews) {
       return;
     }
     this.loadingMore.set(true);
-    this.reviewService.getReceived(this.userId, this.page + 1, REVIEWS_PER_PAGE, 'TASKER').subscribe({
+    this.reviewService.getReceived(this.userId, this.reviewsPage + 1, CLIENT_PAGE_SIZE, 'CLIENT').subscribe({
       next: (next) => {
-        this.page++;
+        this.reviewsPage++;
         this.reviews.update((reviews) => [...reviews, ...(next.content ?? [])]);
+        this.loadingMore.set(false);
+      },
+      error: () => this.loadingMore.set(false),
+    });
+  }
+
+  showMoreHires(): void {
+    if (this.loadingMore() || !this.hasMoreHires) {
+      return;
+    }
+    this.loadingMore.set(true);
+    this.clientProfileService.hires(this.userId, this.hiresPage + 1, CLIENT_PAGE_SIZE).subscribe({
+      next: (next) => {
+        this.hiresPage++;
+        this.hires.update((hires) => [...hires, ...(next.content ?? [])]);
         this.loadingMore.set(false);
       },
       error: () => this.loadingMore.set(false),

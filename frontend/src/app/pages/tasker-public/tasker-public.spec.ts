@@ -4,12 +4,14 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { Review } from '../../api/models';
+import { AuthService } from '../../auth/auth.service';
 import { TaskerPublic } from './tasker-public';
 
 describe('Public tasker profile', () => {
   let http: HttpTestingController;
 
   const profile = {
+    userId: 'u7',
     fullName: 'Adnan Delić',
     headline: 'Moving and furniture assembly',
     averageRating: 4.5,
@@ -59,6 +61,27 @@ describe('Public tasker profile', () => {
     expect(text).toContain('Ilidža');
     expect(text).toContain('Great job 1');
     expect(TestBed.inject(Title).getTitle()).toBe('Adnan Delić · TaskNest');
+  });
+
+  it('asks only for the reviews the person received as a tasker', async () => {
+    const fixture = TestBed.createComponent(TaskerPublic);
+    await fixture.whenStable();
+
+    const reviews = http.expectOne((request) => request.url === '/api/users/u7/reviews');
+    expect(reviews.request.params.get('as')).toBe('TASKER');
+    reviews.flush({ content: [], totalElements: 0 });
+    http.expectOne('/api/tasker-profiles/users/u7').flush(profile);
+  });
+
+  it('tells the owner this is how clients see them, with links to edit and to their client profile', async () => {
+    TestBed.inject(AuthService).login({ email: 'me@test.ba', password: 'password123' }).subscribe();
+    http.expectOne('/api/auth/login').flush({ token: 't', userId: 'u7', email: 'me@test.ba', fullName: 'Me', roles: ['CLIENT', 'TASKER'] });
+    const fixture = await open(0, []);
+
+    expect(fixture.nativeElement.textContent).toContain('This is how clients see your tasker profile.');
+    const links = Array.from<HTMLAnchorElement>(fixture.nativeElement.querySelectorAll('a')).map((link) => link.getAttribute('href'));
+    expect(links).toContain('/tasker/profile');
+    expect(links).toContain('/clients/u7');
   });
 
   it('loads the next page of reviews on demand', async () => {

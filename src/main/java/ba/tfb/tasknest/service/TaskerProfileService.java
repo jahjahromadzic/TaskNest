@@ -109,7 +109,7 @@ public class TaskerProfileService {
     @Transactional
     public void refreshAverageRating(User reviewee) {
         taskerProfileRepository.findWithWriteLockByUser(reviewee).ifPresent(profile -> {
-            BigDecimal average = reviewRepository.findAverageRatingByReviewee(reviewee.getId())
+            BigDecimal average = reviewRepository.findAverageRatingAsTasker(reviewee.getId())
                     .map(value -> BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP))
                     .orElse(null);
 

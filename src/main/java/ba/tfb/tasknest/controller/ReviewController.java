@@ -3,6 +3,7 @@ package ba.tfb.tasknest.controller;
 import ba.tfb.tasknest.dto.common.PagedResponse;
 import ba.tfb.tasknest.dto.review.CreateReviewRequest;
 import ba.tfb.tasknest.dto.review.ReviewResponse;
+import ba.tfb.tasknest.dto.review.ReviewedAs;
 import ba.tfb.tasknest.security.UserPrincipal;
 import ba.tfb.tasknest.service.ReviewService;
 import jakarta.validation.Valid;
@@ -40,8 +41,9 @@ public class ReviewController {
     @GetMapping("/users/{userId}/reviews")
     public PagedResponse<ReviewResponse> received(
             @PathVariable UUID userId,
+            @RequestParam(required = false) ReviewedAs as,
             @PageableDefault(size = 20) Pageable pageable) {
-        return PagedResponse.from(reviewService.getReceivedReviews(userId,
+        return PagedResponse.from(reviewService.getReceivedReviews(userId, as,
                 PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())));
     }
 }

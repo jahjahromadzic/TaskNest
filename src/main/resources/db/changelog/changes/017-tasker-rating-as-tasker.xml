@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="042-tasker-rating-excludes-client-reviews" author="jahja">
+        <sql>
+            UPDATE tasker_profiles p
+            SET average_rating = (
+                SELECT ROUND(AVG(r.rating), 2)
+                FROM reviews r
+                JOIN tasks t ON t.id = r.task_id
+                WHERE r.reviewee_id = p.user_id
+                  AND t.client_id &lt;&gt; p.user_id
+            )
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -80,7 +80,7 @@ class DemoDataSeederTest extends AbstractIntegrationTest {
         transactionTemplate.executeWithoutResult(status -> {
             for (TaskerProfile profile : taskerProfileRepository.findAll()) {
                 User tasker = profile.getUser();
-                BigDecimal expected = reviewRepository.findAverageRatingByReviewee(tasker.getId())
+                BigDecimal expected = reviewRepository.findAverageRatingAsTasker(tasker.getId())
                         .map(value -> BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP))
                         .orElse(null);
                 long closedJobs = taskRepository.findAll().stream()

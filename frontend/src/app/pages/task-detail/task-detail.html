@@ -95,10 +95,13 @@
               <div class="flex items-center justify-between gap-3 py-2.5">
                 <dt class="text-text-sub">{{ 'detail.client' | t }}</dt>
                 <dd class="flex items-center gap-2 font-medium">
-                  <span class="w-7 h-7 rounded-full bg-brand-light text-brand text-xs font-semibold flex items-center justify-center">
-                    {{ initials(task.clientName) }}
-                  </span>
-                  {{ task.clientName }}
+                  <a [routerLink]="['/clients', task.clientId]" [title]="'detail.clientProfile' | t"
+                     class="group flex items-center gap-2 hover:text-brand transition-colors">
+                    <span class="w-7 h-7 rounded-full bg-brand-light text-brand text-xs font-semibold flex items-center justify-center transition-shadow group-hover:ring-4 ring-brand/15">
+                      {{ initials(task.clientName) }}
+                    </span>
+                    <span class="group-hover:underline underline-offset-2">{{ task.clientName }}</span>
+                  </a>
                   @if (isOwner(task, vm.user)) {
                     <span class="text-[10px] font-semibold uppercase bg-brand text-white px-1.5 py-0.5 rounded">{{ 'common.you' | t }}</span>
                   }

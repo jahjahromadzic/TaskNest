@@ -1,9 +1,11 @@
 package ba.tfb.tasknest.repository;
 
 import ba.tfb.tasknest.dto.admin.AdminTaskResponse;
+import ba.tfb.tasknest.dto.client.ClientHireResponse;
 import ba.tfb.tasknest.dto.task.TaskSummaryResponse;
 import ba.tfb.tasknest.entity.Task;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
+import ba.tfb.tasknest.repository.projection.ClientTaskStats;
 import ba.tfb.tasknest.repository.projection.TaskStatusCount;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -112,6 +114,35 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
                                                    Pageable pageable);
 
     long countByStatus(TaskStatus status);
+
+    @Query("""
+        select new ba.tfb.tasknest.repository.projection.ClientTaskStats(
+            coalesce(sum(case when t.status <> ba.tfb.tasknest.entity.enums.TaskStatus.DRAFT then 1 else 0 end), 0),
+            coalesce(sum(case when t.acceptedOffer is not null then 1 else 0 end), 0),
+            coalesce(sum(case when t.status = ba.tfb.tasknest.entity.enums.TaskStatus.CLOSED then 1 else 0 end), 0),
+            coalesce(sum(case when t.status = ba.tfb.tasknest.entity.enums.TaskStatus.CANCELLED then 1 else 0 end), 0))
+        from Task t
+        where t.client.id = :clientId
+        """)
+    ClientTaskStats statsOfClient(@Param("clientId") UUID clientId);
+
+    @Query(value = """
+        select new ba.tfb.tasknest.dto.client.ClientHireResponse(
+            t.id, t.title, t.status, c.slug, c.name,
+            tasker.id, concat(tasker.firstName, ' ', tasker.lastName),
+            t.assignedAt, t.completedAt)
+        from Task t
+        join t.acceptedOffer o
+        join o.tasker tasker
+        join t.category c
+        where t.client.id = :clientId
+        order by t.assignedAt desc
+        """,
+        countQuery = """
+        select count(t) from Task t
+        where t.client.id = :clientId and t.acceptedOffer is not null
+        """)
+    Page<ClientHireResponse> findHiresOfClient(@Param("clientId") UUID clientId, Pageable pageable);
 
     @Query(value = """
         select new ba.tfb.tasknest.dto.admin.AdminTaskResponse(

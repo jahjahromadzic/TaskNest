@@ -468,6 +468,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/{userId}/hires": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["hires"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/{userId}/client-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["profile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tasks/{taskId}/offers/mine": {
         parameters: {
             query?: never;
@@ -989,6 +1021,53 @@ export interface components {
             totalPages?: number;
             first?: boolean;
             last?: boolean;
+        };
+        ClientHireResponse: {
+            /** Format: uuid */
+            taskId?: string;
+            title?: string;
+            /** @enum {string} */
+            status?: "DRAFT" | "PUBLISHED" | "ASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CLOSED" | "CANCELLED" | "EXPIRED" | "REMOVED";
+            categorySlug?: string;
+            categoryName?: string;
+            /** Format: uuid */
+            taskerId?: string;
+            taskerName?: string;
+            /** Format: date-time */
+            assignedAt?: string;
+            /** Format: date-time */
+            completedAt?: string;
+        };
+        PagedResponseClientHireResponse: {
+            content?: components["schemas"]["ClientHireResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            first?: boolean;
+            last?: boolean;
+        };
+        ClientProfileResponse: {
+            /** Format: uuid */
+            userId?: string;
+            fullName?: string;
+            /** Format: date-time */
+            memberSince?: string;
+            averageRating?: number;
+            /** Format: int64 */
+            reviewCount?: number;
+            /** Format: int64 */
+            postedTasksCount?: number;
+            /** Format: int64 */
+            hiresCount?: number;
+            /** Format: int64 */
+            completedJobsCount?: number;
+            /** Format: int64 */
+            cancelledTasksCount?: number;
         };
         PagedResponseTaskSummaryResponse: {
             content?: components["schemas"]["TaskSummaryResponse"][];
@@ -1923,6 +2002,7 @@ export interface operations {
     received: {
         parameters: {
             query: {
+                as?: "CLIENT" | "TASKER";
                 pageable: components["schemas"]["Pageable"];
             };
             header?: never;
@@ -1940,6 +2020,52 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PagedResponseReviewResponse"];
+                };
+            };
+        };
+    };
+    hires: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PagedResponseClientHireResponse"];
+                };
+            };
+        };
+    };
+    profile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ClientProfileResponse"];
                 };
             };
         };

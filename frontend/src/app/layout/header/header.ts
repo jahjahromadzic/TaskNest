@@ -1,7 +1,7 @@
 import { Component, ElementRef, HostListener, ViewChild, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { Briefcase, ChevronDown, ListTodo, LogOut, MessageSquare, Plus, Shield, SquareCheck, UserPen } from 'lucide';
+import { Briefcase, ChevronDown, CircleUserRound, ListTodo, LogOut, MessageSquare, Plus, Shield, SquareCheck, UserPen } from 'lucide';
 import { Icon } from '../../components/icon/icon';
 import { AuthService } from '../../auth/auth.service';
 import { CurrentUser } from '../../auth/current-user';
@@ -28,7 +28,7 @@ import { ThemeToggle } from '../../theme/theme-toggle';
   templateUrl: './header.html',
 })
 export class Header {
-  protected readonly icons = { Briefcase, ChevronDown, ListTodo, LogOut, MessageSquare, Plus, Shield, SquareCheck, UserPen };
+  protected readonly icons = { Briefcase, ChevronDown, CircleUserRound, ListTodo, LogOut, MessageSquare, Plus, Shield, SquareCheck, UserPen };
 
   readonly menuOpen = signal(false);
 
