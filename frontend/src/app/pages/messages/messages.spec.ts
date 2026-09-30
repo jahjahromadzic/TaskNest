@@ -9,6 +9,7 @@ import { AppNotification, ChatMessage, Conversation } from '../../api/models';
 import { Subject } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 import { LiveMessage, LiveRead, RealtimeService } from '../../services/realtime.service';
+import { ConfirmService } from '../../shared/confirm/confirm.service';
 
 describe('Messages page', () => {
   let harness: RouterTestingHarness;
@@ -321,6 +322,98 @@ describe('Messages page', () => {
     const bubbles = Array.from(element().querySelectorAll('ol li')).filter((item) => item.textContent?.includes('On my way'));
     expect(bubbles.length).toBe(1);
     expect(text()).not.toContain('Sending...');
+  });
+
+  const pendingOffer: Conversation = {
+    id: 'c3',
+    offerId: 'o3',
+    offerPrice: 140,
+    offerStatus: 'PENDING',
+    taskId: 't3',
+    taskTitle: 'Paint the hallway',
+    taskStatus: 'PUBLISHED',
+    otherPartyId: 'tarik',
+    otherPartyName: 'Tarik Hasanović',
+    viewerRole: 'CLIENT',
+    status: 'OPEN',
+    unreadCount: 0,
+  };
+
+  async function openConversation(conversation: Conversation): Promise<void> {
+    await open(`/messages?conversation=${conversation.id}`, [conversation]);
+    messagesOf(conversation.id!).flush({ content: [], page: 0, size: 30, totalElements: 0, totalPages: 0 });
+    await harness.fixture.whenStable();
+  }
+
+  function offerButton(label: string): HTMLButtonElement | undefined {
+    return Array.from<HTMLButtonElement>(element().querySelectorAll('section button')).find((button) => button.textContent?.includes(label));
+  }
+
+  async function reloadWith(conversation: Conversation): Promise<void> {
+    conversationList().flush({ content: [conversation], page: 0, size: 50, totalElements: 1, totalPages: 1 });
+    await harness.fixture.whenStable();
+  }
+
+  it('lets the client accept a pending offer from the chat after confirming', async () => {
+    await openConversation(pendingOffer);
+    expect(text()).toContain('Happy with the offer? Accept it here to hire this tasker.');
+    expect(element().querySelector('a[href="/users/tarik?as=tasker"]')?.textContent).toContain('Tarik Hasanović');
+
+    offerButton('Accept offer')!.click();
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(ConfirmService).pending()?.title).toBe('Hire Tarik Hasanović for 140 KM?');
+    TestBed.inject(ConfirmService).answer(true);
+    await harness.fixture.whenStable();
+
+    http.expectOne({ method: 'POST', url: '/api/offers/o3/accept' }).flush({});
+    await reloadWith({ ...pendingOffer, offerStatus: 'ACCEPTED', taskStatus: 'ASSIGNED' });
+
+    expect(offerButton('Accept offer')).toBeUndefined();
+    expect(text()).toContain('Accepted');
+    expect(text()).toContain('You accepted this offer. Follow the job on the task page.');
+  });
+
+  it('accepts nothing when the client backs out of the confirmation', async () => {
+    await openConversation(pendingOffer);
+
+    offerButton('Accept offer')!.click();
+    await harness.fixture.whenStable();
+    TestBed.inject(ConfirmService).answer(false);
+    await harness.fixture.whenStable();
+
+    http.expectNone('/api/offers/o3/accept');
+    expect(offerButton('Accept offer')).toBeDefined();
+  });
+
+  it('offers no accept button once the task is no longer open', async () => {
+    await openConversation({ ...pendingOffer, taskStatus: 'CANCELLED' });
+
+    expect(offerButton('Accept offer')).toBeUndefined();
+  });
+
+  it('gives the tasker a way to the task and updates the offer the moment the client accepts', async () => {
+    const asTasker: Conversation = { ...pendingOffer, viewerRole: 'TASKER', otherPartyId: 'amra', otherPartyName: 'Amra Hodžić' };
+    await openConversation(asTasker);
+
+    expect(offerButton('Accept offer')).toBeUndefined();
+    expect(text()).toContain('Waiting for the client to answer.');
+    const openTask = Array.from<HTMLAnchorElement>(element().querySelectorAll('section a')).find((link) => link.textContent?.includes('Open task'));
+    expect(openTask?.getAttribute('href')).toBe('/tasks/t3');
+    expect(element().querySelector('a[href="/users/amra?as=client"]')).not.toBeNull();
+
+    live.notifications$.next({ id: 'n1', type: 'OFFER_ACCEPTED', relatedEntityId: 't3' });
+    await reloadWith({ ...asTasker, offerStatus: 'ACCEPTED', taskStatus: 'ASSIGNED' });
+
+    expect(text()).toContain('Your offer was accepted. Start and finish the job on the task page.');
+  });
+
+  it('does not reload the list for a notification about a new message', async () => {
+    await openConversation(pendingOffer);
+
+    live.notifications$.next({ id: 'n2', type: 'NEW_MESSAGE', relatedEntityId: 'c3' });
+    await harness.fixture.whenStable();
+
+    http.expectNone((request) => request.url === '/api/conversations');
   });
 
   it('shows whether new messages arrive live', async () => {

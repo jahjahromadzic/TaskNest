@@ -146,7 +146,12 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
     void anyAuthenticatedUserCanActivateTaskerRole() throws Exception {
         AuthResponse fresh = register("authz.fresh@test.ba");
 
-        mockMvc.perform(asUser(post("/api/auth/activate-tasker"), fresh.token()))
+        mockMvc.perform(asUser(post("/api/auth/activate-tasker"), fresh.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"headline": "Handyman", "categoryIds": ["%s"], "municipalityIds": ["%s"]}
+                                """.formatted(categoryRepository.findAll().getFirst().getId(),
+                                        municipalityRepository.findAll().getFirst().getId())))
                 .andExpect(status().isOk());
     }
 

@@ -4,6 +4,7 @@ type Schemas = components['schemas'];
 
 export type AuthResponse = Schemas['AuthResponse'];
 export type LoginRequest = Schemas['LoginRequest'];
+export type BecomeTaskerRequest = Schemas['BecomeTaskerRequest'];
 export type RegisterRequest = Schemas['RegisterRequest'];
 
 export type Category = Schemas['CategoryResponse'];

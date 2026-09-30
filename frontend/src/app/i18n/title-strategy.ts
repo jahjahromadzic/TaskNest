@@ -11,6 +11,7 @@ export function pageTitle(text: string): string {
 @Injectable({ providedIn: 'root' })
 export class TranslatedTitleStrategy extends TitleStrategy {
   private key: TranslationKey | null = null;
+  private path = '';
   private applied = '';
 
   constructor(private title: Title) {
@@ -25,7 +26,10 @@ export class TranslatedTitleStrategy extends TitleStrategy {
 
   override updateTitle(snapshot: RouterStateSnapshot): void {
     const key = this.buildTitle(snapshot) as TranslationKey | undefined;
-    if (key) {
+    const path = snapshot.url.split(/[?#]/)[0];
+    const samePage = path === this.path && key === this.key;
+    this.path = path;
+    if (key && !samePage) {
       this.key = key;
       this.apply(key);
     }

@@ -9,6 +9,7 @@ import {
   CheckCheck,
   CircleAlert,
   ExternalLink,
+  Handshake,
   LoaderCircle,
   MessageSquare,
   MessagesSquare,
@@ -22,6 +23,7 @@ import { AuthService } from '../../auth/auth.service';
 import { Icon } from '../../components/icon/icon';
 import { StatusBadge } from '../../components/status-badge/status-badge';
 import { ConversationService } from '../../services/conversation.service';
+import { OfferService } from '../../services/offer.service';
 import { LiveMessage, LiveRead, RealtimeService } from '../../services/realtime.service';
 import { readApiError } from '../../shared/api-error';
 import {
@@ -34,16 +36,34 @@ import {
   mergeMessages,
   preview,
 } from '../../shared/chat/chat';
+import { ConfirmService } from '../../shared/confirm/confirm.service';
 import { formatBudget, timeAgo } from '../../shared/format/format';
-import { TaskStatus } from '../../shared/task-status/task-status';
+import { OFFER_STATUS, TaskStatus } from '../../shared/task-status/task-status';
 import { ToastService } from '../../shared/toast/toast.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
-import { t } from '../../i18n/translate';
+import { TranslationKey, t } from '../../i18n/translate';
 
 export const MESSAGES_PER_PAGE = 30;
 export const MAX_MESSAGE_LENGTH = 5000;
 
 type ThreadLoad = { id: string; page: ChatMessagePage | null };
+
+const OFFER_HINTS: Record<'CLIENT' | 'TASKER', Record<'PENDING' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN', TranslationKey>> = {
+  CLIENT: {
+    PENDING: 'messages.hintClientPending',
+    ACCEPTED: 'messages.hintClientAccepted',
+    REJECTED: 'messages.hintClientRejected',
+    WITHDRAWN: 'messages.hintClientWithdrawn',
+  },
+  TASKER: {
+    PENDING: 'messages.hintTaskerPending',
+    ACCEPTED: 'messages.hintTaskerAccepted',
+    REJECTED: 'messages.hintTaskerRejected',
+    WITHDRAWN: 'messages.hintTaskerWithdrawn',
+  },
+};
+
+const SILENT_NOTIFICATIONS = new Set(['NEW_MESSAGE', 'NEW_TASK_IN_AREA', 'REVIEW_RECEIVED']);
 
 @Component({
   selector: 'app-messages',
@@ -58,6 +78,7 @@ export class Messages implements OnInit {
     CheckCheck,
     CircleAlert,
     ExternalLink,
+    Handshake,
     LoaderCircle,
     MessageSquare,
     MessagesSquare,
@@ -84,10 +105,23 @@ export class Messages implements OnInit {
   readonly totalMessages = signal(0);
   readonly loadingOlder = signal(false);
   readonly draft = signal('');
+  readonly accepting = signal(false);
 
   readonly myId = computed(() => this.authService.currentUser?.id);
   readonly selected = computed(() => this.conversations()?.find((item) => item.id === this.selectedId()) ?? null);
   readonly archived = computed(() => this.selected()?.status === 'ARCHIVED');
+  readonly canAccept = computed(() => {
+    const selected = this.selected();
+    return selected?.viewerRole === 'CLIENT' && selected.offerStatus === 'PENDING' && selected.taskStatus === 'PUBLISHED';
+  });
+  readonly offerHint = computed<TranslationKey | null>(() => {
+    const selected = this.selected();
+    return selected?.viewerRole && selected.offerStatus ? OFFER_HINTS[selected.viewerRole][selected.offerStatus] : null;
+  });
+  readonly offerBadge = computed<{ tone: string; label: TranslationKey } | null>(() => {
+    const status = this.selected()?.offerStatus;
+    return status ? { tone: OFFER_STATUS[status].badge, label: `messages.offerState.${status}` } : null;
+  });
   readonly thread = computed(() => buildThread(this.messages() ?? [], this.myId()));
   readonly hasOlder = computed(() => (this.messages() ?? []).filter((message) => !message.state).length < this.totalMessages());
   readonly missing = computed(() => this.selectedId() !== null && this.conversations() !== null && this.selected() === null);
@@ -109,6 +143,8 @@ export class Messages implements OnInit {
 
   constructor(
     private conversationService: ConversationService,
+    private offerService: OfferService,
+    private confirmService: ConfirmService,
     protected realtime: RealtimeService,
     private authService: AuthService,
     private toastService: ToastService,
@@ -131,6 +167,12 @@ export class Messages implements OnInit {
 
     this.realtime.messages$.pipe(takeUntilDestroyed()).subscribe((live) => this.onLiveMessage(live));
     this.realtime.reads$.pipe(takeUntilDestroyed()).subscribe((read) => this.onLiveRead(read));
+    this.realtime.notifications$
+      .pipe(
+        filter((notification) => !SILENT_NOTIFICATIONS.has(notification.type ?? '')),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.loadConversations());
     fromEvent(document, 'visibilitychange')
       .pipe(
         filter(() => document.visibilityState === 'visible'),
@@ -168,6 +210,34 @@ export class Messages implements OnInit {
     this.conversationService.list().subscribe({
       next: (page) => this.conversations.set(this.withResolved(page.content ?? [])),
       error: () => this.listFailed.set(true),
+    });
+  }
+
+  async acceptOffer(conversation: Conversation): Promise<void> {
+    if (this.accepting() || !conversation.offerId) {
+      return;
+    }
+    const name = conversation.otherPartyName ?? '';
+    const confirmed = await this.confirmService.ask({
+      title: t('offers.hireTitle', { name, price: formatBudget(conversation.offerPrice) }),
+      message: t('messages.acceptMessage', { name }),
+      confirmLabel: t('offers.hireConfirm'),
+    });
+    if (!confirmed) {
+      return;
+    }
+    this.accepting.set(true);
+    this.offerService.accept(conversation.offerId).subscribe({
+      next: () => {
+        this.accepting.set(false);
+        this.toastService.success(t('offers.hiredToast', { name }));
+        this.loadConversations();
+      },
+      error: (error) => {
+        this.accepting.set(false);
+        this.toastService.error(readApiError(error).message);
+        this.loadConversations();
+      },
     });
   }
 

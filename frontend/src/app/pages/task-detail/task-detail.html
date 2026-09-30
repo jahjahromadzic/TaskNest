@@ -95,7 +95,7 @@
               <div class="flex items-center justify-between gap-3 py-2.5">
                 <dt class="text-text-sub">{{ 'detail.client' | t }}</dt>
                 <dd class="flex items-center gap-2 font-medium">
-                  <a [routerLink]="['/clients', task.clientId]" [title]="'detail.clientProfile' | t"
+                  <a [routerLink]="['/users', task.clientId]" [queryParams]="{ as: 'client' }" [title]="'detail.clientProfile' | t"
                      class="group flex items-center gap-2 hover:text-brand transition-colors">
                     <span class="w-7 h-7 rounded-full bg-brand-light text-brand text-xs font-semibold flex items-center justify-center transition-shadow group-hover:ring-4 ring-brand/15">
                       {{ initials(task.clientName) }}

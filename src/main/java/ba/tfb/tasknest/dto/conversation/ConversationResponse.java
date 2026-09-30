@@ -1,6 +1,7 @@
 package ba.tfb.tasknest.dto.conversation;
 
 import ba.tfb.tasknest.entity.enums.ConversationStatus;
+import ba.tfb.tasknest.entity.enums.OfferStatus;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
 
 import java.math.BigDecimal;
@@ -12,11 +13,13 @@ public record ConversationResponse(
         UUID offerId,
         BigDecimal offerPrice,
         String offerMessage,
+        OfferStatus offerStatus,
         UUID taskId,
         String taskTitle,
         TaskStatus taskStatus,
         UUID otherPartyId,
         String otherPartyName,
+        ConversationRole viewerRole,
         ConversationStatus status,
         LocalDateTime lastMessageAt,
         String lastMessage,

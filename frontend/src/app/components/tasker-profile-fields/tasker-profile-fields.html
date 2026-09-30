@@ -1,0 +1,54 @@
+<div>
+  <label for="profile-headline" class="form-label flex justify-between">
+    <span>{{ 'profile.headline' | t }}</span>
+    <span class="font-normal text-slate-400 tabular-nums">{{ headline().length }}/{{ headlineMax }}</span>
+  </label>
+  <input id="profile-headline" name="headline" [ngModel]="headline()" (ngModelChange)="headline.set($event)"
+         [ngModelOptions]="{ standalone: true }" [required]="requireHeadline()"
+         [maxlength]="headlineMax" [placeholder]="'profile.headlinePlaceholder' | t" class="form-input">
+</div>
+
+<div>
+  <label for="profile-bio" class="form-label flex justify-between">
+    <span>{{ 'profile.about' | t }} @if (requireHeadline()) { <span class="font-normal text-text-sub">{{ 'common.optional' | t }}</span> }</span>
+    <span class="font-normal text-slate-400 tabular-nums">{{ bio().length }}/{{ bioMax }}</span>
+  </label>
+  <textarea id="profile-bio" name="bio" rows="2" [ngModel]="bio()" (ngModelChange)="bio.set($event)"
+            [ngModelOptions]="{ standalone: true }" [maxlength]="bioMax"
+            [placeholder]="'profile.aboutPlaceholder' | t"
+            class="form-input resize-y field-sizing-content min-h-16 max-h-48"></textarea>
+</div>
+
+<fieldset>
+  <legend class="form-label">{{ 'profile.whatDoYouDo' | t }} <span class="font-normal text-text-sub">{{ 'common.selected' | t: { count: categoryIds().length } }}</span></legend>
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+    @for (category of categories(); track category.id) {
+      <button type="button" role="checkbox" [attr.aria-checked]="categoryIds().includes(category.id!)"
+              (click)="toggle('categoryIds', category.id)"
+              class="category-tile" [class.active]="categoryIds().includes(category.id!)">
+        <app-category-icon [slug]="category.slug" size="w-4 h-4 shrink-0" />
+        <span class="truncate flex-1">{{ category.slug | category: category.name }}</span>
+        @if (categoryIds().includes(category.id!)) {
+          <svg [appIcon]="icons.Check" class="w-3.5 h-3.5 shrink-0 animate-fade-in"></svg>
+        }
+      </button>
+    }
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend class="form-label">{{ 'profile.whereDoYouWork' | t }} <span class="font-normal text-text-sub">{{ 'common.selected' | t: { count: municipalityIds().length } }}</span></legend>
+  <div class="flex flex-wrap gap-2">
+    @for (municipality of municipalities(); track municipality.id) {
+      <button type="button" role="checkbox" [attr.aria-checked]="municipalityIds().includes(municipality.id!)"
+              (click)="toggle('municipalityIds', municipality.id)"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm transition-all duration-200 active:scale-95"
+              [class]="municipalityIds().includes(municipality.id!)
+                ? 'bg-brand text-white border-brand shadow-subtle'
+                : 'bg-surface-card text-text-sub border-slate-300 hover:border-brand/50 hover:text-text-main'">
+        <svg [appIcon]="municipalityIds().includes(municipality.id!) ? icons.Check : icons.MapPin" class="w-3.5 h-3.5"></svg>
+        {{ municipality.name }}
+      </button>
+    }
+  </div>
+</fieldset>

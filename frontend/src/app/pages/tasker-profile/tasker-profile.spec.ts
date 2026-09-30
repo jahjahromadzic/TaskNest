@@ -45,6 +45,13 @@ describe('Tasker profile page', () => {
     await fixture.whenStable();
   }
 
+  async function tapCategory(name: string): Promise<void> {
+    Array.from<HTMLButtonElement>(fixture.nativeElement.querySelectorAll('.category-tile'))
+      .find((tile) => tile.textContent!.includes(name))!
+      .click();
+    await fixture.whenStable();
+  }
+
   it('shows how complete the profile is and what is missing', async () => {
     await open({ ...fresh, headline: 'Handyman', categories: [plumbing] });
 
@@ -59,17 +66,17 @@ describe('Tasker profile page', () => {
     await open(fresh);
     expect(page.dirty()).toBe(false);
 
-    page.toggle('categoryIds', 'c1');
+    await tapCategory('Plumbing');
     expect(page.dirty()).toBe(true);
 
-    page.toggle('categoryIds', 'c1');
+    await tapCategory('Plumbing');
     expect(page.dirty()).toBe(false);
   });
 
   it('sends only the parts that changed', async () => {
     await open({ ...fresh, headline: 'Handyman', categories: [plumbing], municipalities: [centar] });
 
-    page.toggle('categoryIds', 'c2');
+    await tapCategory('Tiling');
     page.save();
 
     const request = http.expectOne({ method: 'PUT', url: '/api/tasker-profiles/me/categories' });
@@ -85,7 +92,7 @@ describe('Tasker profile page', () => {
   it('refuses to remove the last category or municipality', async () => {
     await open({ ...fresh, categories: [plumbing], municipalities: [centar] });
 
-    page.toggle('categoryIds', 'c1');
+    await tapCategory('Plumbing');
     page.save();
 
     http.expectNone('/api/tasker-profiles/me/categories');

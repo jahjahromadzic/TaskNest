@@ -44,7 +44,7 @@
             </span>
             <div class="min-w-0 space-y-1">
               <p class="font-semibold flex flex-wrap items-center gap-1.5">
-                <a [routerLink]="['/taskers', offer.taskerId]" class="hover:text-brand hover:underline underline-offset-2 transition-colors">
+                <a [routerLink]="['/users', offer.taskerId]" [queryParams]="{ as: 'tasker' }" class="hover:text-brand hover:underline underline-offset-2 transition-colors">
                   {{ offer.taskerName }}
                 </a>
                 @if (offer.taskerVerified) {

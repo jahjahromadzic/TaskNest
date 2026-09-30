@@ -198,4 +198,31 @@ describe('Page titles', () => {
     TestBed.tick();
     expect(title.getTitle()).toBe('Fix the tap · TaskNest');
   });
+
+  it('keeps a page title set by the page when only the query changes', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([
+          { path: 'tasks', title: 'titles.browse', component: Blank },
+          { path: 'users/:id', title: 'titles.userProfile', component: Blank },
+        ]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: TitleStrategy, useExisting: TranslatedTitleStrategy },
+      ],
+    });
+    const title = TestBed.inject(Title);
+    const router = TestBed.inject(Router);
+
+    await router.navigateByUrl('/users/u1');
+    title.setTitle('Adnan Delić · TaskNest');
+    await router.navigateByUrl('/users/u1?as=client');
+    expect(title.getTitle()).toBe('Adnan Delić · TaskNest');
+
+    await router.navigateByUrl('/users/u2');
+    expect(title.getTitle()).toBe('Profile · TaskNest');
+
+    await router.navigateByUrl('/tasks');
+    expect(title.getTitle()).toBe('Browse tasks · TaskNest');
+  });
 });

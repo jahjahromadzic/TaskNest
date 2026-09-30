@@ -1,5 +1,10 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { RedirectFunction, Router, Routes } from '@angular/router';
 import { authGuard, guestGuard, notTaskerGuard, roleGuard } from './auth/auth.guards';
+
+function profileAs(role: 'tasker' | 'client'): RedirectFunction {
+  return ({ params }) => inject(Router).createUrlTree(['/users', params['userId']], { queryParams: { as: role } });
+}
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'tasks' },
@@ -61,17 +66,13 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/become-tasker/become-tasker').then((m) => m.BecomeTasker),
   },
   {
-    path: 'taskers/:userId',
+    path: 'users/:userId',
     canActivate: [authGuard],
-    title: 'titles.tasker',
-    loadComponent: () => import('./pages/tasker-public/tasker-public').then((m) => m.TaskerPublic),
+    title: 'titles.userProfile',
+    loadComponent: () => import('./pages/user-profile/user-profile').then((m) => m.UserProfile),
   },
-  {
-    path: 'clients/:userId',
-    canActivate: [authGuard],
-    title: 'titles.client',
-    loadComponent: () => import('./pages/client-public/client-public').then((m) => m.ClientPublic),
-  },
+  { path: 'taskers/:userId', redirectTo: profileAs('tasker') },
+  { path: 'clients/:userId', redirectTo: profileAs('client') },
   {
     path: 'messages',
     canActivate: [authGuard],

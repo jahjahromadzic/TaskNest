@@ -154,8 +154,11 @@ describe('AuthService', () => {
     service.login({ email: 'amra@test.ba', password: 'password123' }).subscribe();
     http.expectOne('/api/auth/login').flush(response);
 
-    service.becomeTasker().subscribe();
-    http.expectOne({ method: 'POST', url: '/api/auth/activate-tasker' }).flush({ roles: ['CLIENT', 'TASKER'] });
+    const request = { headline: 'Plumber', bio: '', categoryIds: ['c1'], municipalityIds: ['m1'] };
+    service.becomeTasker(request).subscribe();
+    const activation = http.expectOne({ method: 'POST', url: '/api/auth/activate-tasker' });
+    expect(activation.request.body).toEqual(request);
+    activation.flush({ roles: ['CLIENT', 'TASKER'] });
     http.expectOne('/api/auth/refresh').flush({ ...response, token: 'tasker-token', roles: ['CLIENT', 'TASKER'] });
     await new Promise((resolve) => setTimeout(resolve));
 

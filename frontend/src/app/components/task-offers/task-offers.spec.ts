@@ -81,7 +81,7 @@ describe('Task offers', () => {
     expect(cards()[1]).toContain('4.5 (2 reviews)');
     expect(cards()[1]).toContain('3 jobs done');
     expect(fixture.nativeElement.textContent).toContain('Declined and withdrawn offers (1)');
-    expect(fixture.nativeElement.querySelector('article a').getAttribute('href')).toBe('/taskers/' + tarik.taskerId);
+    expect(fixture.nativeElement.querySelector('article a').getAttribute('href')).toBe('/users/' + tarik.taskerId + '?as=tasker');
     expect(
       Array.from<HTMLAnchorElement>(fixture.nativeElement.querySelectorAll('article a[href^="/messages"]')).map((link) =>
         link.getAttribute('href'),

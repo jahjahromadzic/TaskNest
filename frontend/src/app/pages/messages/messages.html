@@ -106,7 +106,10 @@
           {{ initials(conversation.otherPartyName) }}
         </span>
         <div class="min-w-0 flex-1">
-          <h2 class="font-semibold truncate">{{ conversation.otherPartyName }}</h2>
+          <h2 class="font-semibold truncate">
+            <a [routerLink]="['/users', conversation.otherPartyId]" [queryParams]="{ as: conversation.viewerRole === 'CLIENT' ? 'tasker' : 'client' }"
+               [title]="'messages.viewProfile' | t" class="hover:text-brand hover:underline underline-offset-2 transition-colors">{{ conversation.otherPartyName }}</a>
+          </h2>
           <p class="text-xs text-text-sub truncate">{{ conversation.taskTitle }}</p>
         </div>
         <app-status-badge [status]="taskStatus(conversation)" class="hidden sm:block" />
@@ -124,15 +127,43 @@
       }
 
       <div #scroller class="flex-1 min-h-0 overflow-y-auto scroll-area px-4 py-4 bg-gradient-to-b from-slate-50/80 to-surface-card">
-        <div class="max-w-2xl mx-auto mb-4 p-3.5 rounded-xl bg-brand-50/70 border border-brand/15 flex gap-3 text-sm animate-fade-in">
-          <span class="shrink-0 w-8 h-8 rounded-full bg-surface-card text-brand flex items-center justify-center shadow-subtle">
-            <svg [appIcon]="icons.Tag" class="w-4 h-4"></svg>
-          </span>
-          <div class="min-w-0">
-            <p class="font-semibold">{{ 'messages.offer' | t }} · <span class="text-brand">{{ formatBudget(conversation.offerPrice) }}</span></p>
-            @if (conversation.offerMessage) {
-              <p class="text-text-sub mt-0.5 whitespace-pre-line">"{{ conversation.offerMessage }}"</p>
-            }
+        <div class="max-w-2xl mx-auto mb-4 p-3.5 rounded-xl bg-brand-50/70 border border-brand/15 text-sm space-y-3 animate-fade-in">
+          <div class="flex gap-3">
+            <span class="shrink-0 w-8 h-8 rounded-full bg-surface-card text-brand flex items-center justify-center shadow-subtle">
+              <svg [appIcon]="icons.Tag" class="w-4 h-4"></svg>
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="font-semibold flex flex-wrap items-center gap-2">
+                <span>{{ 'messages.offer' | t }} · <span class="text-brand">{{ formatBudget(conversation.offerPrice) }}</span></span>
+                @if (offerBadge(); as badge) {
+                  <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full border animate-fade-in" [class]="badge.tone">{{ badge.label | t }}</span>
+                }
+              </p>
+              @if (conversation.offerMessage) {
+                <p class="text-text-sub mt-0.5 whitespace-pre-line">"{{ conversation.offerMessage }}"</p>
+              }
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-brand/10">
+            <p class="text-xs text-text-sub flex-1 min-w-40">
+              @if (offerHint(); as hint) {
+                {{ hint | t }}
+              }
+            </p>
+            <div class="flex items-center gap-2">
+              <a [routerLink]="['/tasks', conversation.taskId]" class="btn-ghost text-xs py-1.5 border border-surface-border bg-surface-card">
+                <svg [appIcon]="icons.ExternalLink" class="w-3.5 h-3.5"></svg> {{ 'messages.openTask' | t }}
+              </a>
+              @if (canAccept()) {
+                <button type="button" (click)="acceptOffer(conversation)" [disabled]="accepting()" class="btn-primary text-xs py-1.5">
+                  @if (accepting()) {
+                    <svg [appIcon]="icons.LoaderCircle" class="w-3.5 h-3.5 animate-spin"></svg> {{ 'messages.accepting' | t }}
+                  } @else {
+                    <svg [appIcon]="icons.Handshake" class="w-3.5 h-3.5"></svg> {{ 'messages.acceptOffer' | t }}
+                  }
+                </button>
+              }
+            </div>
           </div>
         </div>
 

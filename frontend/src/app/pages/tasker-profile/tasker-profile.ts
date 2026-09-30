@@ -1,20 +1,16 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
 import { Observable, concat, forkJoin, last } from 'rxjs';
-import { BadgeCheck, Check, Circle, CircleCheck, LoaderCircle, MapPin, PartyPopper, Save, Star } from 'lucide';
+import { BadgeCheck, Circle, CircleCheck, LoaderCircle, Save, Star } from 'lucide';
 import { Category, Municipality, TaskerProfile } from '../../api/models';
-import { CategoryIcon } from '../../components/category-icon/category-icon';
+import { TaskerProfileFields } from '../../components/tasker-profile-fields/tasker-profile-fields';
 import { Icon } from '../../components/icon/icon';
 import { ReferenceService } from '../../services/reference.service';
 import { TaskerProfileService } from '../../services/tasker-profile.service';
 import { readApiError } from '../../shared/api-error';
 import { ToastService } from '../../shared/toast/toast.service';
-import { CategoryPipe, TranslatePipe } from '../../i18n/translate.pipe';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { t, translated } from '../../i18n/translate';
-
-export const HEADLINE_MAX = 150;
-export const BIO_MAX = 2000;
 
 interface Snapshot {
   headline: string;
@@ -29,21 +25,17 @@ function sameIds(a: string[], b: string[]): boolean {
 
 @Component({
   selector: 'app-tasker-profile',
-  imports: [FormsModule, CategoryIcon, Icon, TranslatePipe, CategoryPipe],
+  imports: [FormsModule, Icon, TaskerProfileFields, TranslatePipe],
   templateUrl: './tasker-profile.html',
 })
 export class TaskerProfilePage implements OnInit {
-  protected readonly icons = { BadgeCheck, Check, Circle, CircleCheck, LoaderCircle, MapPin, PartyPopper, Save, Star };
-
-  readonly headlineMax = HEADLINE_MAX;
-  readonly bioMax = BIO_MAX;
+  protected readonly icons = { BadgeCheck, Circle, CircleCheck, LoaderCircle, Save, Star };
 
   readonly profile = signal<TaskerProfile | null>(null);
   readonly categories = signal<Category[]>([]);
   readonly municipalities = signal<Municipality[]>([]);
   readonly failed = signal(false);
   readonly saving = signal(false);
-  readonly welcome: boolean;
 
   readonly headline = signal('');
   readonly bio = signal('');
@@ -77,10 +69,7 @@ export class TaskerProfilePage implements OnInit {
     private taskerProfileService: TaskerProfileService,
     private referenceService: ReferenceService,
     private toastService: ToastService,
-    route: ActivatedRoute,
-  ) {
-    this.welcome = route.snapshot.queryParamMap.has('welcome');
-  }
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -109,13 +98,6 @@ export class TaskerProfilePage implements OnInit {
       .slice(0, 2)
       .map((part) => part[0].toUpperCase())
       .join('');
-  }
-
-  toggle(list: 'categoryIds' | 'municipalityIds', id: string | undefined): void {
-    if (!id) {
-      return;
-    }
-    this[list].update((ids) => (ids.includes(id) ? ids.filter((current) => current !== id) : [...ids, id]));
   }
 
   save(): void {

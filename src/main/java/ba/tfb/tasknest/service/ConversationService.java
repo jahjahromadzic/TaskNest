@@ -1,6 +1,7 @@
 package ba.tfb.tasknest.service;
 
 import ba.tfb.tasknest.dto.conversation.ConversationResponse;
+import ba.tfb.tasknest.dto.conversation.ConversationRole;
 import ba.tfb.tasknest.dto.conversation.MessageResponse;
 import ba.tfb.tasknest.dto.conversation.SendMessageRequest;
 import ba.tfb.tasknest.entity.Conversation;
@@ -181,11 +182,13 @@ public class ConversationService {
                 offer.getId(),
                 offer.getPrice(),
                 offer.getMessage(),
+                offer.getStatus(),
                 offer.getTask().getId(),
                 offer.getTask().getTitle(),
                 offer.getTask().getStatus(),
                 other.getId(),
                 other.getFirstName() + " " + other.getLastName(),
+                clientOf(conversation).getId().equals(viewerId) ? ConversationRole.CLIENT : ConversationRole.TASKER,
                 conversation.getStatus(),
                 conversation.getLastMessageAt(),
                 last == null ? null : last.getContent(),

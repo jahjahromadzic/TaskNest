@@ -52,7 +52,7 @@
                 <p class="font-semibold truncate">{{ user.fullName }}</p>
                 <p class="text-text-sub text-xs truncate">{{ user.email }}</p>
               </div>
-              <a [routerLink]="['/clients', user.id]" (click)="closeMenu()" role="menuitem"
+              <a [routerLink]="['/users', user.id]" (click)="closeMenu()" role="menuitem"
                  class="px-3 py-2 hover:bg-slate-50 flex items-center gap-2.5 transition-colors">
                 <svg [appIcon]="icons.CircleUserRound" class="w-4 h-4 text-slate-400"></svg> {{ 'nav.myProfile' | t }}
               </a>

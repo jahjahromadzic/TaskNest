@@ -978,6 +978,12 @@ export interface components {
             email: string;
             password: string;
         };
+        BecomeTaskerRequest: {
+            headline: string;
+            bio?: string;
+            categoryIds: string[];
+            municipalityIds: string[];
+        };
         TaskerActivationResponse: {
             /** Format: uuid */
             userId?: string;
@@ -1137,6 +1143,8 @@ export interface components {
             offerId?: string;
             offerPrice?: number;
             offerMessage?: string;
+            /** @enum {string} */
+            offerStatus?: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN";
             /** Format: uuid */
             taskId?: string;
             taskTitle?: string;
@@ -1145,6 +1153,8 @@ export interface components {
             /** Format: uuid */
             otherPartyId?: string;
             otherPartyName?: string;
+            /** @enum {string} */
+            viewerRole?: "CLIENT" | "TASKER";
             /** @enum {string} */
             status?: "OPEN" | "ARCHIVED";
             /** Format: date-time */
@@ -1872,7 +1882,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BecomeTaskerRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

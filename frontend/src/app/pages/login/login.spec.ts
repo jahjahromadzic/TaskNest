@@ -74,5 +74,6 @@ describe('Login page', () => {
 
     expect(TestBed.inject(AuthService).currentUser?.email).toBe('amra@test.ba');
     expect(TestBed.inject(Router).url).toBe('/become-a-tasker');
+    http.match((request) => request.url === '/api/categories' || request.url === '/api/municipalities');
   });
 });

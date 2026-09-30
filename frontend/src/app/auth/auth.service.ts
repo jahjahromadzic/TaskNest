@@ -13,7 +13,7 @@ import {
   switchMap,
   throwError,
 } from 'rxjs';
-import { AuthResponse, LoginRequest, RegisterRequest } from '../api/models';
+import { AuthResponse, BecomeTaskerRequest, LoginRequest, RegisterRequest } from '../api/models';
 import { CurrentUser, Role } from './current-user';
 
 const REFRESH_LOCK = 'tasknest-token-refresh';
@@ -75,8 +75,8 @@ export class AuthService {
     return this.refreshInFlight;
   }
 
-  becomeTasker(): Observable<CurrentUser> {
-    return this.http.post('/api/auth/activate-tasker', null).pipe(switchMap(() => this.refresh()));
+  becomeTasker(request: BecomeTaskerRequest): Observable<CurrentUser> {
+    return this.http.post('/api/auth/activate-tasker', request).pipe(switchMap(() => this.refresh()));
   }
 
   restoreSession(): Observable<void> {

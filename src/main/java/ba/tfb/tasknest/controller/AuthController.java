@@ -1,6 +1,7 @@
 package ba.tfb.tasknest.controller;
 
 import ba.tfb.tasknest.dto.auth.AuthResponse;
+import ba.tfb.tasknest.dto.auth.BecomeTaskerRequest;
 import ba.tfb.tasknest.dto.auth.LoginRequest;
 import ba.tfb.tasknest.dto.auth.RegisterRequest;
 import ba.tfb.tasknest.dto.auth.TaskerActivationResponse;
@@ -55,8 +56,9 @@ public class AuthController {
     }
 
     @PostMapping("/activate-tasker")
-    public TaskerActivationResponse activateTasker(@AuthenticationPrincipal UserPrincipal principal) {
-        return authService.activateTaskerRole(principal.getId());
+    public TaskerActivationResponse activateTasker(@AuthenticationPrincipal UserPrincipal principal,
+                                                   @Valid @RequestBody BecomeTaskerRequest request) {
+        return authService.becomeTasker(principal.getId(), request);
     }
 
     private ResponseEntity<AuthResponse> withRefreshCookie(HttpStatus status, AuthResponse auth) {

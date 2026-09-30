@@ -49,7 +49,11 @@ single-page application that uses it.
 - **Reviews and reputation** — both parties review each other after a task is
   closed, and the tasker's average rating is kept on their profile. Clients have a
   profile too, so a tasker can check a client's rating, reviews and past hires before
-  sending an offer.
+  sending an offer. Both sides live on one profile page with an "As tasker" / "As client"
+  switch.
+- **Becoming a tasker** — a client fills in a headline, categories and municipalities first;
+  the tasker role is granted only when that profile is saved, so there are no taskers
+  without a trade or an area.
 - **Notifications** — taskers are notified when a matching task is published and
   clients when their task expires, asynchronously over RabbitMQ and by email.
   Clients hear about every new offer and taskers when they are hired.
@@ -303,7 +307,7 @@ application is running.
 | POST | `/login` | Public | Authenticate and receive a token pair |
 | POST | `/refresh` | Public | Exchange the refresh-token cookie for a new access token; rotates the cookie |
 | POST | `/logout` | Public | Revoke the refresh token and clear its cookie |
-| POST | `/activate-tasker` | Authenticated | Activate the tasker role |
+| POST | `/activate-tasker` | Authenticated | Become a tasker: grants the tasker role and saves the headline, optional bio, categories and municipalities in one transaction. A headline, at least one category and one municipality are required, and an unknown category or municipality leaves the account unchanged |
 
 The refresh token never appears in a response body. Register, login and refresh
 set it as a cookie that is `HttpOnly` (unreadable by JavaScript, so an injected
@@ -399,7 +403,7 @@ Paged responses use the following shape:
 
 | Method | Path | Access | Description |
 |---|---|---|---|
-| GET | `/` | Authenticated | The caller's conversations, latest activity first, with the offer, a preview of the last message and unread counts. The query count stays the same however many conversations there are |
+| GET | `/` | Authenticated | The caller's conversations, latest activity first, with the offer and its status, the caller's role in the conversation (client or tasker), a preview of the last message and unread counts. The query count stays the same however many conversations there are |
 | GET | `/by-offer/{offerId}` | Participant | The conversation that belongs to an offer, so the task page can open it |
 | GET | `/unread-count` | Authenticated | Unread messages across all conversations: `{ "count": 3 }` |
 | GET | `/{id}/messages` | Participant | Messages in pages from the newest: page 0 holds the latest messages, and every page reads oldest to newest |
@@ -568,6 +572,9 @@ ago can still be reviewed today.
 
 Every offer opens a conversation between the tasker who made it and the client
 who owns the task, so the two can agree on details before the client decides.
+The offer sits at the top of the chat: the client can accept it right there, the
+tasker sees where it stands and jumps to the task, and both see the change live
+when the offer is accepted.
 Participants are derived from the offer and its task — role does not matter, and
 the same person can be the client in one conversation and the tasker in another.
 Anyone else receives `403`.
@@ -692,13 +699,13 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **329 tests** and requires no manual setup — Testcontainers
+The suite contains **334 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 138 | Service business rules and the task state machine |
-| Integration | 191 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
+| Integration | 196 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
 
 Every integration test starts from an empty database: one `TRUNCATE ... CASCADE` after each test
 clears all application tables at once. Clearing them table by table left a window in which the
@@ -707,11 +714,11 @@ about to be deleted. The listener also ignores events for tasks that are no long
 left over from an earlier test cannot reach the next one. The suite passes in random class order
 (`./mvnw verify -Dsurefire.runOrder=random`).
 
-The frontend has its own suite of **219 tests** (Vitest), covering the session
+The frontend has its own suite of **223 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
 header, the task list and task details, posting a task, the client's own tasks, offers
 and hiring, cancelling, reopening and closing a task, reviews, becoming a tasker and editing the tasker profile, sending and withdrawing offers,
-starting and finishing a job, the tasker dashboard, the public tasker and client profiles, the notification bell and page, the messages page and chat helpers, live updates over WebSocket, the admin panel, translations and plural rules, the theme switch, the confirmation dialog, the dropdown, the progress
+starting and finishing a job, the tasker dashboard, the user profile with its tasker and client sides, the notification bell and page, the messages page and chat helpers, live updates over WebSocket, the admin panel, translations and plural rules, the theme switch, the confirmation dialog, the dropdown, the progress
 timeline, date helpers and the category icons. The server is simulated with Angular's
 `HttpTestingController`.
 

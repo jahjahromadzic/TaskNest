@@ -3,6 +3,7 @@ package ba.tfb.tasknest.service;
 import ba.tfb.tasknest.AbstractIntegrationTest;
 import ba.tfb.tasknest.dto.auth.RegisterRequest;
 import ba.tfb.tasknest.dto.conversation.ConversationResponse;
+import ba.tfb.tasknest.dto.conversation.ConversationRole;
 import ba.tfb.tasknest.dto.conversation.SendMessageRequest;
 import ba.tfb.tasknest.dto.offer.CreateOfferRequest;
 import ba.tfb.tasknest.dto.task.CreateTaskRequest;
@@ -13,6 +14,7 @@ import ba.tfb.tasknest.entity.Notification;
 import ba.tfb.tasknest.entity.Offer;
 import ba.tfb.tasknest.entity.enums.ConversationStatus;
 import ba.tfb.tasknest.entity.enums.NotificationType;
+import ba.tfb.tasknest.entity.enums.OfferStatus;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
 import ba.tfb.tasknest.exception.BusinessRuleException;
 import ba.tfb.tasknest.exception.NotResourceOwnerException;
@@ -344,6 +346,26 @@ class ConversationIntegrationTest extends AbstractIntegrationTest {
             assertThat(forClient.offerMessage()).isEqualTo("Mogu danas");
             assertThat(forClient.taskStatus()).isEqualTo(TaskStatus.PUBLISHED);
             assertThat(forClient.unreadCount()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Each side is told their role, and the conversation follows the offer once it is accepted")
+        void getMyConversations_tellsTheViewerRoleAndTheOfferStatus() {
+            // Arrange
+            UUID offerId = submitOffer(publishedTask(), taskerId);
+
+            // Act
+            ConversationResponse forClient = onlyConversationOf(clientId);
+            ConversationResponse forTasker = onlyConversationOf(taskerId);
+            offerService.acceptOffer(offerId, clientId);
+            ConversationResponse afterAccepting = onlyConversationOf(taskerId);
+
+            // Assert
+            assertThat(forClient.viewerRole()).isEqualTo(ConversationRole.CLIENT);
+            assertThat(forTasker.viewerRole()).isEqualTo(ConversationRole.TASKER);
+            assertThat(forClient.offerStatus()).isEqualTo(OfferStatus.PENDING);
+            assertThat(afterAccepting.offerStatus()).isEqualTo(OfferStatus.ACCEPTED);
+            assertThat(afterAccepting.taskStatus()).isEqualTo(TaskStatus.ASSIGNED);
         }
 
         @Test
