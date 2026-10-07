@@ -388,7 +388,7 @@ through Redis.
 | PUT | `/` | Authenticated | Change the first name, last name and phone. The email is the login and stays fixed |
 | POST | `/password` | Authenticated | Change the password with `currentPassword` and `newPassword`. A wrong current password answers `400` and counts as a failed login, so it is throttled the same way. Every other session is signed out, and this device gets a fresh token pair |
 
-When the password changes, the account's refresh tokens are deleted rather than
+When the password changes, here or through a reset link, the account's refresh tokens are deleted rather than
 marked as revoked. A revoked token that comes back is treated as stolen and signs
 out every session, so an old browser tab refreshing a revoked token would also sign
 out the device that just changed the password. A deleted token is simply unknown.

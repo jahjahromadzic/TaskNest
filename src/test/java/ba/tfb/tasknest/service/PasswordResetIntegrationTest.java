@@ -67,9 +67,12 @@ class PasswordResetIntegrationTest extends AbstractIntegrationTest {
         // Assert
         assertThatThrownBy(() -> authService.login(new LoginRequest("reset@test.ba", "old-password")))
                 .isInstanceOf(BadCredentialsException.class);
-        assertThat(authService.login(new LoginRequest("reset@test.ba", "new-password-1")).token()).isNotBlank();
+        AuthResponse fresh = authService.login(new LoginRequest("reset@test.ba", "new-password-1"));
         assertThatThrownBy(() -> authService.refresh(amra.refreshToken()))
                 .isInstanceOf(InvalidRefreshTokenException.class);
+        assertThat(authService.refresh(fresh.refreshToken()).userId())
+                .as("an old device knocking with its token must not sign out the new login")
+                .isEqualTo(amra.userId());
         confirm(token, "another-password")
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.detail").value("This reset link is invalid or has expired. Ask for a new one."));

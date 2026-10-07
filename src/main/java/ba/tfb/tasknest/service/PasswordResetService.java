@@ -6,7 +6,6 @@ import ba.tfb.tasknest.entity.enums.AccountStatus;
 import ba.tfb.tasknest.entity.enums.VerificationTokenType;
 import ba.tfb.tasknest.exception.BusinessRuleException;
 import ba.tfb.tasknest.messaging.PasswordResetMailer;
-import ba.tfb.tasknest.repository.RefreshTokenRepository;
 import ba.tfb.tasknest.repository.UserRepository;
 import ba.tfb.tasknest.repository.VerificationTokenRepository;
 import ba.tfb.tasknest.security.AuthThrottle;
@@ -31,7 +30,7 @@ public class PasswordResetService {
 
     private final UserRepository userRepository;
     private final VerificationTokenRepository tokenRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenService refreshTokenService;
     private final PasswordEncoder passwordEncoder;
     private final PasswordResetMailer mailer;
     private final AuthThrottle throttle;
@@ -41,7 +40,7 @@ public class PasswordResetService {
 
     public PasswordResetService(UserRepository userRepository,
                                 VerificationTokenRepository tokenRepository,
-                                RefreshTokenRepository refreshTokenRepository,
+                                RefreshTokenService refreshTokenService,
                                 PasswordEncoder passwordEncoder,
                                 PasswordResetMailer mailer,
                                 AuthThrottle throttle,
@@ -49,7 +48,7 @@ public class PasswordResetService {
                                 @Value("${app.password-reset.expiration-minutes}") long validMinutes) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
-        this.refreshTokenRepository = refreshTokenRepository;
+        this.refreshTokenService = refreshTokenService;
         this.passwordEncoder = passwordEncoder;
         this.mailer = mailer;
         this.throttle = throttle;
@@ -97,7 +96,7 @@ public class PasswordResetService {
         User user = token.getUser();
         token.setUsedAt(now);
         user.setPasswordHash(passwordEncoder.encode(newPassword));
-        refreshTokenRepository.revokeAllByUser(user.getId(), now);
+        refreshTokenService.endAllSessions(user.getId());
         throttle.recordSuccessfulLogin(user.getEmail());
     }
 
