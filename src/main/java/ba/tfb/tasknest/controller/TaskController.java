@@ -4,10 +4,12 @@ import ba.tfb.tasknest.dto.common.PagedResponse;
 import ba.tfb.tasknest.dto.task.CreateTaskRequest;
 import ba.tfb.tasknest.dto.task.TaskResponse;
 import ba.tfb.tasknest.dto.task.TaskSummaryResponse;
+import ba.tfb.tasknest.dto.task.UpdateTaskRequest;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
 import ba.tfb.tasknest.security.UserPrincipal;
 import ba.tfb.tasknest.service.TaskService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -34,6 +36,14 @@ public class TaskController {
     public TaskResponse create(@Valid @RequestBody CreateTaskRequest request,
                                @AuthenticationPrincipal UserPrincipal principal) {
         return taskService.createTask(principal.getId(), request);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('CLIENT')")
+    public TaskResponse update(@PathVariable UUID id,
+                               @Valid @RequestBody UpdateTaskRequest request,
+                               @AuthenticationPrincipal UserPrincipal principal) {
+        return taskService.updateTask(id, principal.getId(), request);
     }
 
     @PostMapping("/{id}/publish")
@@ -82,9 +92,10 @@ public class TaskController {
     public PagedResponse<TaskSummaryResponse> browse(
             @RequestParam(required = false) UUID categoryId,
             @RequestParam(required = false) UUID municipalityId,
+            @RequestParam(name = "q", required = false) @Size(max = 100) String search,
             @PageableDefault(size = 20, sort = "publishedAt",
                     direction = Sort.Direction.DESC) Pageable pageable) {
-        return PagedResponse.from(taskService.browseTasks(categoryId, municipalityId, pageable));
+        return PagedResponse.from(taskService.browseTasks(categoryId, municipalityId, search, pageable));
     }
 
     @GetMapping("/matching")

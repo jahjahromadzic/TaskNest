@@ -358,7 +358,7 @@ class TaskServiceTest {
         @Test
         void browseTasks_throwsBusinessRule_whenSortFieldIsUnknown() {
             // Act + Assert
-            assertThatThrownBy(() -> taskService.browseTasks(null, null,
+            assertThatThrownBy(() -> taskService.browseTasks(null, null, null,
                     PageRequest.of(0, 20, Sort.by("nemaOvogPolja"))))
                     .isInstanceOf(BusinessRuleException.class)
                     .hasMessageContaining("Cannot sort by 'nemaOvogPolja'")
@@ -368,7 +368,7 @@ class TaskServiceTest {
         @Test
         void browseTasks_throwsBusinessRule_whenOneOfSeveralSortFieldsIsUnknown() {
             // Act + Assert
-            assertThatThrownBy(() -> taskService.browseTasks(null, null,
+            assertThatThrownBy(() -> taskService.browseTasks(null, null, null,
                     PageRequest.of(0, 20, Sort.by("publishedAt").and(Sort.by("opis")))))
                     .isInstanceOf(BusinessRuleException.class)
                     .hasMessageContaining("opis");
@@ -379,11 +379,11 @@ class TaskServiceTest {
             // Arrange
             PageRequest pageable = PageRequest.of(0, 20, Sort.by("budget"));
             PageRequest emptyValuesLast = PageRequest.of(0, 20, Sort.by(Sort.Order.asc("budget").nullsLast()));
-            when(taskRepository.findOpenTasks(eq(TaskStatus.PUBLISHED), any(), isNull(), isNull(), eq(emptyValuesLast)))
+            when(taskRepository.findOpenTasks(eq(TaskStatus.PUBLISHED), any(), isNull(), isNull(), eq(""), eq(emptyValuesLast)))
                     .thenReturn(Page.empty());
 
             // Act
-            Page<TaskSummaryResponse> page = taskService.browseTasks(null, null, pageable);
+            Page<TaskSummaryResponse> page = taskService.browseTasks(null, null, null, pageable);
 
             // Assert
             assertThat(page).isEmpty();

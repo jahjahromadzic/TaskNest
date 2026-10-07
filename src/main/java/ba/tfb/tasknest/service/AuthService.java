@@ -1,5 +1,6 @@
 package ba.tfb.tasknest.service;
 
+import ba.tfb.tasknest.dto.account.ChangePasswordRequest;
 import ba.tfb.tasknest.dto.auth.AuthResponse;
 import ba.tfb.tasknest.dto.auth.BecomeTaskerRequest;
 import ba.tfb.tasknest.dto.auth.LoginRequest;
@@ -13,6 +14,7 @@ import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.AccountStatus;
 import ba.tfb.tasknest.entity.enums.RoleName;
 import ba.tfb.tasknest.exception.BusinessRuleException;
+import ba.tfb.tasknest.exception.IncorrectPasswordException;
 import ba.tfb.tasknest.exception.ResourceNotFoundException;
 import ba.tfb.tasknest.repository.RoleRepository;
 import ba.tfb.tasknest.repository.TaskerProfileRepository;
@@ -102,6 +104,25 @@ public class AuthService {
     @Transactional
     public void logout(String refreshTokenValue) {
         refreshTokenService.revoke(refreshTokenValue);
+    }
+
+    @Transactional
+    public AuthResponse changePassword(UUID userId, ChangePasswordRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new IncorrectPasswordException("The current password is not correct");
+        }
+
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            throw new BusinessRuleException("The new password must be different from the current one");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        refreshTokenService.endAllSessions(userId);
+
+        return buildResponse(UserPrincipal.withCredentials(user), user);
     }
 
     private String normalizeEmail(String email) {

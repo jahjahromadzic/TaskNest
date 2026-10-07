@@ -54,6 +54,12 @@
   </button>
 }
 
+@if (canEdit) {
+  <a [routerLink]="['/tasks', task.id, 'edit']" class="btn-ghost w-full border border-surface-border">
+    <svg [appIcon]="icons.PencilLine" class="w-4 h-4"></svg> {{ 'actions.edit' | t }}
+  </a>
+}
+
 @if (canCancel) {
   <button type="button" (click)="cancel()" [disabled]="running() !== null"
           class="btn-ghost w-full text-status-error hover:bg-red-50 disabled:opacity-60">

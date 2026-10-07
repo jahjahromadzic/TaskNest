@@ -1,8 +1,21 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
-import { BehaviorSubject, Observable, catchError, combineLatest, map, of, shareReplay, startWith, switchMap } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  Subject,
+  catchError,
+  combineLatest,
+  debounceTime,
+  map,
+  of,
+  shareReplay,
+  startWith,
+  switchMap,
+} from 'rxjs';
 import {
   ArrowUpDown,
   CircleAlert,
@@ -10,8 +23,10 @@ import {
   MapPin,
   Plus,
   RotateCcw,
+  Search,
   SearchX,
   SlidersHorizontal,
+  X,
 } from 'lucide';
 import { Icon } from '../../components/icon/icon';
 import { Category, Municipality, TaskPage } from '../../api/models';
@@ -30,6 +45,9 @@ interface ListState {
   result: TaskPage | null;
 }
 
+export const SEARCH_MAX = 100;
+const SEARCH_DELAY_MS = 300;
+
 const LOADING: ListState = { loading: true, failed: false, result: null };
 const FAILED: ListState = { loading: false, failed: true, result: null };
 
@@ -37,6 +55,7 @@ export function readFilters(params: ParamMap): TaskFilters {
   const sort = params.get('sort');
   const page = Number(params.get('page'));
   return {
+    search: (params.get('q') ?? '').trim().slice(0, SEARCH_MAX),
     categoryId: params.get('category'),
     municipalityId: params.get('municipality'),
     sort: sort && sort in TASK_SORTS ? (sort as TaskSort) : 'newest',
@@ -68,9 +87,13 @@ export class BrowseTasks {
     MapPin,
     Plus,
     RotateCcw,
+    Search,
     SearchX,
     SlidersHorizontal,
+    X,
   };
+  readonly searchMax = SEARCH_MAX;
+  readonly searchText = signal('');
 
   readonly sortOptions: SelectOption[] = Object.entries(TASK_SORTS).map(([value, sort]) => ({
     value,
@@ -87,6 +110,7 @@ export class BrowseTasks {
   readonly state$: Observable<ListState>;
 
   private readonly retry$ = new BehaviorSubject<void>(undefined);
+  private readonly typed$ = new Subject<string>();
 
   @ViewChild('list') private list?: ElementRef<HTMLElement>;
 
@@ -116,6 +140,14 @@ export class BrowseTasks {
       ]),
     );
     this.filters$ = this.route.queryParamMap.pipe(map(readFilters), shareReplay(1));
+    this.filters$.pipe(takeUntilDestroyed()).subscribe((filters) => {
+      if (filters.search !== this.searchText().trim()) {
+        this.searchText.set(filters.search);
+      }
+    });
+    this.typed$
+      .pipe(debounceTime(SEARCH_DELAY_MS), takeUntilDestroyed())
+      .subscribe((text) => this.applySearch(text.trim()));
     this.state$ = combineLatest([this.filters$, this.retry$]).pipe(
       switchMap(([filters]) =>
         this.taskService.browse(filters).pipe(
@@ -134,6 +166,28 @@ export class BrowseTasks {
   categoryLabel(categories: Category[] | null, id: string | null): string | undefined {
     const category = categories?.find((item) => item.id === id);
     return category ? (tOptional(`categories.${category.slug}`) ?? category.name) : undefined;
+  }
+
+  type(text: string): void {
+    this.searchText.set(text);
+    this.typed$.next(text);
+  }
+
+  searchNow(): void {
+    this.applySearch(this.searchText().trim());
+  }
+
+  clearSearch(): void {
+    this.searchText.set('');
+    this.typed$.next('');
+    this.applySearch('');
+  }
+
+  private applySearch(text: string): void {
+    if (text === (this.route.snapshot.queryParamMap.get('q') ?? '')) {
+      return;
+    }
+    this.updateQuery({ q: text || null });
   }
 
   setCategory(categoryId: string | null): void {

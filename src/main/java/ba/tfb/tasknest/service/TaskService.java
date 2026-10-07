@@ -4,6 +4,7 @@ import ba.tfb.tasknest.domain.TaskStateMachine;
 import ba.tfb.tasknest.dto.task.CreateTaskRequest;
 import ba.tfb.tasknest.dto.task.TaskResponse;
 import ba.tfb.tasknest.dto.task.TaskSummaryResponse;
+import ba.tfb.tasknest.dto.task.UpdateTaskRequest;
 import ba.tfb.tasknest.entity.Category;
 import ba.tfb.tasknest.entity.Municipality;
 import ba.tfb.tasknest.entity.Offer;
@@ -28,12 +29,15 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -45,6 +49,11 @@ public class TaskService {
 
     private static final Set<String> SORTABLE_FIELDS =
             Set.of("publishedAt", "createdAt", "updatedAt", "expiresAt", "budget", "title", "status");
+
+    private static final Set<TaskStatus> EDITABLE_STATUSES = EnumSet.of(TaskStatus.DRAFT, TaskStatus.PUBLISHED);
+
+    private static final String ACCENTED_LETTERS = "čćšđž";
+    private static final String PLAIN_LETTERS = "ccsdz";
 
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
@@ -81,6 +90,57 @@ public class TaskService {
         task.setStatus(TaskStatus.DRAFT);
 
         return TaskResponse.from(taskRepository.save(task));
+    }
+
+    @Transactional
+    public TaskResponse updateTask(UUID taskId, UUID clientId, UpdateTaskRequest request) {
+        Task task = taskRepository.findWithWriteLockById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
+
+        if (!task.getClient().getId().equals(clientId)) {
+            throw new NotResourceOwnerException("Task does not belong to this user");
+        }
+
+        if (!EDITABLE_STATUSES.contains(task.getStatus())) {
+            throw new BusinessRuleException("Only a draft or a task that is open for offers can be edited");
+        }
+
+        Category category = categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category", request.categoryId()));
+
+        if (!category.isActive() && !category.equals(task.getCategory())) {
+            throw new BusinessRuleException("Category is not active: " + category.getName());
+        }
+
+        Municipality municipality = municipalityRepository.findById(request.municipalityId())
+                .orElseThrow(() -> new ResourceNotFoundException("Municipality", request.municipalityId()));
+
+        boolean changed = !request.title().equals(task.getTitle())
+                || !Objects.equals(request.description(), task.getDescription())
+                || !category.equals(task.getCategory())
+                || !municipality.equals(task.getMunicipality())
+                || !sameAmount(request.budget(), task.getBudget());
+
+        if (!changed) {
+            return TaskResponse.from(task);
+        }
+
+        task.setTitle(request.title());
+        task.setDescription(request.description());
+        task.setCategory(category);
+        task.setMunicipality(municipality);
+        task.setBudget(request.budget());
+        taskRepository.flush();
+
+        if (task.getStatus() == TaskStatus.PUBLISHED) {
+            notificationService.notifyTaskUpdated(task, offerService.taskersWithPendingOffers(task));
+        }
+
+        return TaskResponse.from(task);
+    }
+
+    private static boolean sameAmount(BigDecimal first, BigDecimal second) {
+        return first == null || second == null ? first == second : first.compareTo(second) == 0;
     }
 
     @Transactional
@@ -303,9 +363,29 @@ public class TaskService {
     @Transactional(readOnly = true)
     public Page<TaskSummaryResponse> browseTasks(UUID categoryId,
                                                  UUID municipalityId,
+                                                 String search,
                                                  Pageable pageable) {
         return taskRepository.findOpenTasks(TaskStatus.PUBLISHED, LocalDateTime.now(clock),
-                categoryId, municipalityId, sortable(pageable));
+                categoryId, municipalityId, searchPattern(search), sortable(pageable));
+    }
+
+    static String searchPattern(String search) {
+        if (search == null || search.isBlank()) {
+            return "";
+        }
+        String lowerCase = search.strip().toLowerCase(Locale.ROOT);
+        StringBuilder pattern = new StringBuilder(lowerCase.length());
+        for (char letter : lowerCase.toCharArray()) {
+            int accented = ACCENTED_LETTERS.indexOf(letter);
+            if (accented >= 0) {
+                pattern.append(PLAIN_LETTERS.charAt(accented));
+            } else if (letter == '!' || letter == '%' || letter == '_') {
+                pattern.append('!').append(letter);
+            } else {
+                pattern.append(letter);
+            }
+        }
+        return pattern.toString();
     }
 
     @Transactional(readOnly = true)

@@ -187,6 +187,15 @@ public class NotificationService {
     }
 
     @Transactional
+    public void notifyTaskUpdated(Task task, List<User> taskers) {
+        for (User tasker : taskers) {
+            save(tasker, NotificationType.TASK_UPDATED, task,
+                    "The client changed a task you made an offer on: " + task.getTitle()
+                            + ". Check that your offer still fits.");
+        }
+    }
+
+    @Transactional
     public void notifyTaskRemoved(Task task, String reason) {
         save(task.getClient(), NotificationType.TASK_REMOVED, task,
                 "Your task was removed by a moderator: " + task.getTitle() + ". Reason: " + reason);

@@ -67,7 +67,7 @@ class DemoDataSeederTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("Every open demo task shows up in the public listing")
     void seed_fillsThePublicListing() {
-        long open = taskService.browseTasks(null, null, PageRequest.of(0, 50)).getTotalElements();
+        long open = taskService.browseTasks(null, null, null, PageRequest.of(0, 50)).getTotalElements();
 
         assertThat(open).isEqualTo(25);
     }

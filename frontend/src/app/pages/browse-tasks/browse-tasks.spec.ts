@@ -113,11 +113,54 @@ describe('Browse tasks page', () => {
 
     expect(text()).toContain('Fix the kitchen sink');
   });
+
+  it('searches a moment after the user stops typing and keeps the words in the address', async () => {
+    await open('/tasks?category=c1');
+    taskRequest().flush(page([task]));
+    await harness.fixture.whenStable();
+
+    const input = harness.routeNativeElement!.querySelector<HTMLInputElement>('#task-search')!;
+    for (const typed of ['ves', 'ves ma', 'ves masina ']) {
+      input.value = typed;
+      input.dispatchEvent(new Event('input'));
+    }
+    http.expectNone((req) => req.url === '/api/tasks');
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    await harness.fixture.whenStable();
+
+    const params = taskRequest().request.params;
+    expect(params.get('q')).toBe('ves masina');
+    expect(params.get('categoryId')).toBe('c1');
+    expect(router.url).toBe('/tasks?category=c1&q=ves%20masina');
+  });
+
+  it('says what was searched for when nothing matches and clears the search in one click', async () => {
+    await open('/tasks?q=perilica');
+    const request = taskRequest();
+    expect(request.request.params.get('q')).toBe('perilica');
+    request.flush(page([]));
+    await harness.fixture.whenStable();
+
+    expect(harness.routeNativeElement!.querySelector<HTMLInputElement>('#task-search')!.value).toBe('perilica');
+    expect(text()).toContain('No open task matches “perilica”');
+
+    harness.routeNativeElement!.querySelector<HTMLButtonElement>('[aria-label="Clear search"]')!.click();
+    await harness.fixture.whenStable();
+
+    expect(router.url).toBe('/tasks');
+    expect(taskRequest().request.params.has('q')).toBe(false);
+  });
 });
 
 describe('readFilters', () => {
+  it('trims the search from the address and cuts it at 100 characters', () => {
+    expect(readFilters(convertToParamMap({ q: '  perilica ' })).search).toBe('perilica');
+    expect(readFilters(convertToParamMap({ q: 'a'.repeat(150) })).search).toHaveLength(100);
+  });
+
   it('falls back to safe values when the address holds nonsense', () => {
     expect(readFilters(convertToParamMap({ sort: 'hack', page: '-4' }))).toEqual({
+      search: '',
       categoryId: null,
       municipalityId: null,
       sort: 'newest',

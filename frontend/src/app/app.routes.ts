@@ -20,6 +20,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/post-task/post-task').then((m) => m.PostTask),
   },
   {
+    path: 'tasks/:id/edit',
+    canActivate: [roleGuard('CLIENT')],
+    title: 'titles.editTask',
+    loadComponent: () => import('./pages/post-task/post-task').then((m) => m.PostTask),
+  },
+  {
     path: 'tasks/:id',
     title: 'titles.task',
     loadComponent: () => import('./pages/task-detail/task-detail').then((m) => m.TaskDetailPage),
@@ -83,6 +89,12 @@ export const routes: Routes = [
   },
   { path: 'taskers/:userId', redirectTo: profileAs('tasker') },
   { path: 'clients/:userId', redirectTo: profileAs('client') },
+  {
+    path: 'settings',
+    canActivate: [authGuard],
+    title: 'titles.settings',
+    loadComponent: () => import('./pages/account-settings/account-settings').then((m) => m.AccountSettings),
+  },
   {
     path: 'messages',
     canActivate: [authGuard],

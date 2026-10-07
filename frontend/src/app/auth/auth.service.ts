@@ -13,7 +13,7 @@ import {
   switchMap,
   throwError,
 } from 'rxjs';
-import { AuthResponse, BecomeTaskerRequest, LoginRequest, RegisterRequest } from '../api/models';
+import { AuthResponse, BecomeTaskerRequest, ChangePasswordRequest, LoginRequest, RegisterRequest } from '../api/models';
 import { CurrentUser, Role } from './current-user';
 
 const REFRESH_LOCK = 'tasknest-token-refresh';
@@ -85,6 +85,19 @@ export class AuthService {
 
   resetPassword(token: string, password: string): Observable<void> {
     return this.http.post<void>('/api/auth/password-reset/confirm', { token, password });
+  }
+
+  changePassword(request: ChangePasswordRequest): Observable<CurrentUser> {
+    return this.http
+      .post<AuthResponse>('/api/account/password', request)
+      .pipe(map((response) => this.startSession(response)));
+  }
+
+  rename(fullName: string): void {
+    const user = this.currentUser;
+    if (user) {
+      this.userSubject.next({ ...user, fullName });
+    }
   }
 
   restoreSession(): Observable<void> {

@@ -81,8 +81,12 @@
                   <svg [appIcon]="icons.Shield" class="w-4 h-4"></svg> {{ 'nav.admin' | t }}
                 </a>
               }
+              <a routerLink="/settings" (click)="closeMenu()" role="menuitem"
+                 class="px-3 py-2 hover:bg-slate-50 flex items-center gap-2.5 transition-colors border-t border-slate-100 mt-1">
+                <svg [appIcon]="icons.Settings" class="w-4 h-4 text-slate-400"></svg> {{ 'nav.settings' | t }}
+              </a>
               <button type="button" (click)="logout()" role="menuitem"
-                      class="w-full px-3 py-2 text-status-error hover:bg-red-50 flex items-center gap-2.5 transition-colors border-t border-slate-100 mt-1">
+                      class="w-full px-3 py-2 text-status-error hover:bg-red-50 flex items-center gap-2.5 transition-colors">
                 <svg [appIcon]="icons.LogOut" class="w-4 h-4"></svg> {{ 'nav.logOut' | t }}
               </button>
             </div>

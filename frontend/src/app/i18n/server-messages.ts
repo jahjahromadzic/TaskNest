@@ -16,6 +16,10 @@ const EXACT: Record<string, string> = {
   'The photo is empty': 'Fotografija je prazna',
   'Photos can only be changed while the task is a draft or open for offers':
     'Fotografije se mogu mijenjati samo dok je oglas nacrt ili prima ponude',
+  'Only a draft or a task that is open for offers can be edited':
+    'Mijenjati se može samo nacrt ili oglas koji prima ponude',
+  'The current password is not correct': 'Trenutna lozinka nije tačna',
+  'The new password must be different from the current one': 'Nova lozinka mora biti drugačija od trenutne',
   'This reset link is invalid or has expired. Ask for a new one.':
     'Ovaj link za promjenu lozinke nije važeći ili je istekao. Zatraži novi.',
   'Invalid refresh token': SESSION,
@@ -92,6 +96,10 @@ const NOTIFICATIONS: Rule[] = [
     'Oglas je automatski zatvoren i računa se kao završen: $1',
   ],
   [/^Your offer is active again: (.*)$/s, 'Tvoja ponuda je ponovo aktivna: $1'],
+  [
+    /^The client changed a task you made an offer on: (.*)\. Check that your offer still fits\.$/s,
+    'Klijent je izmijenio oglas na koji si dao ponudu: $1. Provjeri da li ti ponuda još odgovara.',
+  ],
 ];
 
 function applyRules(text: string, rules: Rule[]): string | null {

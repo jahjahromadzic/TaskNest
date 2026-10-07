@@ -1,10 +1,12 @@
 import { Component, OnDestroy, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable, catchError, concat, defaultIfEmpty, from, map, of, shareReplay, switchMap, toArray } from 'rxjs';
-import { ArrowLeft, CircleAlert, Eye, Lightbulb, LoaderCircle, MapPin, Save, Send, X } from 'lucide';
-import { Category, Municipality, TaskDetail, TaskSummary } from '../../api/models';
+import { ArrowLeft, CircleAlert, Eye, Images, Lightbulb, LoaderCircle, Lock, MapPin, Save, Send, X } from 'lucide';
+import { Category, CreateTaskRequest, Municipality, TaskDetail, TaskSummary } from '../../api/models';
+import { AuthService } from '../../auth/auth.service';
 import { CategoryIcon } from '../../components/category-icon/category-icon';
 import { Icon } from '../../components/icon/icon';
 import { PhotoDropzone } from '../../components/photo-dropzone/photo-dropzone';
@@ -22,6 +24,9 @@ export const TITLE_MAX = 200;
 export const DESCRIPTION_MAX = 5000;
 
 type SubmitMode = 'draft' | 'publish';
+type LoadState = 'ready' | 'loading' | 'locked' | 'missing' | 'failed';
+
+const EDITABLE_STATUSES = ['DRAFT', 'PUBLISHED'];
 
 interface PendingPhoto {
   file: File;
@@ -34,7 +39,7 @@ interface PendingPhoto {
   templateUrl: './post-task.html',
 })
 export class PostTask implements OnDestroy {
-  protected readonly icons = { ArrowLeft, CircleAlert, Eye, Lightbulb, LoaderCircle, MapPin, Save, Send, X };
+  protected readonly icons = { ArrowLeft, CircleAlert, Eye, Images, Lightbulb, LoaderCircle, Lock, MapPin, Save, Send, X };
   readonly maxPhotos = MAX_PHOTOS;
   readonly photos = signal<PendingPhoto[]>([]);
 
@@ -46,6 +51,10 @@ export class PostTask implements OnDestroy {
   categoryId: string | null = null;
   municipalityId: string | null = null;
   budget: number | null = null;
+
+  readonly editId: string | null;
+  readonly original = signal<TaskDetail | null>(null);
+  readonly load = signal<LoadState>('ready');
 
   readonly attempted = signal(false);
   readonly submitting = signal<SubmitMode | null>(null);
@@ -64,7 +73,17 @@ export class PostTask implements OnDestroy {
     private toastService: ToastService,
     private router: Router,
     private preparer: PhotoPreparer,
+    private authService: AuthService,
+    route: ActivatedRoute,
   ) {
+    this.editId = route.snapshot.paramMap.get('id');
+    if (this.editId) {
+      this.load.set('loading');
+      this.taskService.getTask(this.editId).subscribe({
+        next: (task) => this.startEditing(task),
+        error: (error) => this.load.set(isMissing(error) ? 'missing' : 'failed'),
+      });
+    }
     this.categories$ = this.referenceService.getCategories().pipe(shareReplay(1));
     this.municipalities$ = this.referenceService.getMunicipalities().pipe(shareReplay(1));
     this.municipalityOptions$ = this.municipalities$.pipe(
@@ -84,9 +103,31 @@ export class PostTask implements OnDestroy {
       categorySlug: category?.slug,
       categoryName: category?.name ?? t('postTask.previewCategory'),
       municipalityName: municipalities?.find((item) => item.id === this.municipalityId)?.name ?? t('postTask.previewMunicipality'),
-      publishedAt: this.previewPublished,
-      expiresAt: this.previewExpiry,
+      publishedAt: this.original()?.publishedAt ?? this.previewPublished,
+      expiresAt: this.original()?.expiresAt ?? this.previewExpiry,
     };
+  }
+
+  coverPreview(): string | null {
+    return this.editId ? (this.original()?.photos?.[0]?.url ?? null) : (this.photos()[0]?.preview ?? null);
+  }
+
+  private startEditing(task: TaskDetail): void {
+    if (task.clientId !== this.authService.currentUser?.id) {
+      this.load.set('missing');
+      return;
+    }
+    this.original.set(task);
+    if (!EDITABLE_STATUSES.includes(task.status ?? '')) {
+      this.load.set('locked');
+      return;
+    }
+    this.title = task.title ?? '';
+    this.description = task.description ?? '';
+    this.categoryId = task.categoryId ?? null;
+    this.municipalityId = task.municipalityId ?? null;
+    this.budget = task.budget ?? null;
+    this.load.set('ready');
   }
 
   serverError(field: string): string | undefined {
@@ -125,14 +166,13 @@ export class PostTask implements OnDestroy {
     this.submitting.set(mode);
     this.error.set(null);
 
+    if (this.editId) {
+      this.saveChanges(this.editId, mode);
+      return;
+    }
+
     this.taskService
-      .createTask({
-        title: this.title.trim(),
-        description: this.description.trim() || undefined,
-        categoryId: this.categoryId,
-        municipalityId: this.municipalityId!,
-        budget: this.budget ?? undefined,
-      })
+      .createTask(this.request())
       .pipe(
         switchMap((draft) => this.uploadPhotos(draft.id!).pipe(map(() => draft))),
         switchMap((draft) =>
@@ -146,6 +186,33 @@ export class PostTask implements OnDestroy {
       )
       .subscribe({
         next: (result) => this.finish(result.task, result.published, 'publishFailed' in result),
+        error: (error) => {
+          this.error.set(readApiError(error));
+          this.submitting.set(null);
+        },
+      });
+  }
+
+  private request(): CreateTaskRequest {
+    return {
+      title: this.title.trim(),
+      description: this.description.trim() || undefined,
+      categoryId: this.categoryId!,
+      municipalityId: this.municipalityId!,
+      budget: this.budget ?? undefined,
+    };
+  }
+
+  private saveChanges(taskId: string, mode: SubmitMode): void {
+    const publish = mode === 'publish' && this.original()?.status === 'DRAFT';
+    this.taskService
+      .updateTask(taskId, this.request())
+      .pipe(switchMap((task) => (publish ? this.taskService.publishTask(task.id!) : of(task))))
+      .subscribe({
+        next: (task) => {
+          this.toastService.success(t(publish ? 'postTask.published' : 'postTask.changesSaved'));
+          this.router.navigate(['/tasks', task.id]);
+        },
         error: (error) => {
           this.error.set(readApiError(error));
           this.submitting.set(null);
@@ -184,4 +251,8 @@ export class PostTask implements OnDestroy {
     }
     this.router.navigate(['/tasks', task.id]);
   }
+}
+
+function isMissing(error: unknown): boolean {
+  return error instanceof HttpErrorResponse && (error.status === 404 || error.status === 400 || error.status === 403);
 }

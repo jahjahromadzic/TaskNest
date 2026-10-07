@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Ban, CircleCheckBig, LoaderCircle, Send, Undo2 } from 'lucide';
+import { RouterLink } from '@angular/router';
+import { Ban, CircleCheckBig, LoaderCircle, PencilLine, Send, Undo2 } from 'lucide';
 import { TaskDetail } from '../../api/models';
 import { TaskService } from '../../services/task.service';
 import { readApiError } from '../../shared/api-error';
@@ -17,11 +18,11 @@ type TaskAction = 'publish' | 'cancel' | 'reopen' | 'close';
 
 @Component({
   selector: 'app-task-actions',
-  imports: [Icon, TranslatePipe],
+  imports: [Icon, RouterLink, TranslatePipe],
   templateUrl: './task-actions.html',
 })
 export class TaskActions {
-  protected readonly icons = { Ban, CircleCheckBig, LoaderCircle, Send, Undo2 };
+  protected readonly icons = { Ban, CircleCheckBig, LoaderCircle, PencilLine, Send, Undo2 };
 
   @Input({ required: true }) task!: TaskDetail;
   @Output() changed = new EventEmitter<void>();
@@ -37,6 +38,10 @@ export class TaskActions {
 
   get tasker(): string {
     return this.task.assignedTaskerName ?? t('actions.theTasker');
+  }
+
+  get canEdit(): boolean {
+    return this.task.status === 'DRAFT' || this.task.status === 'PUBLISHED';
   }
 
   get canCancel(): boolean {

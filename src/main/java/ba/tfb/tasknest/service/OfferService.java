@@ -186,6 +186,13 @@ public class OfferService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<User> taskersWithPendingOffers(Task task) {
+        return offerRepository.findByTaskAndStatus(task, OfferStatus.PENDING).stream()
+                .map(Offer::getTasker)
+                .toList();
+    }
+
     @Transactional
     public void rejectActiveOffers(Task task) {
         for (Offer offer : offerRepository.findByTask(task)) {

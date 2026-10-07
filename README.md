@@ -30,18 +30,20 @@ single-page application that uses it.
 ## Features
 
 - **Accounts and roles** — every account starts as a client and can activate the
-  tasker role from within the application.
+  tasker role from within the application. On the settings page a user changes their
+  name and phone, and their password after confirming the current one.
 - **Authentication** — JWT access tokens with long-lived refresh tokens, token
   rotation, and reuse detection. Refresh tokens are stored only as SHA-256 hashes,
   so a copy of the database does not contain usable tokens. Account suspension
   takes effect immediately.
-- **Task management** — clients create, publish and cancel tasks. A state machine
-  governs the allowed transitions.
+- **Task management** — clients create, publish, edit and cancel tasks. A state machine
+  governs the allowed transitions. A task can be edited while it is a draft or open for
+  offers, and taskers who already sent an offer are told about the change.
 - **Offers** — taskers submit offers on published tasks. When a client accepts
   one, the task is assigned and the remaining offers are rejected automatically.
 - **Tasker coverage** — taskers select the categories and municipalities they
   serve, which drives task matching.
-- **Task discovery** — a public listing with filters, a personalised feed of
+- **Task discovery** — a public listing with a text search and filters, a personalised feed of
   matching tasks for taskers, and separate views for posted and assigned work.
 - **Work execution** — the tasker reports start and completion, the client
   confirms and closes. Confirmed work raises the tasker's completed-job count.
@@ -74,7 +76,7 @@ single-page application that uses it.
 | Language | Java 21 |
 | Framework | Spring Boot 4.1.1 |
 | Database | PostgreSQL 17 |
-| Migrations | Liquibase (41 changesets, 16 tables) |
+| Migrations | Liquibase (43 changesets, 17 tables) |
 | Persistence | Spring Data JPA, Hibernate 7 (`ddl-auto: validate`) |
 | Security | Spring Security, JWT (jjwt 0.12.6) |
 | Messaging | RabbitMQ |
@@ -223,8 +225,9 @@ browser sees one origin. That matters because the refresh token travels in a
 - **Guards** — pages are protected by login and by role (tasker, admin). A visitor
   is sent to the login page and returned to the requested page afterwards; the
   return address must stay inside the application.
-- **Task list** — filters, sorting and the page number live in the URL, so a
-  filtered list can be shared, reloaded and navigated with the back button.
+- **Task list** — the search text, filters, sorting and the page number live in the URL, so a
+  filtered list can be shared, reloaded and navigated with the back button. The search
+  runs 300 ms after the user stops typing, so a word costs one request, not one per letter.
 - **Live updates** — one WebSocket connection per signed-in user delivers new
   messages, read receipts and notifications. Unread counts are fetched again on
   every live event and after every reconnect, so an event missed while offline
@@ -377,13 +380,27 @@ successful login clears the count for that email. The counters live in the
 application, which fits a single instance; several instances would share them
 through Redis.
 
+### Account — `/api/account`
+
+| Method | Path | Access | Description |
+|---|---|---|---|
+| GET | `/` | Authenticated | The caller's own email, name, phone and the date they joined |
+| PUT | `/` | Authenticated | Change the first name, last name and phone. The email is the login and stays fixed |
+| POST | `/password` | Authenticated | Change the password with `currentPassword` and `newPassword`. A wrong current password answers `400` and counts as a failed login, so it is throttled the same way. Every other session is signed out, and this device gets a fresh token pair |
+
+When the password changes, the account's refresh tokens are deleted rather than
+marked as revoked. A revoked token that comes back is treated as stolen and signs
+out every session, so an old browser tab refreshing a revoked token would also sign
+out the device that just changed the password. A deleted token is simply unknown.
+
 ### Tasks — `/api/tasks`
 
 | Method | Path | Access | Description |
 |---|---|---|---|
-| GET | `/` | Public | List published tasks. Filters: `categoryId`, `municipalityId` |
+| GET | `/` | Public | List published tasks. Filters: `q` (text, at most 100 characters), `categoryId`, `municipalityId` |
 | GET | `/{id}` | Public | Task details, including the hired tasker. Drafts are visible to the owner only |
 | POST | `/` | Client | Create a task as a draft |
+| PUT | `/{id}` | Client | Change the title, description, category, municipality and budget of a draft or a task open for offers. Taskers with a pending offer are notified, unless nothing changed |
 | POST | `/{id}/publish` | Client | Publish a draft |
 | POST | `/{id}/cancel` | Client | Cancel a task |
 | POST | `/{id}/reopen` | Client | Release the assigned tasker and reopen the task |
@@ -394,6 +411,15 @@ through Redis.
 | GET | `/mine/counts` | Client | Number of the caller's tasks in every status, from one grouped query |
 | GET | `/matching` | Tasker | Published tasks matching the caller's coverage |
 | GET | `/assigned` | Tasker | Tasks assigned to the caller |
+
+**Search.** `q` looks for the text in the title and the description, ignoring
+letter case and the Bosnian letters č, ć, š, đ and ž, so `ciscenje` finds
+"Čišćenje stana". The `%` and `_` characters are searched as plain text rather than
+as SQL wildcards.
+
+**Editing.** The task row is locked for writing while it is edited, and submitting
+an offer waits for that lock, so an offer cannot slip in between the edit and the
+notifications and miss the news.
 
 Listing endpoints accept `page`, `size` and `sort`. The maximum page size is 50.
 Sortable fields are `publishedAt`, `createdAt`, `updatedAt`, `expiresAt`,
@@ -801,13 +827,13 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **361 tests** and requires no manual setup — Testcontainers
+The suite contains **381 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 141 | Service business rules, the task state machine and the login attempt limiter |
-| Integration | 220 | Authentication, password reset, login throttling, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
+| Integration | 240 | Authentication, password reset, login throttling, account settings, task editing and search, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
 
 Every integration test starts from an empty database: one `TRUNCATE ... CASCADE` after each test
 clears all application tables at once. Clearing them table by table left a window in which the
@@ -816,9 +842,9 @@ about to be deleted. The listener also ignores events for tasks that are no long
 left over from an earlier test cannot reach the next one. The suite passes in random class order
 (`./mvnw verify -Dsurefire.runOrder=random`).
 
-The frontend has its own suite of **237 tests** (Vitest), covering the session
+The frontend has its own suite of **249 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
-header, the task list and task details, posting a task, the client's own tasks, offers
+header, the task list and its search, task details, posting and editing a task, account settings, the client's own tasks, offers
 and hiring, cancelling, reopening and closing a task, reviews, becoming a tasker and editing the tasker profile, sending and withdrawing offers,
 starting and finishing a job, the tasker dashboard, the user profile with its tasker and client sides, the notification bell and page, the messages page and chat helpers, live updates over WebSocket, the admin panel, translations and plural rules, the theme switch, the confirmation dialog, the dropdown, the progress
 timeline, date helpers and the category icons. The server is simulated with Angular's

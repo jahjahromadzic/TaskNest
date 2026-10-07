@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { TaskDetail } from '../../api/models';
 import { ConfirmOptions, ConfirmService } from '../../shared/confirm/confirm.service';
 import { TaskActions } from './task-actions';
@@ -20,6 +21,7 @@ describe('Task actions', () => {
     changed = 0;
     TestBed.configureTestingModule({
       providers: [
+        provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
         {
@@ -51,6 +53,10 @@ describe('Task actions', () => {
     );
   }
 
+  function editLink(): string | null {
+    return fixture.nativeElement.querySelector('a')?.getAttribute('href') ?? null;
+  }
+
   async function press(label: string): Promise<void> {
     Array.from<HTMLButtonElement>(fixture.nativeElement.querySelectorAll('button'))
       .find((button) => button.textContent!.includes(label))!
@@ -61,12 +67,15 @@ describe('Task actions', () => {
   it('offers only the actions that the status allows', async () => {
     await show({ status: 'DRAFT' });
     expect(buttons()).toEqual(['Publish task', 'Discard draft']);
+    expect(editLink()).toBe('/tasks/t1/edit');
 
     await show({ status: 'PUBLISHED' });
     expect(buttons()).toEqual(['Cancel task']);
+    expect(editLink()).toBe('/tasks/t1/edit');
 
     await show({ status: 'ASSIGNED' });
     expect(buttons()).toEqual(["Tasker can't make it? Reopen", 'Cancel task']);
+    expect(editLink()).toBeNull();
 
     await show({ status: 'COMPLETED', completedAt: new Date().toISOString() });
     expect(buttons()).toEqual(['Confirm and close']);

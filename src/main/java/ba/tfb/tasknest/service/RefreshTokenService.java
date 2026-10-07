@@ -93,6 +93,11 @@ public class RefreshTokenService {
         });
     }
 
+    @Transactional
+    public void endAllSessions(java.util.UUID userId) {
+        refreshTokenRepository.deleteAllByUser(userId);
+    }
+
     private void handleReuse(RefreshToken reused) {
         java.util.UUID userId = reused.getUser().getId();
 

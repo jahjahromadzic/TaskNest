@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CreateTaskRequest, TaskDetail, TaskPage, TaskPhoto } from '../api/models';
+import { CreateTaskRequest, TaskDetail, TaskPage, TaskPhoto, UpdateTaskRequest } from '../api/models';
 import { TaskStatus } from '../shared/task-status/task-status';
 import { translated } from '../i18n/translate';
 
@@ -15,6 +15,7 @@ export const TASK_SORTS = {
 export type TaskSort = keyof typeof TASK_SORTS;
 
 export interface TaskFilters {
+  search: string;
   categoryId: string | null;
   municipalityId: string | null;
   sort: TaskSort;
@@ -32,6 +33,9 @@ export class TaskService {
       .set('page', filters.page)
       .set('size', TASKS_PER_PAGE)
       .set('sort', TASK_SORTS[filters.sort].value);
+    if (filters.search) {
+      params = params.set('q', filters.search);
+    }
     if (filters.categoryId) {
       params = params.set('categoryId', filters.categoryId);
     }
@@ -47,6 +51,10 @@ export class TaskService {
 
   createTask(request: CreateTaskRequest): Observable<TaskDetail> {
     return this.http.post<TaskDetail>('/api/tasks', request);
+  }
+
+  updateTask(id: string, request: UpdateTaskRequest): Observable<TaskDetail> {
+    return this.http.put<TaskDetail>(`/api/tasks/${encodeURIComponent(id)}`, request);
   }
 
   uploadPhoto(taskId: string, photo: Blob): Observable<TaskPhoto> {

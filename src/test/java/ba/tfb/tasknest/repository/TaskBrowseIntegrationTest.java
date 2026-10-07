@@ -124,7 +124,7 @@ class TaskBrowseIntegrationTest extends AbstractIntegrationTest {
 
     private Page<TaskSummaryResponse> browse() {
         return taskRepository.findOpenTasks(
-                TaskStatus.PUBLISHED, LocalDateTime.now(), null, null, PageRequest.of(0, 20));
+                TaskStatus.PUBLISHED, LocalDateTime.now(), null, null, "", PageRequest.of(0, 20));
     }
 
     private void persistTask(TaskStatus status, LocalDateTime expiresAt) {

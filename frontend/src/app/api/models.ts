@@ -6,6 +6,9 @@ export type AuthResponse = Schemas['AuthResponse'];
 export type LoginRequest = Schemas['LoginRequest'];
 export type BecomeTaskerRequest = Schemas['BecomeTaskerRequest'];
 export type RegisterRequest = Schemas['RegisterRequest'];
+export type Account = Schemas['AccountResponse'];
+export type UpdateAccountRequest = Schemas['UpdateAccountRequest'];
+export type ChangePasswordRequest = Schemas['ChangePasswordRequest'];
 
 export type Category = Schemas['CategoryResponse'];
 export type Municipality = Schemas['MunicipalityResponse'];
@@ -15,6 +18,7 @@ export type TaskDetail = Schemas['TaskResponse'];
 export type TaskPhoto = Schemas['TaskPhotoResponse'];
 export type TaskPage = Schemas['PagedResponseTaskSummaryResponse'];
 export type CreateTaskRequest = Schemas['CreateTaskRequest'];
+export type UpdateTaskRequest = Schemas['UpdateTaskRequest'];
 export type TaskOffer = Schemas['TaskOfferResponse'];
 export type Review = Schemas['ReviewResponse'];
 export type CreateReviewRequest = Schemas['CreateReviewRequest'];

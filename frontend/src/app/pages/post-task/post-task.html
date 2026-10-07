@@ -4,18 +4,38 @@
 ) {
   <div class="space-y-3">
     <nav [attr.aria-label]="'common.breadcrumb' | t">
-      <a routerLink="/tasks" class="group inline-flex items-center gap-1 text-sm text-text-sub hover:text-brand transition-colors">
+      <a [routerLink]="editId ? ['/tasks', editId] : '/tasks'" class="group inline-flex items-center gap-1 text-sm text-text-sub hover:text-brand transition-colors">
         <svg [appIcon]="icons.ArrowLeft" class="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5"></svg>
-        {{ 'postTask.back' | t }}
+        {{ (editId ? 'postTask.backToTask' : 'postTask.back') | t }}
       </a>
     </nav>
 
+    @switch (load()) {
+    @case ('loading') {
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" aria-hidden="true">
+        <div class="lg:col-span-2 bg-surface-card p-6 rounded-card border border-surface-border space-y-4">
+          <span class="skeleton block h-7 w-48"></span>
+          <span class="skeleton block h-10 w-full"></span>
+          <span class="skeleton block h-24 w-full"></span>
+          <span class="skeleton block h-10 w-full"></span>
+        </div>
+        <span class="skeleton block h-40 rounded-card"></span>
+      </div>
+    }
+    @case ('ready') {
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
       <form #form="ngForm" (ngSubmit)="submit(form, 'publish')" novalidate
             class="lg:col-span-2 bg-surface-card p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-4 animate-fade-in">
         <div>
-          <h1 class="text-2xl font-bold tracking-tight">{{ 'postTask.title' | t }}</h1>
-          <p class="text-sm text-text-sub mt-0.5">{{ 'postTask.subtitle' | t }}</p>
+          @if (editId) {
+            <h1 class="text-2xl font-bold tracking-tight">{{ 'postTask.editTitle' | t }}</h1>
+            <p class="text-sm text-text-sub mt-0.5">
+              {{ (original()?.status === 'PUBLISHED' ? 'postTask.editPublishedHint' : 'postTask.editDraftHint') | t }}
+            </p>
+          } @else {
+            <h1 class="text-2xl font-bold tracking-tight">{{ 'postTask.title' | t }}</h1>
+            <p class="text-sm text-text-sub mt-0.5">{{ 'postTask.subtitle' | t }}</p>
+          }
         </div>
 
         @if (error(); as error) {
@@ -115,6 +135,13 @@
           }
         </div>
 
+        @if (editId) {
+          <a [routerLink]="['/tasks', editId]"
+             class="group flex items-center gap-3 p-3 rounded-btn border border-dashed border-surface-border text-sm text-text-sub hover:border-brand/40 hover:text-text-main transition-colors">
+            <svg [appIcon]="icons.Images" class="w-4 h-4 text-brand shrink-0"></svg>
+            <span>{{ 'postTask.photosOnTaskPage' | t: { count: original()?.photos?.length ?? 0 } }}</span>
+          </a>
+        } @else {
         <div class="space-y-2">
           <p class="form-label">
             {{ 'photos.title' | t }} <span class="font-normal text-text-sub">{{ 'common.optional' | t }}</span>
@@ -136,23 +163,35 @@
             <app-photo-dropzone [remaining]="maxPhotos - photos().length" (picked)="addPhotos($event)" />
           }
         </div>
+        }
 
         <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 pt-4 border-t border-slate-100">
-          <button type="button" (click)="submit(form, 'draft')" [disabled]="submitting() !== null"
-                  class="btn-ghost border border-surface-border disabled:opacity-60">
-            @if (submitting() === 'draft') {
-              <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'common.saving' | t }}
-            } @else {
-              <svg [appIcon]="icons.Save" class="w-4 h-4"></svg> {{ 'postTask.saveDraft' | t }}
-            }
-          </button>
-          <button type="submit" [disabled]="submitting() !== null" class="btn-primary">
-            @if (submitting() === 'publish') {
-              <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'postTask.publishing' | t }}
-            } @else {
-              <svg [appIcon]="icons.Send" class="w-4 h-4"></svg> {{ 'postTask.publish' | t }}
-            }
-          </button>
+          @if (editId && original()?.status === 'PUBLISHED') {
+            <a [routerLink]="['/tasks', editId]" class="btn-ghost border border-surface-border">{{ 'common.cancel' | t }}</a>
+            <button type="submit" [disabled]="submitting() !== null" class="btn-primary">
+              @if (submitting()) {
+                <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'common.saving' | t }}
+              } @else {
+                <svg [appIcon]="icons.Save" class="w-4 h-4"></svg> {{ 'postTask.saveChanges' | t }}
+              }
+            </button>
+          } @else {
+            <button type="button" (click)="submit(form, 'draft')" [disabled]="submitting() !== null"
+                    class="btn-ghost border border-surface-border disabled:opacity-60">
+              @if (submitting() === 'draft') {
+                <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'common.saving' | t }}
+              } @else {
+                <svg [appIcon]="icons.Save" class="w-4 h-4"></svg> {{ (editId ? 'postTask.saveChanges' : 'postTask.saveDraft') | t }}
+              }
+            </button>
+            <button type="submit" [disabled]="submitting() !== null" class="btn-primary">
+              @if (submitting() === 'publish') {
+                <svg [appIcon]="icons.LoaderCircle" class="w-4 h-4 animate-spin"></svg> {{ 'postTask.publishing' | t }}
+              } @else {
+                <svg [appIcon]="icons.Send" class="w-4 h-4"></svg> {{ (editId ? 'postTask.saveAndPublish' : 'postTask.publish') | t }}
+              }
+            </button>
+          }
         </div>
       </form>
 
@@ -161,7 +200,7 @@
           <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
             <svg [appIcon]="icons.Eye" class="w-3.5 h-3.5"></svg> {{ 'postTask.preview' | t }}
           </p>
-          <app-task-card [task]="preview(vm.categories, vm.municipalities)" [coverUrl]="photos()[0]?.preview ?? null"
+          <app-task-card [task]="preview(vm.categories, vm.municipalities)" [coverUrl]="coverPreview()"
                          inert class="block pointer-events-none" />
         </div>
 
@@ -178,5 +217,31 @@
         </div>
       </aside>
     </div>
+    }
+    @default {
+      <div class="bg-surface-card p-10 rounded-card border border-surface-border shadow-subtle text-center space-y-3 max-w-lg mx-auto animate-slide-in">
+        <div class="mx-auto w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+          <svg [appIcon]="load() === 'locked' ? icons.Lock : icons.CircleAlert" class="w-7 h-7"></svg>
+        </div>
+        @switch (load()) {
+          @case ('locked') {
+            <h1 class="text-xl font-semibold">{{ 'postTask.lockedTitle' | t }}</h1>
+            <p class="text-sm text-text-sub">{{ 'postTask.lockedText' | t }}</p>
+            <a [routerLink]="['/tasks', editId]" class="btn-primary py-2">{{ 'postTask.backToTask' | t }}</a>
+          }
+          @case ('missing') {
+            <h1 class="text-xl font-semibold">{{ 'detail.notAvailableTitle' | t }}</h1>
+            <p class="text-sm text-text-sub">{{ 'postTask.notYours' | t }}</p>
+            <a routerLink="/my-tasks" class="btn-primary py-2">{{ 'nav.myTasks' | t }}</a>
+          }
+          @default {
+            <h1 class="text-xl font-semibold">{{ 'common.somethingWrong' | t }}</h1>
+            <p class="text-sm text-text-sub">{{ 'detail.failedText' | t }}</p>
+            <a [routerLink]="['/tasks', editId]" class="btn-primary py-2">{{ 'postTask.backToTask' | t }}</a>
+          }
+        }
+      </div>
+    }
+    }
   </div>
 }

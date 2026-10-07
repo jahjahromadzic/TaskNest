@@ -7,6 +7,7 @@ import {
   Hourglass,
   MapPin,
   MessageSquare,
+  PencilLine,
   RotateCcw,
   ShieldAlert,
   Star,
@@ -47,6 +48,7 @@ export const NOTIFICATION_KINDS: Record<NotificationType, NotificationKind> = {
   OFFER_REACTIVATED: translated({ icon: RotateCcw, tone: BRAND }, { title: 'notifications.kinds.OFFER_REACTIVATED' }),
   ASSIGNMENT_EXPIRED: translated({ icon: TimerOff, tone: WARNING }, { title: 'notifications.kinds.ASSIGNMENT_EXPIRED' }),
   TASK_AUTO_CLOSED: translated({ icon: Archive, tone: NEUTRAL }, { title: 'notifications.kinds.TASK_AUTO_CLOSED' }),
+  TASK_UPDATED: translated({ icon: PencilLine, tone: INFO }, { title: 'notifications.kinds.TASK_UPDATED' }),
 };
 
 export function notificationKind(type: AppNotification['type']): NotificationKind {
