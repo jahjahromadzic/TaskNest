@@ -70,6 +70,8 @@
             }
           </section>
 
+          <app-task-photos [task]="task" [editable]="canEditPhotos(task, vm.user)" class="block [animation-delay:90ms]" />
+
           @if ((isOwner(task, vm.user) || isAssignedTasker(task, vm.user)) && task.status === 'CLOSED') {
             <app-task-reviews [task]="task" [viewerId]="vm.user!.id" class="block animate-fade-in [animation-delay:100ms]" />
           }

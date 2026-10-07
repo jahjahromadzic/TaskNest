@@ -26,6 +26,9 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Lock(LockModeType.PESSIMISTIC_READ)
     Optional<Task> findWithSharedLockById(UUID id);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Task> findWithWriteLockById(UUID id);
+
     @Query("select t.id from Task t where t.status = :status and t.assignedAt < :cutoff")
     List<UUID> findIdsAssignedBefore(@Param("status") TaskStatus status,
                                      @Param("cutoff") LocalDateTime cutoff);
@@ -39,7 +42,8 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("""
         select new ba.tfb.tasknest.dto.task.TaskSummaryResponse(
             t.id, t.title, t.budget, t.status,
-            c.slug, c.name, m.name, t.publishedAt, t.expiresAt)
+            c.slug, c.name, m.name, t.publishedAt, t.expiresAt,
+            (select p.id from TaskPhoto p where p.task = t and p.position = 0))
         from Task t
         join t.category c
         join t.municipality m
@@ -57,7 +61,8 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("""
         select new ba.tfb.tasknest.dto.task.TaskSummaryResponse(
             t.id, t.title, t.budget, t.status,
-            c.slug, c.name, m.name, t.publishedAt, t.expiresAt)
+            c.slug, c.name, m.name, t.publishedAt, t.expiresAt,
+            (select p.id from TaskPhoto p where p.task = t and p.position = 0))
         from Task t
         join t.category c
         join t.municipality m
@@ -81,7 +86,8 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("""
         select new ba.tfb.tasknest.dto.task.TaskSummaryResponse(
             t.id, t.title, t.budget, t.status,
-            c.slug, c.name, m.name, t.publishedAt, t.expiresAt)
+            c.slug, c.name, m.name, t.publishedAt, t.expiresAt,
+            (select p.id from TaskPhoto p where p.task = t and p.position = 0))
         from Task t
         join t.category c
         join t.municipality m
@@ -103,7 +109,8 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("""
         select new ba.tfb.tasknest.dto.task.TaskSummaryResponse(
             t.id, t.title, t.budget, t.status,
-            c.slug, c.name, m.name, t.publishedAt, t.expiresAt)
+            c.slug, c.name, m.name, t.publishedAt, t.expiresAt,
+            (select p.id from TaskPhoto p where p.task = t and p.position = 0))
         from Task t
         join t.category c
         join t.municipality m

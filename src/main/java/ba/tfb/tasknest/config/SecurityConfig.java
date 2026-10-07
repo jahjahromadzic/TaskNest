@@ -64,6 +64,7 @@ public class SecurityConfig {
                                 "/api/tasks/assigned").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/tasks").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tasks/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/photos/*").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/ws").permitAll()
                         .requestMatchers("/error").permitAll()

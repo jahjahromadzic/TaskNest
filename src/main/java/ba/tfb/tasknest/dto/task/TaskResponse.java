@@ -6,6 +6,7 @@ import ba.tfb.tasknest.entity.enums.TaskStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public record TaskResponse(
@@ -28,7 +29,8 @@ public record TaskResponse(
         LocalDateTime assignedAt,
         LocalDateTime startedAt,
         LocalDateTime completedAt,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        List<TaskPhotoResponse> photos
 ) {
     public static TaskResponse from(Task task) {
         return new TaskResponse(
@@ -52,7 +54,8 @@ public record TaskResponse(
                 task.getAssignedAt(),
                 task.getStartedAt(),
                 task.getCompletedAt(),
-                task.getCreatedAt()
+                task.getCreatedAt(),
+                task.getPhotos().stream().map(TaskPhotoResponse::from).toList()
         );
     }
 

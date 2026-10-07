@@ -1,18 +1,20 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnDestroy, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Observable, catchError, map, of, shareReplay, switchMap } from 'rxjs';
-import { ArrowLeft, CircleAlert, Eye, Lightbulb, LoaderCircle, MapPin, Save, Send } from 'lucide';
+import { Observable, catchError, concat, defaultIfEmpty, from, map, of, shareReplay, switchMap, toArray } from 'rxjs';
+import { ArrowLeft, CircleAlert, Eye, Lightbulb, LoaderCircle, MapPin, Save, Send, X } from 'lucide';
 import { Category, Municipality, TaskDetail, TaskSummary } from '../../api/models';
 import { CategoryIcon } from '../../components/category-icon/category-icon';
 import { Icon } from '../../components/icon/icon';
+import { PhotoDropzone } from '../../components/photo-dropzone/photo-dropzone';
 import { Select, SelectOption } from '../../components/select/select';
 import { TaskCard } from '../../components/task-card/task-card';
 import { ReferenceService } from '../../services/reference.service';
 import { TaskService } from '../../services/task.service';
 import { ApiError, readApiError } from '../../shared/api-error';
 import { ToastService } from '../../shared/toast/toast.service';
+import { MAX_PHOTOS, PhotoPreparer } from '../../shared/photos/photos';
 import { CategoryPipe, TranslatePipe } from '../../i18n/translate.pipe';
 import { t } from '../../i18n/translate';
 
@@ -21,13 +23,20 @@ export const DESCRIPTION_MAX = 5000;
 
 type SubmitMode = 'draft' | 'publish';
 
+interface PendingPhoto {
+  file: File;
+  preview: string;
+}
+
 @Component({
   selector: 'app-post-task',
-  imports: [AsyncPipe, FormsModule, RouterLink, CategoryIcon, Icon, Select, TaskCard, TranslatePipe, CategoryPipe],
+  imports: [AsyncPipe, FormsModule, RouterLink, CategoryIcon, Icon, PhotoDropzone, Select, TaskCard, TranslatePipe, CategoryPipe],
   templateUrl: './post-task.html',
 })
-export class PostTask {
-  protected readonly icons = { ArrowLeft, CircleAlert, Eye, Lightbulb, LoaderCircle, MapPin, Save, Send };
+export class PostTask implements OnDestroy {
+  protected readonly icons = { ArrowLeft, CircleAlert, Eye, Lightbulb, LoaderCircle, MapPin, Save, Send, X };
+  readonly maxPhotos = MAX_PHOTOS;
+  readonly photos = signal<PendingPhoto[]>([]);
 
   readonly titleMax = TITLE_MAX;
   readonly descriptionMax = DESCRIPTION_MAX;
@@ -54,6 +63,7 @@ export class PostTask {
     private referenceService: ReferenceService,
     private toastService: ToastService,
     private router: Router,
+    private preparer: PhotoPreparer,
   ) {
     this.categories$ = this.referenceService.getCategories().pipe(shareReplay(1));
     this.municipalities$ = this.referenceService.getMunicipalities().pipe(shareReplay(1));
@@ -92,6 +102,20 @@ export class PostTask {
     }
   }
 
+  addPhotos(files: File[]): void {
+    this.photos.update((photos) => [...photos, ...files.map((file) => ({ file, preview: URL.createObjectURL(file) }))]);
+  }
+
+  removePhoto(index: number): void {
+    const photo = this.photos()[index];
+    URL.revokeObjectURL(photo.preview);
+    this.photos.update((photos) => photos.filter((_, i) => i !== index));
+  }
+
+  ngOnDestroy(): void {
+    this.photos().forEach((photo) => URL.revokeObjectURL(photo.preview));
+  }
+
   submit(form: NgForm, mode: SubmitMode): void {
     this.attempted.set(true);
     if (form.invalid || !this.categoryId || this.submitting()) {
@@ -110,6 +134,7 @@ export class PostTask {
         budget: this.budget ?? undefined,
       })
       .pipe(
+        switchMap((draft) => this.uploadPhotos(draft.id!).pipe(map(() => draft))),
         switchMap((draft) =>
           mode === 'draft'
             ? of({ task: draft, published: false })
@@ -126,6 +151,27 @@ export class PostTask {
           this.submitting.set(null);
         },
       });
+  }
+
+  private uploadPhotos(taskId: string): Observable<number> {
+    const uploads = this.photos().map((photo) =>
+      from(this.preparer.prepare(photo.file)).pipe(
+        switchMap((prepared) => this.taskService.uploadPhoto(taskId, prepared)),
+        map(() => true),
+        catchError(() => of(false)),
+      ),
+    );
+    return concat(...uploads).pipe(
+      toArray(),
+      defaultIfEmpty([] as boolean[]),
+      map((results) => results.filter((ok) => !ok).length),
+      map((failed) => {
+        if (failed > 0) {
+          this.toastService.error(t('photos.someFailed', { count: failed }));
+        }
+        return failed;
+      }),
+    );
   }
 
   private finish(task: TaskDetail, published: boolean, publishFailed: boolean): void {

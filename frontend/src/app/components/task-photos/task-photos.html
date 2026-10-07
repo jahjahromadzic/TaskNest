@@ -1,0 +1,61 @@
+@if (photos().length > 0 || editable()) {
+  <section class="bg-surface-card p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-3 animate-fade-in">
+    <h2 class="font-semibold flex items-center gap-2">
+      <svg [appIcon]="icons.Images" class="w-4 h-4 text-brand"></svg> {{ 'photos.title' | t }}
+      @if (photos().length > 0) {
+        <span class="text-xs font-normal text-text-sub tabular-nums">{{ photos().length }}/{{ max }}</span>
+      }
+    </h2>
+
+    @if (photos().length > 0) {
+      <div class="grid grid-cols-4 gap-2">
+        @for (photo of photos(); track photo.id; let i = $index) {
+          <div class="group relative animate-fade-in" [class]="i === 0 ? 'col-span-4 sm:col-span-2 sm:row-span-2' : 'col-span-2 sm:col-span-1'">
+            <button type="button" (click)="open(i)" [attr.aria-label]="'photos.open' | t: { index: i + 1 }"
+                    class="block w-full overflow-hidden rounded-btn bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/30"
+                    [class]="i === 0 ? 'aspect-[4/3]' : 'aspect-square'">
+              <img [src]="photo.url" [alt]="'photos.alt' | t: { index: i + 1 }" loading="lazy"
+                   class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+            </button>
+            @if (editable()) {
+              <button type="button" (click)="remove(photo, $event)" [attr.aria-label]="'photos.remove' | t"
+                      class="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/60 text-white opacity-90 hover:bg-status-error transition-colors">
+                <svg [appIcon]="icons.X" class="w-3.5 h-3.5"></svg>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @if (editable() && remaining() > 0) {
+      <app-photo-dropzone [remaining]="remaining()" [busy]="uploading()" (picked)="add($event)" />
+    }
+  </section>
+}
+
+<dialog #viewer (close)="viewing.set(null)" (click)="onBackdrop($event)" (keydown)="onKey($event)"
+        class="m-auto p-0 bg-transparent max-w-[min(96vw,1200px)] max-h-[96vh] backdrop:bg-black/80 backdrop:backdrop-blur-sm">
+  @if (current(); as photo) {
+    <figure class="relative flex items-center justify-center animate-scale-in">
+      <img [src]="photo.url" [alt]="'photos.alt' | t: { index: viewing()! + 1 }" class="max-h-[85vh] max-w-full rounded-card shadow-modal object-contain">
+      <figcaption class="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 text-white text-xs tabular-nums">
+        {{ 'photos.counter' | t: { index: viewing()! + 1, total: photos().length } }}
+      </figcaption>
+      <button type="button" (click)="close()" [attr.aria-label]="'photos.close' | t"
+              class="absolute top-3 right-3 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors">
+        <svg [appIcon]="icons.X" class="w-5 h-5"></svg>
+      </button>
+      @if (photos().length > 1) {
+        <button type="button" (click)="step(-1)" [attr.aria-label]="'photos.previous' | t"
+                class="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors">
+          <svg [appIcon]="icons.ChevronLeft" class="w-6 h-6"></svg>
+        </button>
+        <button type="button" (click)="step(1)" [attr.aria-label]="'photos.next' | t"
+                class="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors">
+          <svg [appIcon]="icons.ChevronRight" class="w-6 h-6"></svg>
+        </button>
+      }
+    </figure>
+  }
+</dialog>

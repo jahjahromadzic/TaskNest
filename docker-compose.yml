@@ -51,6 +51,8 @@ services:
       CORS_ALLOWED_ORIGINS: http://localhost:4200
     ports:
       - "8080:8080"
+    volumes:
+      - photos_data:/app/photos
     depends_on:
       postgres:
         condition: service_healthy
@@ -58,6 +60,12 @@ services:
         condition: service_healthy
       mailpit:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      start_period: 30s
+      retries: 20
     restart: unless-stopped
 
   frontend:
@@ -67,8 +75,10 @@ services:
     ports:
       - "4200:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
   postgres_data:
+  photos_data:

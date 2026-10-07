@@ -16,7 +16,7 @@ import org.testcontainers.rabbitmq.RabbitMQContainer;
 public abstract class AbstractIntegrationTest {
 
     private static final String TRUNCATE = "TRUNCATE TABLE " + String.join(", ",
-            "tasks", "tasker_profiles", "tasker_categories", "tasker_municipalities", "users", "user_roles",
+            "tasks", "task_photos", "tasker_profiles", "tasker_categories", "tasker_municipalities", "users", "user_roles",
             "notifications", "offers", "conversations", "messages", "reviews",
             "refresh_tokens", "verification_tokens") + " CASCADE";
 

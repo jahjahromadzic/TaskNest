@@ -4,6 +4,7 @@ import { ArrowRight, Clock, Hourglass, MapPin } from 'lucide';
 import { Icon } from '../icon/icon';
 import { TaskSummary } from '../../api/models';
 import { daysLeft, formatBudget, timeAgo } from '../../shared/format/format';
+import { photoUrl } from '../../shared/photos/photos';
 import { CategoryIcon } from '../category-icon/category-icon';
 import { StatusBadge } from '../status-badge/status-badge';
 import { CategoryPipe, TranslatePipe } from '../../i18n/translate.pipe';
@@ -19,6 +20,11 @@ export class TaskCard {
   @Input({ required: true }) task!: TaskSummary;
   @Input() showStatus = false;
   @Input() note: string | null = null;
+  @Input() coverUrl: string | null = null;
+
+  get cover(): string | null {
+    return this.coverUrl ?? (this.task.coverPhotoId ? photoUrl(this.task.coverPhotoId) : null);
+  }
 
   get budget(): string {
     return formatBudget(this.task.budget);

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CreateTaskRequest, TaskDetail, TaskPage } from '../api/models';
+import { CreateTaskRequest, TaskDetail, TaskPage, TaskPhoto } from '../api/models';
 import { TaskStatus } from '../shared/task-status/task-status';
 import { translated } from '../i18n/translate';
 
@@ -47,6 +47,16 @@ export class TaskService {
 
   createTask(request: CreateTaskRequest): Observable<TaskDetail> {
     return this.http.post<TaskDetail>('/api/tasks', request);
+  }
+
+  uploadPhoto(taskId: string, photo: Blob): Observable<TaskPhoto> {
+    const form = new FormData();
+    form.append('file', photo, 'photo.jpg');
+    return this.http.post<TaskPhoto>(`/api/tasks/${encodeURIComponent(taskId)}/photos`, form);
+  }
+
+  deletePhoto(taskId: string, photoId: string): Observable<void> {
+    return this.http.delete<void>(`/api/tasks/${encodeURIComponent(taskId)}/photos/${encodeURIComponent(photoId)}`);
   }
 
   publishTask(id: string): Observable<TaskDetail> {

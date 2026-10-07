@@ -15,6 +15,7 @@ public record TaskSummaryResponse(
         String categoryName,
         String municipalityName,
         LocalDateTime publishedAt,
-        LocalDateTime expiresAt
+        LocalDateTime expiresAt,
+        UUID coverPhotoId
 ) {
 }

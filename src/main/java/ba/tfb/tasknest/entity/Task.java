@@ -9,6 +9,8 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "tasks")
@@ -46,6 +48,10 @@ public class Task extends BaseEntity {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "accepted_offer_id")
     private Offer acceptedOffer;
+
+    @OneToMany(mappedBy = "task")
+    @OrderBy("position ASC")
+    private List<TaskPhoto> photos = new ArrayList<>();
 
     @Column(name = "published_at")
     private LocalDateTime publishedAt;

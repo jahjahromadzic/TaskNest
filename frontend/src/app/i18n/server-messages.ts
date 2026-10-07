@@ -9,6 +9,13 @@ const EXACT: Record<string, string> = {
   'Administrators cannot be suspended through the API': 'Administratori se ne mogu suspendovati',
   'An account with this email already exists': 'Račun s ovim emailom već postoji',
   'Invalid email or password': 'Pogrešan email ili lozinka',
+  'Only JPEG and PNG photos are accepted': 'Prihvataju se samo JPEG i PNG fotografije',
+  'The photo could not be read; it may be damaged': 'Fotografija se ne može pročitati, možda je oštećena',
+  'The photo has too many pixels; use one under 40 megapixels': 'Fotografija ima previše piksela; koristi onu ispod 40 megapiksela',
+  'The photo is larger than 5 MB': 'Fotografija je veća od 5 MB',
+  'The photo is empty': 'Fotografija je prazna',
+  'Photos can only be changed while the task is a draft or open for offers':
+    'Fotografije se mogu mijenjati samo dok je oglas nacrt ili prima ponude',
   'This reset link is invalid or has expired. Ask for a new one.':
     'Ovaj link za promjenu lozinke nije važeći ili je istekao. Zatraži novi.',
   'Invalid refresh token': SESSION,
@@ -44,6 +51,7 @@ const EXACT: Record<string, string> = {
 };
 
 const PATTERNS: Rule[] = [
+  [/^A task can have at most (\d+) photos$/, 'Oglas može imati najviše $1 fotografija'],
   [/^Too many failed login attempts\. Try again in (\d+) min\.$/, 'Previše neuspjelih pokušaja prijave. Pokušaj ponovo za $1 min.'],
   [/^\w+ not found: .*$/s, 'Traženi podatak nije pronađen'],
   [/^Invalid task transition: .*$/s, 'Ova radnja nije moguća u trenutnom stanju oglasa'],

@@ -21,6 +21,11 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
   data:
     web:
       pageable:
@@ -32,10 +37,28 @@ spring:
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:tasknest}
     password: ${RABBITMQ_PASSWORD:tasknest}
+    listener:
+      simple:
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: ${RABBITMQ_RETRY_MAX_ATTEMPTS:3}
+          initial-interval: ${RABBITMQ_RETRY_INITIAL_INTERVAL:1s}
+          multiplier: 2
+          max-interval: 10s
 
   mail:
     host: ${MAIL_HOST:localhost}
     port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${MAIL_SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS:false}
+      mail.smtp.starttls.required: ${MAIL_SMTP_STARTTLS:false}
+      mail.smtp.connectiontimeout: ${MAIL_TIMEOUT_MS:5000}
+      mail.smtp.timeout: ${MAIL_TIMEOUT_MS:5000}
+      mail.smtp.writetimeout: ${MAIL_TIMEOUT_MS:5000}
 
 app:
   jwt:
@@ -54,6 +77,9 @@ app:
     email: ${APP_ADMIN_EMAIL:}
 
   frontend-url: ${FRONTEND_URL:http://localhost:4200}
+
+  photos:
+    directory: ${PHOTOS_DIRECTORY:data/photos}
 
   password-reset:
     expiration-minutes: ${PASSWORD_RESET_EXPIRATION_MINUTES:30}

@@ -12,6 +12,10 @@ describe('Password reset', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
 
+  beforeAll(async () => {
+    await Promise.all([import('../login/login'), import('../forgot-password/forgot-password'), import('./reset-password')]);
+  }, 60_000);
+
   beforeEach(async () => {
     TestBed.configureTestingModule({
       providers: [provideRouter(routes), provideHttpClient(), provideHttpClientTesting()],

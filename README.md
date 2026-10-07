@@ -17,6 +17,7 @@ single-page application that uses it.
 - [Configuration](#configuration)
 - [API reference](#api-reference)
 - [Task lifecycle](#task-lifecycle)
+- [Task photos](#task-photos)
 - [Reviews and reputation](#reviews-and-reputation)
 - [Messaging](#messaging)
 - [Real-time updates](#real-time-updates)
@@ -46,6 +47,8 @@ single-page application that uses it.
   confirms and closes. Confirmed work raises the tasker's completed-job count.
 - **Messaging** — every offer opens a conversation between the tasker and the
   client, with unread counts and read receipts.
+- **Task photos** — up to five photos per task, scaled down in the browser and
+  cleaned of location data on the server.
 - **Reviews and reputation** — both parties review each other after a task is
   closed, and the tasker's average rating is kept on their profile. Clients have a
   profile too, so a tasker can check a client's rating, reviews and past hires before
@@ -95,10 +98,11 @@ single-page application that uses it.
 ### Run everything with one command
 
 ```bash
-docker compose --profile app up -d --build
+docker compose --profile app up -d --build --wait
 ```
 
-This builds and starts the whole application: PostgreSQL, RabbitMQ, Mailpit, the
+`--wait` returns only when every container is healthy, so the application is ready the
+moment the command finishes. This builds and starts the whole application: PostgreSQL, RabbitMQ, Mailpit, the
 backend and the frontend. Open `http://localhost:4200`; emails land in Mailpit at
 `http://localhost:8025`. The frontend container is nginx: it serves the built Angular
 app and forwards `/api` and the `/ws` WebSocket to the backend, so the browser sees
@@ -281,7 +285,15 @@ The default profile is `dev` and runs without any environment variables.
 | `RABBITMQ_PORT` | `5672` | |
 | `MAIL_HOST` | `localhost` | |
 | `MAIL_PORT` | `1025` | |
+| `MAIL_USERNAME` | empty | SMTP login, needed by real mail providers |
+| `MAIL_PASSWORD` | empty | SMTP password or app password |
+| `MAIL_SMTP_AUTH` | `false` | Log in to the SMTP server |
+| `MAIL_SMTP_STARTTLS` | `false` | Upgrade the connection to TLS and refuse to send without it |
+| `MAIL_TIMEOUT_MS` | `5000` | Connect, read and write timeout towards the SMTP server |
 | `MAIL_FROM` | `noreply@tasknest.ba` | Sender address on notification emails |
+| `RABBITMQ_RETRY_MAX_ATTEMPTS` | `3` | Attempts per message before it goes to the dead-letter queue |
+| `RABBITMQ_RETRY_INITIAL_INTERVAL` | `1s` | Pause before the second attempt; it doubles after each failure |
+| `PHOTOS_DIRECTORY` | `data/photos` | Where uploaded task photos are stored |
 | `APP_ADMIN_EMAIL` | empty | Existing account promoted to administrator at startup |
 | `DEMO_DATA_ENABLED` | `true` in `dev`, `false` otherwise | Fill an empty database with demo accounts and tasks |
 | `DEMO_DATA_PASSWORD` | `demo12345` in `dev` | Password of every demo account |
@@ -308,6 +320,14 @@ The default profile is `dev` and runs without any environment variables.
 | `dev` | Default. SQL logging enabled, development signing key, demo data |
 | `prod` | Requires `JWT_SECRET`; the application fails to start without it |
 | `test` | Used by the test suite with a Testcontainers database |
+
+Locally all mail goes to Mailpit, which accepts anything. A real provider only
+needs environment variables, for example Gmail with an app password:
+
+```bash
+MAIL_HOST=smtp.gmail.com MAIL_PORT=587 MAIL_USERNAME=you@gmail.com MAIL_PASSWORD=<app-password> \
+MAIL_SMTP_AUTH=true MAIL_SMTP_STARTTLS=true MAIL_FROM=you@gmail.com
+```
 
 Running with the production profile:
 
@@ -423,6 +443,17 @@ Paged responses use the following shape:
 |---|---|---|---|
 | GET | `/categories` | Public | Active service categories |
 | GET | `/municipalities` | Public | Municipalities, ordered by name |
+
+### Task photos — `/api`
+
+| Method | Path | Access | Description |
+|---|---|---|---|
+| POST | `/tasks/{taskId}/photos` | Task owner | Add a photo (multipart field `file`) while the task is a draft or open for offers; at most 5 per task and 5 MB per photo |
+| DELETE | `/tasks/{taskId}/photos/{photoId}` | Task owner | Remove a photo; the next one becomes the cover |
+| GET | `/photos/{photoId}` | Public | The photo itself, cached by the browser for a year. Photos of a task removed by a moderator answer `404` |
+
+The task response lists its photos, and every task card carries `coverPhotoId`, the
+first photo, so lists show a thumbnail without an extra request.
 
 ### Reviews — `/api`
 
@@ -575,6 +606,26 @@ client's release is not, because it cannot be verified and would let an unhappy
 client penalise a tasker. Once work is `IN_PROGRESS` the task can no longer be
 reopened; cancellation remains available to the client.
 
+## Task photos
+
+A client can add up to five photos to a task while it is a draft or open for
+offers. The browser prepares each photo before uploading it: it applies the
+camera's rotation, scales it down to 1920 pixels on the longest side and saves it
+as JPEG, so a 6 MB phone photo travels as a few hundred kilobytes.
+
+The server does not trust that preparation. It checks the real file type from the
+first bytes (a renamed script is refused whatever its name), reads the image size
+from the header and refuses anything over 40 megapixels before decoding it, so a
+tiny file that claims huge dimensions cannot exhaust the memory. It then decodes
+and re-encodes the image, which drops every piece of metadata; a phone writes the
+GPS position into the photo, and leaving it in would publish the client's address.
+
+Files live on disk, behind a `PhotoStorage` interface so they can move to object
+storage such as S3 without touching the rest of the code; the database keeps only
+the row with the size and order. The task row is locked while photos change, so
+two uploads at the same moment cannot exceed five. Photos are served by a random,
+unguessable id that browsers cache for a year.
+
 ## Reviews and reputation
 
 A closed task can be reviewed by both parties: the client reviews the tasker and
@@ -704,6 +755,17 @@ Email delivery is best-effort: a failing address is logged and skipped rather
 than failing the batch, because an exception would make the broker redeliver the
 message and duplicate the notifications.
 
+**Retries and dead letters.** A consumer that throws gets the message again up to
+three times, waiting one second and then two between attempts, which rides out a
+short database or network hiccup. If the third attempt also fails, the message is
+rejected without requeueing and RabbitMQ moves it through the `tasknest.events.dlx`
+exchange into a dead-letter queue (`tasknest.task-published.dlq`,
+`tasknest.task-expired.dlq`). Without this, a message that can never succeed would
+be redelivered forever and block the queue. A message that cannot even be parsed
+skips the retries and goes to the dead-letter queue straight away. Parked messages
+can be inspected in the RabbitMQ management UI and moved back once the cause is
+fixed.
+
 ### Scheduled expiry
 
 A scheduler moves published tasks past their deadline to `EXPIRED` and notifies
@@ -739,13 +801,13 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **349 tests** and requires no manual setup — Testcontainers
+The suite contains **361 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 141 | Service business rules, the task state machine and the login attempt limiter |
-| Integration | 208 | Authentication, password reset, login throttling, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
+| Integration | 220 | Authentication, password reset, login throttling, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
 
 Every integration test starts from an empty database: one `TRUNCATE ... CASCADE` after each test
 clears all application tables at once. Clearing them table by table left a window in which the
@@ -754,7 +816,7 @@ about to be deleted. The listener also ignores events for tasks that are no long
 left over from an earlier test cannot reach the next one. The suite passes in random class order
 (`./mvnw verify -Dsurefire.runOrder=random`).
 
-The frontend has its own suite of **230 tests** (Vitest), covering the session
+The frontend has its own suite of **237 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
 header, the task list and task details, posting a task, the client's own tasks, offers
 and hiring, cancelling, reopening and closing a task, reviews, becoming a tasker and editing the tasker profile, sending and withdrawing offers,

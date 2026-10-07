@@ -31,6 +31,7 @@ import { TaskReviews } from '../../components/task-reviews/task-reviews';
 import { TaskerPanel } from '../../components/tasker-panel/tasker-panel';
 import { RemoveTaskDialog } from '../../components/remove-task-dialog/remove-task-dialog';
 import { TaskTimeline } from '../../components/task-timeline/task-timeline';
+import { TaskPhotos } from '../../components/task-photos/task-photos';
 import { TaskService } from '../../services/task.service';
 import { daysLeft, formatBudget, formatDate, timeAgo } from '../../shared/format/format';
 import { isStopped } from '../../shared/task-status/task-status';
@@ -61,6 +62,7 @@ const FAILED: DetailState = { loading: false, notFound: false, failed: true, tas
     TaskOffers,
     TaskReviews,
     TaskTimeline,
+    TaskPhotos,
     TaskerPanel,
     RemoveTaskDialog,
     TranslatePipe,
@@ -121,6 +123,10 @@ export class TaskDetailPage {
         ),
       ),
     );
+  }
+
+  canEditPhotos(task: TaskDetail, user: CurrentUser | null): boolean {
+    return this.isOwner(task, user) && (task.status === 'DRAFT' || task.status === 'PUBLISHED');
   }
 
   isOwner(task: TaskDetail, user: CurrentUser | null): boolean {

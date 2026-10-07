@@ -33,3 +33,6 @@ build/
 .vscode/
 
 .claude/
+
+### Uploaded photos in development ###
+/data/

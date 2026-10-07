@@ -12,8 +12,15 @@ app:
     enabled: false
   task-deadlines:
     enabled: false
+  photos:
+    directory: ${java.io.tmpdir}/tasknest-test-photos
 
 spring:
+  rabbitmq:
+    listener:
+      simple:
+        retry:
+          initial-interval: 100ms
   jpa:
     properties:
       hibernate:

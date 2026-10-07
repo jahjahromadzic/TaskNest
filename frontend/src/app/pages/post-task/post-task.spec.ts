@@ -6,6 +6,8 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
 import { AuthService } from '../../auth/auth.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { PhotoPreparer } from '../../shared/photos/photos';
+import { PostTask } from './post-task';
 
 describe('Post a task page', () => {
   let harness: RouterTestingHarness;
@@ -106,6 +108,35 @@ describe('Post a task page', () => {
 
     expect(TestBed.inject(Router).url).toBe('/tasks/t1');
     expect(TestBed.inject(ToastService).toasts()[0].text).toContain('Your task is live');
+    http.expectOne('/api/tasks/t1').flush({ ...draft, status: 'PUBLISHED' });
+  });
+
+  it('uploads the chosen photos after creating the task and only then publishes it', async () => {
+    URL.createObjectURL = vi.fn(() => 'blob:preview');
+    URL.revokeObjectURL = vi.fn();
+    vi.spyOn(TestBed.inject(PhotoPreparer), 'prepare').mockResolvedValue(new Blob(['jpeg'], { type: 'image/jpeg' }));
+    await fillValidForm();
+    const component = harness.routeDebugElement!.componentInstance as PostTask;
+    component.addPhotos([new File(['a'], 'a.jpg', { type: 'image/jpeg' }), new File(['b'], 'b.jpg', { type: 'image/jpeg' })]);
+    await harness.fixture.whenStable();
+    expect(page().querySelectorAll('form img')).toHaveLength(2);
+    expect(page().querySelector('aside app-task-card img')?.getAttribute('src')).toBe('blob:preview');
+
+    await click('Publish task');
+    http.expectOne({ method: 'POST', url: '/api/tasks' }).flush(draft);
+    const first = await vi.waitFor(() => http.expectOne({ method: 'POST', url: '/api/tasks/t1/photos' }));
+    expect(first.request.body).toBeInstanceOf(FormData);
+    http.expectNone('/api/tasks/t1/publish');
+    first.flush({ id: 'p1' });
+    await vi.waitFor(() =>
+      http.expectOne({ method: 'POST', url: '/api/tasks/t1/photos' }).flush({ detail: 'Bad photo' }, { status: 400, statusText: 'Bad Request' }),
+    );
+    await vi.waitFor(() => http.expectOne({ method: 'POST', url: '/api/tasks/t1/publish' }).flush({ ...draft, status: 'PUBLISHED' }));
+    await harness.fixture.whenStable();
+
+    const toasts = TestBed.inject(ToastService).toasts().map((toast) => toast.text);
+    expect(toasts).toContain('1 photo could not be saved');
+    expect(TestBed.inject(Router).url).toBe('/tasks/t1');
     http.expectOne('/api/tasks/t1').flush({ ...draft, status: 'PUBLISHED' });
   });
 
