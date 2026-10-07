@@ -6,7 +6,14 @@ import { ToastService } from '../shared/toast/toast.service';
 import { AuthService } from './auth.service';
 import { t } from '../i18n/translate';
 
-const PUBLIC_AUTH_URLS = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh', '/api/auth/logout'];
+const PUBLIC_AUTH_URLS = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/refresh',
+  '/api/auth/logout',
+  '/api/auth/password-reset/request',
+  '/api/auth/password-reset/confirm',
+];
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   if (!request.url.startsWith('/api/') || PUBLIC_AUTH_URLS.includes(request.url)) {

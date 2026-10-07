@@ -3,9 +3,11 @@ package ba.tfb.tasknest.bootstrap;
 import ba.tfb.tasknest.AbstractIntegrationTest;
 import ba.tfb.tasknest.dto.auth.AuthResponse;
 import ba.tfb.tasknest.dto.auth.LoginRequest;
+import ba.tfb.tasknest.entity.Task;
 import ba.tfb.tasknest.entity.TaskerProfile;
 import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
+import ba.tfb.tasknest.repository.NotificationRepository;
 import ba.tfb.tasknest.repository.ReviewRepository;
 import ba.tfb.tasknest.repository.TaskRepository;
 import ba.tfb.tasknest.repository.TaskerProfileRepository;
@@ -23,6 +25,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,6 +42,7 @@ class DemoDataSeederTest extends AbstractIntegrationTest {
     @Autowired private TaskRepository taskRepository;
     @Autowired private TaskerProfileRepository taskerProfileRepository;
     @Autowired private ReviewRepository reviewRepository;
+    @Autowired private NotificationRepository notificationRepository;
     @Autowired private TaskService taskService;
     @Autowired private AuthService authService;
     @Autowired private TransactionTemplate transactionTemplate;
@@ -54,7 +60,7 @@ class DemoDataSeederTest extends AbstractIntegrationTest {
 
         seeder.seed();
 
-        assertThat(userRepository.count()).isEqualTo(users).isEqualTo(8);
+        assertThat(userRepository.count()).isEqualTo(users).isEqualTo(9);
         assertThat(taskRepository.count()).isEqualTo(tasks);
     }
 
@@ -63,7 +69,27 @@ class DemoDataSeederTest extends AbstractIntegrationTest {
     void seed_fillsThePublicListing() {
         long open = taskService.browseTasks(null, null, PageRequest.of(0, 50)).getTotalElements();
 
-        assertThat(open).isEqualTo(24);
+        assertThat(open).isEqualTo(25);
+    }
+
+    @Test
+    @DisplayName("The demo has a task in every status, so every tab and badge has something to show")
+    void seed_coversEveryTaskStatus() {
+        Set<TaskStatus> statuses = taskRepository.findAll().stream().map(Task::getStatus).collect(Collectors.toSet());
+
+        assertThat(statuses).containsExactlyInAnyOrder(TaskStatus.values());
+    }
+
+    @Test
+    @DisplayName("Clients have reviews from taskers and every demo user except the admin has notifications")
+    void seed_fillsClientProfilesAndNotifications() {
+        UUID amra = userRepository.findByEmail("amra" + DemoDataSeeder.EMAIL_DOMAIN).orElseThrow().getId();
+
+        assertThat(reviewRepository.summarizeReceivedAsClient(amra).count()).isEqualTo(1);
+        transactionTemplate.executeWithoutResult(status -> userRepository.findAll().stream()
+                .filter(user -> !user.getEmail().startsWith("lejla"))
+                .forEach(user -> assertThat(notificationRepository.findByRecipientOrderByCreatedAtDesc(user))
+                        .as(user.getEmail()).isNotEmpty()));
     }
 
     @Test

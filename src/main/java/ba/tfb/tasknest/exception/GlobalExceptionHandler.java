@@ -2,8 +2,10 @@ package ba.tfb.tasknest.exception;
 
 import ba.tfb.tasknest.domain.InvalidTaskTransitionException;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AccountStatusException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -42,6 +44,13 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleConcurrentUpdate(OptimisticLockingFailureException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
                 "This item was changed by someone else. Please reload and try again.");
+    }
+
+    @ExceptionHandler(TooManyAttemptsException.class)
+    public ResponseEntity<ProblemDetail> handleTooManyAttempts(TooManyAttemptsException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(Math.max(1, ex.getRetryAfter().toSeconds())))
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage()));
     }
 
     @ExceptionHandler(BadCredentialsException.class)

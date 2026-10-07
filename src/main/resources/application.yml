@@ -1,3 +1,6 @@
+server:
+  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:native}
+
 spring:
   application:
     name: TaskNest
@@ -49,6 +52,19 @@ app:
 
   admin:
     email: ${APP_ADMIN_EMAIL:}
+
+  frontend-url: ${FRONTEND_URL:http://localhost:4200}
+
+  password-reset:
+    expiration-minutes: ${PASSWORD_RESET_EXPIRATION_MINUTES:30}
+
+  auth-throttle:
+    login-attempts-per-email: ${LOGIN_ATTEMPTS_PER_EMAIL:5}
+    login-attempts-per-address: ${LOGIN_ATTEMPTS_PER_ADDRESS:20}
+    login-window-minutes: ${LOGIN_WINDOW_MINUTES:15}
+    reset-requests-per-email: ${RESET_REQUESTS_PER_EMAIL:3}
+    reset-requests-per-address: ${RESET_REQUESTS_PER_ADDRESS:10}
+    reset-window-minutes: ${RESET_WINDOW_MINUTES:60}
 
   demo-data:
     enabled: ${DEMO_DATA_ENABLED:false}

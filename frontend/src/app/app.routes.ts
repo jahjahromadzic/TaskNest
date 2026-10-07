@@ -39,6 +39,16 @@ export const routes: Routes = [
         title: 'titles.register',
         loadComponent: () => import('./pages/register/register').then((m) => m.Register),
       },
+      {
+        path: 'forgot-password',
+        title: 'titles.forgotPassword',
+        loadComponent: () => import('./pages/forgot-password/forgot-password').then((m) => m.ForgotPassword),
+      },
+      {
+        path: 'reset-password',
+        title: 'titles.resetPassword',
+        loadComponent: () => import('./pages/reset-password/reset-password').then((m) => m.ResetPassword),
+      },
     ],
   },
   {

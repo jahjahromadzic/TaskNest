@@ -9,6 +9,8 @@ const EXACT: Record<string, string> = {
   'Administrators cannot be suspended through the API': 'Administratori se ne mogu suspendovati',
   'An account with this email already exists': 'Račun s ovim emailom već postoji',
   'Invalid email or password': 'Pogrešan email ili lozinka',
+  'This reset link is invalid or has expired. Ask for a new one.':
+    'Ovaj link za promjenu lozinke nije važeći ili je istekao. Zatraži novi.',
   'Invalid refresh token': SESSION,
   'Refresh token has already been used': SESSION,
   'Refresh token has expired': SESSION,
@@ -42,6 +44,7 @@ const EXACT: Record<string, string> = {
 };
 
 const PATTERNS: Rule[] = [
+  [/^Too many failed login attempts\. Try again in (\d+) min\.$/, 'Previše neuspjelih pokušaja prijave. Pokušaj ponovo za $1 min.'],
   [/^\w+ not found: .*$/s, 'Traženi podatak nije pronađen'],
   [/^Invalid task transition: .*$/s, 'Ova radnja nije moguća u trenutnom stanju oglasa'],
   [/^Category is not active: .*$/s, 'Ova kategorija nije aktivna'],

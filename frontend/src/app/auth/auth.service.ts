@@ -79,6 +79,14 @@ export class AuthService {
     return this.http.post('/api/auth/activate-tasker', request).pipe(switchMap(() => this.refresh()));
   }
 
+  requestPasswordReset(email: string): Observable<void> {
+    return this.http.post<void>('/api/auth/password-reset/request', { email });
+  }
+
+  resetPassword(token: string, password: string): Observable<void> {
+    return this.http.post<void>('/api/auth/password-reset/confirm', { token, password });
+  }
+
   restoreSession(): Observable<void> {
     return this.refresh().pipe(
       map(() => undefined),

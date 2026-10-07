@@ -39,6 +39,9 @@
     @if (passwordField.invalid && (passwordField.touched || form.submitted)) {
       <p class="form-error">{{ 'auth.passwordRequired' | t }}</p>
     }
+    <a routerLink="/forgot-password" class="mt-1.5 inline-block text-xs font-medium text-brand hover:underline underline-offset-2">
+      {{ 'auth.forgotLink' | t }}
+    </a>
   </div>
 
   <button type="submit" class="btn-primary w-full py-3" [disabled]="submitting()">

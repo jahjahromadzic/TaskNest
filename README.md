@@ -92,7 +92,20 @@ single-page application that uses it.
 - Docker
 - Node.js 24.15 or newer, for the frontend
 
-### Run
+### Run everything with one command
+
+```bash
+docker compose --profile app up -d --build
+```
+
+This builds and starts the whole application: PostgreSQL, RabbitMQ, Mailpit, the
+backend and the frontend. Open `http://localhost:4200`; emails land in Mailpit at
+`http://localhost:8025`. The frontend container is nginx: it serves the built Angular
+app and forwards `/api` and the `/ws` WebSocket to the backend, so the browser sees
+one origin. The backend runs the `dev` profile, so an empty database is filled with
+demo data. Stop it with `docker compose --profile app down`.
+
+### Run for development
 
 Start the infrastructure:
 
@@ -114,23 +127,28 @@ seeds reference data on first run.
 ### Demo data
 
 In the `dev` profile the application also fills an empty database with demo data
-on startup: eight accounts, twenty-four open tasks with offers, and a few tasks further
-along the lifecycle (assigned with a conversation, in progress, closed with reviews,
-and a draft). Dates are relative to the moment of seeding, so the tasks are fresh
-and none of them is picked up by the expiry or deadline schedulers.
+on startup. The content is in Bosnian, as real users in Sarajevo would write it:
+nine accounts, twenty-five open tasks with offers, and a task in every other status
+(draft, assigned with an unread message, in progress, completed and waiting for the
+client, closed with reviews in both directions, cancelled, expired and removed by a
+moderator). Pending offers come with chats, so an offer can be accepted from the
+conversation, and every account except the admin has notifications. Dates are
+relative to the moment of seeding, so the tasks are fresh and none of them is
+picked up by the expiry or deadline schedulers.
 
 Every demo account uses the password `demo12345` (`DEMO_DATA_PASSWORD`).
 
 | Account | Roles | Story |
 |---|---|---|
-| `amra@demo.tasknest.ba` | client | Open tasks, an assigned task with an unread message, a task in progress, a closed and reviewed task, a draft |
-| `emina@demo.tasknest.ba` | client | Open tasks and two closed, reviewed jobs |
-| `haris@demo.tasknest.ba` | client | Open tasks and one closed, reviewed job |
+| `amra@demo.tasknest.ba` | client | Open tasks, an assigned task with an unread message, a task in progress, a closed and reviewed task, a draft, and a chat on a pending offer |
+| `emina@demo.tasknest.ba` | client | Open tasks, a job finished by Tarik waiting for her confirmation, two closed jobs and an expired task |
+| `haris@demo.tasknest.ba` | client | Open tasks, a chat with Adnan about moving, a closed job and a cancelled task |
 | `lejla@demo.tasknest.ba` | client, admin | Administration |
-| `emir@demo.tasknest.ba` | client, tasker | Plumbing, electrical, heating and appliances, verified, rating 4.00 |
+| `nermin@demo.tasknest.ba` | client, suspended | A task removed by a moderator as spam |
+| `emir@demo.tasknest.ba` | client, tasker | Plumbing, electrical, heating and appliances, verified; also hired Selma as a client |
 | `selma@demo.tasknest.ba` | client, tasker | Cleaning, painting and gardening, verified, rating 5.00 |
 | `adnan@demo.tasknest.ba` | client, tasker | Moving, furniture assembly, carpentry and locks, rating 4.50 |
-| `tarik@demo.tasknest.ba` | client, tasker | Electrical, painting, air conditioning and computers, no jobs yet |
+| `tarik@demo.tasknest.ba` | client, tasker | Electrical, painting, air conditioning and computers, new on TaskNest |
 
 The seeder runs only once: it does nothing when `amra@demo.tasknest.ba` already
 exists. To start again from a clean database, remove the Docker volume:
@@ -268,6 +286,15 @@ The default profile is `dev` and runs without any environment variables.
 | `DEMO_DATA_ENABLED` | `true` in `dev`, `false` otherwise | Fill an empty database with demo accounts and tasks |
 | `DEMO_DATA_PASSWORD` | `demo12345` in `dev` | Password of every demo account |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:4200` | Comma-separated origins allowed to call the API |
+| `FRONTEND_URL` | `http://localhost:4200` | Base address used in the password reset link |
+| `PASSWORD_RESET_EXPIRATION_MINUTES` | `30` | Lifetime of a password reset link |
+| `LOGIN_ATTEMPTS_PER_EMAIL` | `5` | Failed logins allowed per email within the login window |
+| `LOGIN_ATTEMPTS_PER_ADDRESS` | `20` | Failed logins allowed per client address within the login window |
+| `LOGIN_WINDOW_MINUTES` | `15` | Length of the login window |
+| `RESET_REQUESTS_PER_EMAIL` | `3` | Reset links sent per email within the reset window |
+| `RESET_REQUESTS_PER_ADDRESS` | `10` | Reset requests accepted per client address within the reset window |
+| `RESET_WINDOW_MINUTES` | `60` | Length of the reset window |
+| `FORWARD_HEADERS_STRATEGY` | `native` | Trust `X-Forwarded-For` only from internal proxies, so the login limit sees the real client address behind nginx |
 | `TASK_EXPIRY_ENABLED` | `true` | Set to `false` to disable the expiry scheduler |
 | `TASK_EXPIRY_INTERVAL_MS` | `60000` | Delay between two expiry passes |
 | `TASK_DEADLINES_ENABLED` | `true` | Set to `false` to disable the deadline scheduler |
@@ -304,9 +331,11 @@ application is running.
 | Method | Path | Access | Description |
 |---|---|---|---|
 | POST | `/register` | Public | Create an account and receive a token pair |
-| POST | `/login` | Public | Authenticate and receive a token pair |
+| POST | `/login` | Public | Authenticate and receive a token pair. After 5 wrong passwords for one email, or 20 from one address, within 15 minutes, login answers `429` with `Retry-After` until the oldest failure leaves the window |
 | POST | `/refresh` | Public | Exchange the refresh-token cookie for a new access token; rotates the cookie |
 | POST | `/logout` | Public | Revoke the refresh token and clear its cookie |
+| POST | `/password-reset/request` | Public | Email a one-time link to choose a new password. Always answers `202`, so the response never reveals whether an account exists; at most 3 links per email and 10 per address are sent per hour |
+| POST | `/password-reset/confirm` | Public | Set a new password with the token from the link. The token works once and expires after 30 minutes; every existing session of the account is signed out |
 | POST | `/activate-tasker` | Authenticated | Become a tasker: grants the tasker role and saves the headline, optional bio, categories and municipalities in one transaction. A headline, at least one category and one municipality are required, and an unknown category or municipality leaves the account unchanged |
 
 The refresh token never appears in a response body. Register, login and refresh
@@ -316,6 +345,17 @@ another site) and scoped to `/api/auth` (not sent with any other request). The
 access token is returned in the body and kept in memory by the client. Because
 of `SameSite=Strict`, the frontend has to be served from the same site as the
 API, which in development is done by the Angular dev-server proxy.
+
+**Password reset.** The reset token is 32 random bytes sent only in the email; the
+database keeps its SHA-256 hash, like the refresh token, so a leaked database does not
+leak working links. Asking again invalidates the previous link.
+
+**Login throttling.** Failed logins are counted in memory per email and per client
+address in a sliding 15-minute window. Counting per email stops guessing one
+password; counting per address stops trying one password on many accounts. A
+successful login clears the count for that email. The counters live in the
+application, which fits a single instance; several instances would share them
+through Redis.
 
 ### Tasks — `/api/tasks`
 
@@ -699,13 +739,13 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **334 tests** and requires no manual setup — Testcontainers
+The suite contains **349 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
-| Unit | 138 | Service business rules and the task state machine |
-| Integration | 196 | Authentication, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
+| Unit | 141 | Service business rules, the task state machine and the login attempt limiter |
+| Integration | 208 | Authentication, password reset, login throttling, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
 
 Every integration test starts from an empty database: one `TRUNCATE ... CASCADE` after each test
 clears all application tables at once. Clearing them table by table left a window in which the
@@ -714,7 +754,7 @@ about to be deleted. The listener also ignores events for tasks that are no long
 left over from an earlier test cannot reach the next one. The suite passes in random class order
 (`./mvnw verify -Dsurefire.runOrder=random`).
 
-The frontend has its own suite of **223 tests** (Vitest), covering the session
+The frontend has its own suite of **230 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
 header, the task list and task details, posting a task, the client's own tasks, offers
 and hiring, cancelling, reopening and closing a task, reviews, becoming a tasker and editing the tasker profile, sending and withdrawing offers,
@@ -759,9 +799,10 @@ frontend/           Angular application, see Frontend
 ## Roadmap
 
 - [x] Real-time message delivery over WebSocket
-- [ ] Email verification, password reset, rate limiting
+- [x] Password reset by email and login throttling
+- [ ] Email verification
 - [x] Angular frontend: client, tasker, messaging and administration
-- [ ] Application Dockerfile
+- [x] Dockerfiles and one-command start with Docker Compose
 
 ## License
 

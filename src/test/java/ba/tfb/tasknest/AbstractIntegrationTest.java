@@ -1,5 +1,6 @@
 package ba.tfb.tasknest;
 
+import ba.tfb.tasknest.security.AuthThrottle;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,8 +36,12 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private AuthThrottle authThrottle;
+
     @AfterEach
     protected void truncateApplicationTables() {
+        authThrottle.clear();
         for (int attempt = 1; ; attempt++) {
             try {
                 jdbcTemplate.execute(TRUNCATE);

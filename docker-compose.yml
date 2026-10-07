@@ -25,6 +25,11 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   mailpit:
     image: axllent/mailpit:latest
@@ -32,6 +37,38 @@ services:
     ports:
       - "1025:1025"
       - "8025:8025"
+
+  backend:
+    profiles: [app]
+    build: .
+    container_name: tasknest-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_URL: jdbc:postgresql://postgres:5432/tasknest
+      RABBITMQ_HOST: rabbitmq
+      MAIL_HOST: mailpit
+      FRONTEND_URL: http://localhost:4200
+      CORS_ALLOWED_ORIGINS: http://localhost:4200
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    restart: unless-stopped
+
+  frontend:
+    profiles: [app]
+    build: ./frontend
+    container_name: tasknest-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
 
 volumes:
   postgres_data:

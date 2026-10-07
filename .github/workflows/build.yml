@@ -60,3 +60,12 @@ jobs:
 
       - name: Test
         run: npm test -- --watch=false
+
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build the application images
+        run: docker compose --profile app build
