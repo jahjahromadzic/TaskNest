@@ -178,16 +178,36 @@ public class DemoDataSeeder {
                 "Završio sam elektrotehničku školu i radim manje električarske i molerske poslove. Brzo i povoljno.",
                 List.of(ELECTRICAL, PAINTING, AIR_CONDITIONING, COMPUTERS), List.of(VOGOSCA, NOVI_GRAD, CENTAR), false);
 
+        User dzenana = user("dzenana", "Dženana", "Alić", "+387 61 555 666", 70, RoleName.CLIENT);
+        User kenan = user("kenan", "Kenan", "Imamović", null, 45, RoleName.CLIENT);
+        User sanela = user("sanela", "Sanela", "Pašić", "+387 62 777 888", 30, RoleName.CLIENT);
+
+        User mirza = tasker("mirza", "Mirza", "Softić", 150,
+                "Stolar i keramičar, radim i brave",
+                "Popravljam i pravim namještaj po mjeri, postavljam pločice i mijenjam brave. "
+                        + "Prije početka uvijek dođem izmjeriti i dam tačnu cijenu.",
+                List.of(CARPENTRY, TILING, LOCKSMITH), List.of(CENTAR, STARI_GRAD, NOVI_GRAD, ILIDZA), true);
+        User alen = tasker("alen", "Alen", "Husić", 40,
+                "Serviser grijanja, klima i kućanskih aparata",
+                "Servisiram plinske kotlove, klime, veš mašine i frižidere. Rezervne dijelove nabavljam isti dan.",
+                List.of(HEATING, AIR_CONDITIONING, APPLIANCES), List.of(NOVO_SARAJEVO, NOVI_GRAD, ILIDZA, VOGOSCA), false);
+        User lamija = tasker("lamija", "Lamija", "Zukić", 85,
+                "Bašta, čišćenje i pomoć s računarom",
+                "Uređujem bašte i dvorišta, čistim stanove, a strpljivo pomažem i starijima oko računara i telefona.",
+                List.of(GARDENING, CLEANING, COMPUTERS), List.of(CENTAR, NOVO_SARAJEVO, ILIDZA, VOGOSCA), true);
+
         seedOpenTasks(amra, emina, haris, emir, selma, adnan, tarik);
+        seedEveryCategory(dzenana, kenan, sanela, mirza, alen, lamija, tarik);
         seedAmraStory(amra, emir, selma, adnan);
         seedFinishedJobs(emina, haris, emir, selma, adnan);
+        seedNewTaskerJobs(dzenana, kenan, mirza, lamija);
         seedOtherOutcomes(emina, haris, nermin, tarik);
 
         finishProfiles();
         entityManager.flush();
         backdating.forEach(Runnable::run);
 
-        log.info("Demo data created: 9 users with the password from app.demo-data.password, "
+        log.info("Demo data created: 15 users with the password from app.demo-data.password, "
                 + "log in as amra{} (client), emir{} (tasker) or lejla{} (admin)", EMAIL_DOMAIN, EMAIL_DOMAIN, EMAIL_DOMAIN);
     }
 
@@ -320,6 +340,111 @@ public class DemoDataSeeder {
         offer(emirsAirConditioner, tarik, 140, "Imam iskustva s ugradnjom, bušenje zida i vakumiranje su uključeni.", OfferStatus.PENDING, 40);
         notify(emir, NotificationType.NEW_OFFER, emirsAirConditioner.getId(),
                 "Tarik Hasanović offered 140 KM for: " + emirsAirConditioner.getTitle(), 40, false);
+    }
+
+    private void seedEveryCategory(User dzenana, User kenan, User sanela,
+                                   User mirza, User alen, User lamija, User tarik) {
+        Task backsplash = published(kenan, TILING, NOVI_GRAD, "Pločice u kuhinji iznad radne ploče",
+                "Zid od 3 m² između gornjih i donjih elemenata. Pločice i ljepilo su kupljeni.", 120, 2 * 24);
+        offer(backsplash, mirza, 110, "Mogu doći u srijedu, fugovanje je uključeno u cijenu.", OfferStatus.PENDING, 30);
+        notify(kenan, NotificationType.NEW_OFFER, backsplash.getId(), "Mirza Softić offered 110 KM for: " + backsplash.getTitle(), 30, false);
+        notify(mirza, NotificationType.NEW_TASK_IN_AREA, backsplash.getId(), "New task in your area: " + backsplash.getTitle(), 2 * 24, true);
+
+        published(sanela, TILING, CENTAR, "Zamjena napuklih pločica na terasi",
+                "Desetak pločica na terasi je popucalo od mraza. Imam rezervne iz iste serije.", 90, 5 * 24);
+
+        Task wardrobeDoors = published(dzenana, CARPENTRY, STARI_GRAD, "Popravka kliznih vrata na ormaru",
+                "Vrata ormara ispadaju iz šine i zapinju pri otvaranju. Ormar je star osam godina.", 50, 20);
+        offer(wardrobeDoors, mirza, 45, "Najčešće treba zamijeniti točkiće, a njih imam sa sobom.", OfferStatus.PENDING, 12);
+        notify(mirza, NotificationType.NEW_TASK_IN_AREA, wardrobeDoors.getId(), "New task in your area: " + wardrobeDoors.getTitle(), 20, false);
+
+        published(kenan, CARPENTRY, CENTAR, "Izrada polica po mjeri za niše",
+                "Dvije niše u dnevnom boravku, svaka 90 x 40 cm. Želim police od hrastovog furnira.", 220, 3 * 24);
+
+        Task stairs = published(sanela, CARPENTRY, NOVI_GRAD, "Brušenje i lakiranje drvenih stepenica",
+                "Unutrašnje stepenice imaju 14 gazišta, a lak je izlizan na sredini.", 400, 6 * 24);
+        offer(stairs, mirza, 380, "Brusim bez prašine po kući, dva sloja laka, gotovo za tri dana.", OfferStatus.PENDING, 5 * 24);
+        notify(sanela, NotificationType.NEW_OFFER, stairs.getId(), "Mirza Softić offered 380 KM for: " + stairs.getTitle(), 5 * 24, true);
+
+        Task leakingAirConditioner = published(dzenana, AIR_CONDITIONING, ILIDZA, "Klima curi vodu u sobi",
+                "Iz unutrašnje jedinice kaplje voda niz zid. Vjerovatno je začepljen odvod kondenzata.", 40, 10);
+        offer(leakingAirConditioner, alen, 35, "Očistim odvod i filtere, pola sata posla.", OfferStatus.PENDING, 6);
+        notify(dzenana, NotificationType.NEW_OFFER, leakingAirConditioner.getId(),
+                "Alen Husić offered 35 KM for: " + leakingAirConditioner.getTitle(), 6, false);
+        notify(alen, NotificationType.NEW_TASK_IN_AREA, leakingAirConditioner.getId(),
+                "New task in your area: " + leakingAirConditioner.getTitle(), 10, true);
+
+        Task boilerService = published(kenan, HEATING, NOVO_SARAJEVO, "Servis plinskog kotla prije sezone",
+                "Kotao Vaillant, zadnji servis bio je prije dvije godine. Treba provjeriti i ekspanzionu posudu.", 80, 24);
+        Offer boilerServiceOffer = offer(boilerService, alen, 75, "Ovlašteni sam serviser za Vaillant, mogu doći sutra ujutro.",
+                OfferStatus.PENDING, 18);
+        Conversation boilerChat = conversationOf(boilerServiceOffer);
+        message(boilerChat, kenan, "Da li je u cijenu uključena i analiza dimnih plinova?", 16, true);
+        message(boilerChat, alen, "Jeste, dobijate i zapisnik o servisu za upravitelja zgrade.", 15, false);
+        notify(kenan, NotificationType.NEW_OFFER, boilerService.getId(), "Alen Husić offered 75 KM for: " + boilerService.getTitle(), 18, true);
+        notify(kenan, NotificationType.NEW_MESSAGE, boilerChat.getId(), "New message about: " + boilerService.getTitle(), 15, false);
+        notify(alen, NotificationType.NEW_TASK_IN_AREA, boilerService.getId(), "New task in your area: " + boilerService.getTitle(), 24, true);
+
+        published(sanela, HEATING, VOGOSCA, "Radijatori se ne zagrijavaju do kraja",
+                "Gornji dio radijatora ostaje hladan u tri sobe. Možda treba ozračiti sistem.", 60, 3 * 24);
+
+        published(dzenana, HEATING, ILIDZA, "Ugradnja termostatskih ventila",
+                "Pet radijatora, termostatski ventili su već kupljeni.", 120, 7 * 24);
+
+        published(sanela, APPLIANCES, NOVO_SARAJEVO, "Frižider ne hladi",
+                "Svjetlo u frižideru radi, ali ne hladi. Zamrzivač radi normalno.", null, 6);
+
+        Task dishwasher = published(kenan, APPLIANCES, NOVI_GRAD, "Ugradnja mašine za suđe",
+                "Ugradna mašina od 60 cm, priključci za vodu i odvod već postoje.", 60, 4 * 24);
+        offer(dishwasher, alen, 55, "Ugradnja i probno pranje, sat vremena.", OfferStatus.PENDING, 3 * 24);
+        notify(kenan, NotificationType.NEW_OFFER, dishwasher.getId(), "Alen Husić offered 55 KM for: " + dishwasher.getTitle(), 3 * 24, true);
+
+        Task basementLock = published(dzenana, LOCKSMITH, CENTAR, "Otvaranje zaključanih vrata podruma",
+                "Ključ od podruma je izgubljen. Treba otvoriti vrata i ugraditi novu bravu.", 70, 2 * 24);
+        Offer basementLockOffer = offer(basementLock, mirza, 60, "Otvaram bez oštećenja vrata, a novu bravu donosim.",
+                OfferStatus.PENDING, 40);
+        Conversation lockChat = conversationOf(basementLockOffer);
+        message(lockChat, dzenana, "Možete li doći i u subotu?", 30, true);
+        message(lockChat, mirza, "Mogu, u subotu radim do 14h.", 29, true);
+        notify(dzenana, NotificationType.NEW_OFFER, basementLock.getId(), "Mirza Softić offered 60 KM for: " + basementLock.getTitle(), 40, true);
+
+        published(kenan, LOCKSMITH, STARI_GRAD, "Ugradnja dodatne brave na ulazna vrata",
+                "Želim dodatnu sigurnosnu bravu i sigurnosni lanac.", 80, 8 * 24);
+
+        Task orchard = published(sanela, GARDENING, VOGOSCA, "Orezivanje voćki u dvorištu",
+                "Šest stabala jabuke i šljive treba orezati, a granje odvesti.", 100, 2 * 24);
+        offer(orchard, lamija, 90, "Orezujem i odvozim granje isti dan.", OfferStatus.PENDING, 36);
+        notify(sanela, NotificationType.NEW_OFFER, orchard.getId(), "Lamija Zukić offered 90 KM for: " + orchard.getTitle(), 36, false);
+        notify(lamija, NotificationType.NEW_TASK_IN_AREA, orchard.getId(), "New task in your area: " + orchard.getTitle(), 2 * 24, true);
+
+        published(kenan, GARDENING, NOVO_SARAJEVO, "Sadnja živice uz ogradu",
+                "Dvadesetak sadnica tuje treba posaditi uz ogradu od 15 metara. Sadnice su kupljene.", 120, 9 * 24);
+
+        Task laptop = published(dzenana, COMPUTERS, CENTAR, "Instalacija Windowsa i prebacivanje podataka",
+                "Novi laptop, treba instalirati programe i prebaciti slike i dokumente sa starog.", 50, 24);
+        offer(laptop, lamija, 45, "Prebacim sve podatke i podesim štampač ako ga imate.", OfferStatus.PENDING, 20);
+        offer(laptop, tarik, 40, "Mogu i danas navečer.", OfferStatus.PENDING, 18);
+        notify(lamija, NotificationType.NEW_TASK_IN_AREA, laptop.getId(), "New task in your area: " + laptop.getTitle(), 24, false);
+
+        published(sanela, COMPUTERS, NOVO_SARAJEVO, "Pomoć roditeljima oko pametnog telefona",
+                "Novi telefon za roditelje, treba podesiti Viber i mail i povećati slova.", 30, 5 * 24);
+    }
+
+    private void seedNewTaskerJobs(User dzenana, User kenan, User mirza, User lamija) {
+        Task kitchenDoors = published(dzenana, CARPENTRY, CENTAR, "Popravka vrata na kuhinjskim elementima",
+                "Četiri vrata visila su ukoso, a jedna šarka je pukla.", 40, 16 * 24);
+        Offer kitchenDoorsOffer = offer(kitchenDoors, mirza, 40, "Mijenjam šarke i podešavam sva vrata.", OfferStatus.ACCEPTED, 15 * 24);
+        close(kitchenDoors, kitchenDoorsOffer, 15 * 24, 14 * 24, 14 * 24);
+        review(kitchenDoors, dzenana, mirza, 5, "Došao na vrijeme i sve popravio za sat. Vrata sad zatvaraju kao nova.", 13 * 24);
+        review(kitchenDoors, mirza, dzenana, 5, "Jasan dogovor i ljubazna domaćica.", 13 * 24);
+        notify(mirza, NotificationType.REVIEW_RECEIVED, kitchenDoors.getId(), "You received a review for: " + kitchenDoors.getTitle(), 13 * 24, true);
+
+        Task balcony = published(kenan, GARDENING, NOVO_SARAJEVO, "Sadnja cvijeća na balkonu",
+                "Šest žardinjera, treba nabaviti zemlju i posaditi sezonsko cvijeće.", 60, 11 * 24);
+        Offer balconyOffer = offer(balcony, lamija, 60, "Donosim zemlju i sadnice, a vi birate boje.", OfferStatus.ACCEPTED, 10 * 24);
+        close(balcony, balconyOffer, 10 * 24, 9 * 24, 9 * 24);
+        review(balcony, kenan, lamija, 4, "Lijepo urađeno, samo je jedna žardinjera ostala prazna dan duže.", 8 * 24);
+        notify(lamija, NotificationType.REVIEW_RECEIVED, balcony.getId(), "You received a review for: " + balcony.getTitle(), 8 * 24, false);
     }
 
     private void seedAmraStory(User amra, User emir, User selma, User adnan) {

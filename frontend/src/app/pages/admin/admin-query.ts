@@ -1,10 +1,11 @@
 import { ParamMap } from '@angular/router';
-import { AdminTaskQuery, AdminUserQuery } from '../../services/admin.service';
+import { AdminReportQuery, AdminTaskQuery, AdminUserQuery } from '../../services/admin.service';
 import { translated } from '../../i18n/translate';
 
-export type AdminTab = 'users' | 'tasks';
+export type AdminTab = 'users' | 'tasks' | 'reports';
 export type UserFilter = 'all' | 'taskers' | 'suspended';
 export type TaskFilter = 'all' | 'open' | 'assigned' | 'removed';
+export type ReportFilter = 'open' | 'resolved' | 'dismissed' | 'all';
 
 export const USER_FILTERS: { key: UserFilter; readonly label: string }[] = [
   translated({ key: 'all' as UserFilter }, { label: 'admin.filterAllUsers' }),
@@ -19,6 +20,20 @@ export const TASK_FILTERS: { key: TaskFilter; readonly label: string }[] = [
   translated({ key: 'removed' as TaskFilter }, { label: 'admin.filterRemoved' }),
 ];
 
+export const REPORT_FILTERS: { key: ReportFilter; readonly label: string }[] = [
+  translated({ key: 'open' as ReportFilter }, { label: 'admin.filterReportsOpen' }),
+  translated({ key: 'resolved' as ReportFilter }, { label: 'admin.filterReportsResolved' }),
+  translated({ key: 'dismissed' as ReportFilter }, { label: 'admin.filterReportsDismissed' }),
+  translated({ key: 'all' as ReportFilter }, { label: 'admin.filterReportsAll' }),
+];
+
+const REPORT_STATUS_BY_FILTER: Record<ReportFilter, AdminReportQuery['status']> = {
+  open: 'OPEN',
+  resolved: 'RESOLVED',
+  dismissed: 'DISMISSED',
+  all: null,
+};
+
 const TASK_STATUS_BY_FILTER: Record<TaskFilter, AdminTaskQuery['status']> = {
   all: null,
   open: 'PUBLISHED',
@@ -27,7 +42,8 @@ const TASK_STATUS_BY_FILTER: Record<TaskFilter, AdminTaskQuery['status']> = {
 };
 
 export function readTab(params: ParamMap): AdminTab {
-  return params.get('tab') === 'tasks' ? 'tasks' : 'users';
+  const tab = params.get('tab');
+  return tab === 'tasks' || tab === 'reports' ? tab : 'users';
 }
 
 function readPage(params: ParamMap): number {
@@ -59,6 +75,14 @@ export function readTaskQuery(params: ParamMap): AdminTaskQuery {
     search: params.get('q') ?? '',
     page: readPage(params),
   };
+}
+
+export function readReportFilter(params: ParamMap): ReportFilter {
+  return REPORT_FILTERS.find((filter) => filter.key === params.get('filter'))?.key ?? 'open';
+}
+
+export function readReportQuery(params: ParamMap): AdminReportQuery {
+  return { status: REPORT_STATUS_BY_FILTER[readReportFilter(params)], page: readPage(params) };
 }
 
 export function sameQuery<T>(a: T, b: T): boolean {

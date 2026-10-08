@@ -10,6 +10,7 @@ import {
   ChevronRight,
   CircleAlert,
   FileText,
+  Flag,
   Info,
   Link,
   LogIn,
@@ -30,6 +31,7 @@ import { TaskOffers } from '../../components/task-offers/task-offers';
 import { TaskReviews } from '../../components/task-reviews/task-reviews';
 import { TaskerPanel } from '../../components/tasker-panel/tasker-panel';
 import { RemoveTaskDialog } from '../../components/remove-task-dialog/remove-task-dialog';
+import { ReportDialog } from '../../components/report-dialog/report-dialog';
 import { TaskTimeline } from '../../components/task-timeline/task-timeline';
 import { TaskPhotos } from '../../components/task-photos/task-photos';
 import { TaskService } from '../../services/task.service';
@@ -65,6 +67,7 @@ const FAILED: DetailState = { loading: false, notFound: false, failed: true, tas
     TaskPhotos,
     TaskerPanel,
     RemoveTaskDialog,
+    ReportDialog,
     TranslatePipe,
     CategoryPipe,
   ],
@@ -77,6 +80,7 @@ export class TaskDetailPage {
     ChevronRight,
     CircleAlert,
     FileText,
+    Flag,
     Info,
     Link,
     LogIn,
@@ -97,6 +101,7 @@ export class TaskDetailPage {
   readonly isStopped = isStopped;
 
   readonly removing = signal(false);
+  readonly reporting = signal(false);
 
   private readonly retry$ = new BehaviorSubject<void>(undefined);
 
@@ -161,6 +166,16 @@ export class TaskDetailPage {
 
   retry(): void {
     this.retry$.next();
+  }
+
+  canReport(task: TaskDetail, user: CurrentUser | null): boolean {
+    return (
+      user !== null &&
+      !user.roles.includes('ADMIN') &&
+      !this.isOwner(task, user) &&
+      task.status !== 'DRAFT' &&
+      task.status !== 'REMOVED'
+    );
   }
 
   canModerate(task: TaskDetail, user: CurrentUser | null): boolean {

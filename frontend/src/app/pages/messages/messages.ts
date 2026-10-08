@@ -9,6 +9,7 @@ import {
   CheckCheck,
   CircleAlert,
   ExternalLink,
+  Flag,
   Handshake,
   LoaderCircle,
   MessageSquare,
@@ -18,6 +19,7 @@ import {
   SendHorizontal,
   Tag,
 } from 'lucide';
+import { ReportDialog } from '../../components/report-dialog/report-dialog';
 import { ChatMessagePage, Conversation } from '../../api/models';
 import { AuthService } from '../../auth/auth.service';
 import { Icon } from '../../components/icon/icon';
@@ -67,7 +69,7 @@ const SILENT_NOTIFICATIONS = new Set(['NEW_MESSAGE', 'NEW_TASK_IN_AREA', 'REVIEW
 
 @Component({
   selector: 'app-messages',
-  imports: [Icon, RouterLink, StatusBadge, TranslatePipe],
+  imports: [Icon, ReportDialog, RouterLink, StatusBadge, TranslatePipe],
   templateUrl: './messages.html',
 })
 export class Messages implements OnInit {
@@ -78,6 +80,7 @@ export class Messages implements OnInit {
     CheckCheck,
     CircleAlert,
     ExternalLink,
+    Flag,
     Handshake,
     LoaderCircle,
     MessageSquare,
@@ -89,6 +92,7 @@ export class Messages implements OnInit {
   };
 
   readonly maxLength = MAX_MESSAGE_LENGTH;
+  readonly reporting = signal(false);
   readonly skeletons = [1, 2, 3, 4];
   readonly formatBudget = formatBudget;
   readonly timeAgo = timeAgo;

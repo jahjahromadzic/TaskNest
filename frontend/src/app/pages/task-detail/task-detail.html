@@ -169,6 +169,17 @@
             </a>
           </div>
 
+          @if (canReport(task, vm.user)) {
+            <button type="button" (click)="reporting.set(true)"
+                    class="w-full inline-flex items-center justify-center gap-1.5 py-1 text-xs text-text-sub hover:text-status-error transition-colors">
+              <svg [appIcon]="icons.Flag" class="w-3.5 h-3.5"></svg> {{ 'report.reportTask' | t }}
+            </button>
+            @if (reporting()) {
+              <app-report-dialog target="TASK" [targetId]="task.id!" [targetName]="task.title ?? ''"
+                                 (sent)="reporting.set(false)" (dismissed)="reporting.set(false)" />
+            }
+          }
+
           @if (canModerate(task, vm.user)) {
             <section class="p-4 rounded-card border border-red-200 bg-red-50/40 space-y-2.5">
               <p class="text-xs font-semibold uppercase tracking-wide text-red-700 flex items-center gap-1.5">

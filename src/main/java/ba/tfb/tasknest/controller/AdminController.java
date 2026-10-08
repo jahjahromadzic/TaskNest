@@ -1,5 +1,6 @@
 package ba.tfb.tasknest.controller;
 
+import ba.tfb.tasknest.dto.admin.AdminReportResponse;
 import ba.tfb.tasknest.dto.admin.AdminStatsResponse;
 import ba.tfb.tasknest.dto.admin.AdminTaskResponse;
 import ba.tfb.tasknest.dto.admin.AdminUserResponse;
@@ -8,15 +9,18 @@ import ba.tfb.tasknest.dto.common.PagedResponse;
 import ba.tfb.tasknest.dto.task.TaskResponse;
 import ba.tfb.tasknest.dto.taskerprofile.TaskerProfileResponse;
 import ba.tfb.tasknest.entity.enums.AccountStatus;
+import ba.tfb.tasknest.entity.enums.ReportStatus;
 import ba.tfb.tasknest.entity.enums.RoleName;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
 import ba.tfb.tasknest.security.UserPrincipal;
 import ba.tfb.tasknest.service.AdminService;
+import ba.tfb.tasknest.service.ReportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +34,7 @@ import java.util.UUID;
 public class AdminController {
 
     private final AdminService adminService;
+    private final ReportService reportService;
 
     @GetMapping("/stats")
     public AdminStatsResponse stats() {
@@ -53,6 +58,21 @@ public class AdminController {
             @PageableDefault(size = 20) Pageable pageable) {
         return PagedResponse.from(adminService.listTasks(status, search,
                 PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())));
+    }
+
+    @GetMapping("/reports")
+    public PagedResponse<AdminReportResponse> reports(
+            @RequestParam(required = false) ReportStatus status,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return PagedResponse.from(reportService.listForAdmin(status,
+                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())));
+    }
+
+    @PostMapping("/reports/{id}/dismiss")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void dismissReport(@PathVariable UUID id,
+                              @AuthenticationPrincipal UserPrincipal principal) {
+        reportService.dismiss(principal.getId(), id);
     }
 
     @PostMapping("/users/{id}/suspend")

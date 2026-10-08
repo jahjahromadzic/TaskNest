@@ -15,6 +15,15 @@
             <a routerLink="/tasker/profile" class="font-semibold underline underline-offset-2 hover:text-brand-hover">{{ 'userProfile.editTasker' | t }}</a>
           }
         </p>
+      } @else if (canReport) {
+        <button type="button" (click)="reporting.set(true)"
+                class="inline-flex items-center gap-1.5 text-xs text-text-sub hover:text-status-error transition-colors">
+          <svg [appIcon]="icons.Flag" class="w-3.5 h-3.5"></svg> {{ 'report.reportUser' | t }}
+        </button>
+        @if (reporting()) {
+          <app-report-dialog target="USER" [targetId]="userId" [targetName]="client.fullName ?? ''"
+                             (sent)="reporting.set(false)" (dismissed)="reporting.set(false)" />
+        }
       }
     </div>
 

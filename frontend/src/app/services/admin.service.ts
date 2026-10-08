@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AdminStats, AdminTaskPage, AdminUser, AdminUserPage, TaskDetail, TaskerProfile } from '../api/models';
+import { AdminReportPage, AdminStats, AdminTaskPage, AdminUser, AdminUserPage, TaskDetail, TaskerProfile } from '../api/models';
 
 export interface AdminUserQuery {
   status: 'ACTIVE' | 'SUSPENDED' | null;
@@ -13,6 +13,11 @@ export interface AdminUserQuery {
 export interface AdminTaskQuery {
   status: 'PUBLISHED' | 'ASSIGNED' | 'REMOVED' | null;
   search: string;
+  page: number;
+}
+
+export interface AdminReportQuery {
+  status: 'OPEN' | 'RESOLVED' | 'DISMISSED' | null;
   page: number;
 }
 
@@ -39,6 +44,16 @@ export class AdminService {
     if (query.status) params = params.set('status', query.status);
     if (query.search.trim()) params = params.set('search', query.search.trim());
     return this.http.get<AdminTaskPage>('/api/admin/tasks', { params });
+  }
+
+  reports(query: AdminReportQuery): Observable<AdminReportPage> {
+    let params = new HttpParams().set('page', query.page).set('size', ADMIN_PAGE_SIZE);
+    if (query.status) params = params.set('status', query.status);
+    return this.http.get<AdminReportPage>('/api/admin/reports', { params });
+  }
+
+  dismissReport(reportId: string): Observable<void> {
+    return this.http.post<void>(`/api/admin/reports/${encodeURIComponent(reportId)}/dismiss`, null);
   }
 
   suspend(userId: string): Observable<AdminUser> {

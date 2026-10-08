@@ -45,6 +45,7 @@ public class AdminService {
     private final TaskerProfileRepository taskerProfileRepository;
     private final TaskService taskService;
     private final TaskRepository taskRepository;
+    private final ReportService reportService;
     private final Clock clock;
 
     @Transactional(readOnly = true)
@@ -72,7 +73,8 @@ public class AdminService {
                 taskerProfileRepository.count(),
                 taskerProfileRepository.countByVerifiedFalse(),
                 taskRepository.countByStatus(TaskStatus.PUBLISHED),
-                taskRepository.countByStatus(TaskStatus.REMOVED));
+                taskRepository.countByStatus(TaskStatus.REMOVED),
+                reportService.countOpen());
     }
 
     @Transactional(readOnly = true)
@@ -94,8 +96,9 @@ public class AdminService {
 
         user.setAccountStatus(AccountStatus.SUSPENDED);
         int revoked = refreshTokenRepository.revokeAllByUser(userId, LocalDateTime.now(clock));
+        int resolved = reportService.resolveForUser(adminId, userId);
 
-        log.info("Admin {} suspended user {} ({} refresh tokens revoked)", adminId, userId, revoked);
+        log.info("Admin {} suspended user {} ({} refresh tokens revoked, {} reports resolved)", adminId, userId, revoked, resolved);
         return toResponse(user);
     }
 
@@ -127,8 +130,9 @@ public class AdminService {
     @Transactional
     public TaskResponse removeTask(UUID adminId, UUID taskId, String reason) {
         TaskResponse removed = taskService.removeTask(taskId, reason);
+        int resolved = reportService.resolveForTask(adminId, taskId);
 
-        log.info("Admin {} removed task {}: {}", adminId, taskId, reason);
+        log.info("Admin {} removed task {} ({} reports resolved): {}", adminId, taskId, resolved, reason);
         return removed;
     }
 

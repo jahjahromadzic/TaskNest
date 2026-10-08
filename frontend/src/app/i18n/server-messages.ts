@@ -19,6 +19,14 @@ const EXACT: Record<string, string> = {
   'Only a draft or a task that is open for offers can be edited':
     'Mijenjati se može samo nacrt ili oglas koji prima ponude',
   'The current password is not correct': 'Trenutna lozinka nije tačna',
+  'You cannot report your own task': 'Ne možeš prijaviti svoj oglas',
+  'You cannot report yourself': 'Ne možeš prijaviti sebe',
+  'This task has already been removed by a moderator': 'Moderator je već uklonio ovaj oglas',
+  'This account is already suspended': 'Ovaj račun je već suspendovan',
+  'You have already reported this. An administrator will review it.': 'Ovo si već prijavio/la. Administrator će to pregledati.',
+  'Describe the problem when the reason is Other': 'Opiši problem kad izabereš „Nešto drugo“',
+  'You have sent too many reports today. Try again tomorrow.': 'Danas si poslao/la previše prijava. Pokušaj ponovo sutra.',
+  'This report has already been handled': 'Ova prijava je već obrađena',
   'The new password must be different from the current one': 'Nova lozinka mora biti drugačija od trenutne',
   'This reset link is invalid or has expired. Ask for a new one.':
     'Ovaj link za promjenu lozinke nije važeći ili je istekao. Zatraži novi.',

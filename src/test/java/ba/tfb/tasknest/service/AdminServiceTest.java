@@ -50,6 +50,7 @@ class AdminServiceTest {
     @Mock private TaskerProfileRepository taskerProfileRepository;
     @Mock private TaskService taskService;
     @Mock private TaskRepository taskRepository;
+    @Mock private ReportService reportService;
 
     private AdminService adminService;
 
@@ -57,7 +58,7 @@ class AdminServiceTest {
     void setUp() {
         Clock clock = Clock.fixed(NOW.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
         adminService = new AdminService(userRepository, refreshTokenRepository,
-                taskerProfileRepository, taskService, taskRepository, clock);
+                taskerProfileRepository, taskService, taskRepository, reportService, clock);
     }
 
     @Nested

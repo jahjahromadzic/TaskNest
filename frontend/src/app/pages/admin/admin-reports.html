@@ -1,0 +1,128 @@
+<section class="flex flex-col gap-3 lg:flex-1 lg:min-h-0 bg-surface-card rounded-card border border-surface-border shadow-subtle p-4 animate-fade-in">
+  <div class="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <p class="text-sm text-text-sub flex items-center gap-2">
+      <svg [appIcon]="icons.Flag" class="w-4 h-4 text-status-error"></svg> {{ 'admin.reportsHint' | t }}
+    </p>
+    <div class="flex gap-1.5 overflow-x-auto [scrollbar-width:none]">
+      @for (option of filters; track option.key) {
+        <button type="button" (click)="selectFilter(option.key)" [attr.aria-pressed]="filter() === option.key"
+                class="shrink-0 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all duration-200 active:scale-95"
+                [class]="filter() === option.key ? 'bg-brand text-white border-brand shadow-subtle' : 'bg-surface-card border-surface-border text-text-sub hover:text-text-main hover:border-slate-300'">
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="space-y-1.5 lg:flex-1 lg:min-h-0 lg:overflow-y-auto scroll-area lg:-mx-1 lg:px-1">
+    @if (rows(); as rows) {
+      @for (report of rows; track report.id; let i = $index) {
+        <article class="flex flex-col md:flex-row md:items-center gap-3 p-3 rounded-xl border border-surface-border hover:border-slate-300 hover:bg-slate-50/60 transition-colors animate-fade-in"
+                 [class.opacity-70]="report.status !== 'OPEN'" [style.animation-delay.ms]="i * 25">
+          <div class="flex items-start gap-3 min-w-0 flex-1">
+            <span class="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                  [class]="report.status === 'OPEN' ? 'bg-red-50 text-status-error' : 'bg-slate-100 text-slate-500'">
+              <svg [appIcon]="report.targetType === 'TASK' ? icons.ClipboardList : icons.UserRound" class="w-5 h-5"></svg>
+            </span>
+            <div class="min-w-0 space-y-0.5">
+              <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                <span class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                  {{ (report.targetType === 'TASK' ? 'admin.reportTargetTask' : 'admin.reportTargetUser') | t }}
+                </span>
+                @if (report.targetType === 'TASK') {
+                  <a [routerLink]="['/tasks', report.taskId]" class="font-semibold truncate hover:text-brand hover:underline underline-offset-2">
+                    {{ report.taskTitle }}
+                  </a>
+                } @else {
+                  <a [routerLink]="['/users', report.reportedUserId]" class="font-semibold truncate hover:text-brand hover:underline underline-offset-2">
+                    {{ report.reportedUserName }}
+                  </a>
+                  <span class="text-xs text-text-sub truncate">{{ report.reportedUserEmail }}</span>
+                }
+                @if (report.status === 'OPEN' && (report.openReportsOnTarget ?? 0) > 1) {
+                  <span class="text-[11px] font-semibold bg-red-50 text-red-700 border border-red-200 px-1.5 py-0.5 rounded-full">
+                    {{ 'admin.reportsOnTarget' | t: { count: report.openReportsOnTarget } }}
+                  </span>
+                }
+              </p>
+              <p class="text-xs">
+                <span class="font-semibold text-status-error">{{ reasonKey(report.reason) | t }}</span>
+                @if (report.comment) {
+                  <span class="text-text-main"> · „{{ report.comment }}“</span>
+                }
+              </p>
+              <p class="text-[11px] text-slate-400">
+                {{ 'admin.reportedBy' | t: { name: report.reporterName, time: timeAgo(report.createdAt) } }}
+                @if (report.status !== 'OPEN') {
+                  · {{ (report.status === 'RESOLVED' ? 'admin.reportResolvedBy' : 'admin.reportDismissedBy') | t: { name: report.resolvedByName, time: timeAgo(report.resolvedAt) } }}
+                }
+              </p>
+            </div>
+          </div>
+          @if (report.status === 'OPEN') {
+            <div class="flex items-center justify-end gap-1.5 shrink-0">
+              @if (canRemove(report)) {
+                <button type="button" (click)="removing.set(report)" [disabled]="busy() !== null"
+                        class="btn-ghost py-1.5 px-2.5 text-xs text-status-error hover:bg-red-50">
+                  <svg [appIcon]="icons.Ban" class="w-3.5 h-3.5"></svg> {{ 'admin.removeTask' | t }}
+                </button>
+              }
+              @if (canSuspend(report)) {
+                <button type="button" (click)="suspend(report)" [disabled]="busy() !== null"
+                        class="btn-ghost py-1.5 px-2.5 text-xs text-status-error hover:bg-red-50">
+                  <svg [appIcon]="icons.UserX" class="w-3.5 h-3.5"></svg> {{ 'admin.suspend' | t }}
+                </button>
+              }
+              <button type="button" (click)="dismiss(report)" [disabled]="busy() !== null"
+                      class="btn-ghost py-1.5 px-2.5 text-xs border border-surface-border">
+                <svg [appIcon]="icons.X" class="w-3.5 h-3.5"></svg> {{ 'admin.dismissReport' | t }}
+              </button>
+            </div>
+          } @else {
+            <span class="shrink-0 self-start md:self-center text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                  [class]="report.status === 'RESOLVED' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'">
+              {{ (report.status === 'RESOLVED' ? 'admin.reportStatusResolved' : 'admin.reportStatusDismissed') | t }}
+            </span>
+          }
+        </article>
+      } @empty {
+        <div class="py-12 text-center space-y-2">
+          <div class="mx-auto w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <svg [appIcon]="icons.ShieldCheck" class="w-6 h-6"></svg>
+          </div>
+          <p class="text-sm font-semibold">{{ 'admin.noReportsTitle' | t }}</p>
+          <p class="text-xs text-text-sub">{{ 'admin.noReportsText' | t }}</p>
+        </div>
+      }
+    } @else if (failed()) {
+      <div role="alert" class="py-12 text-center space-y-2">
+        <svg [appIcon]="icons.CircleAlert" class="w-8 h-8 mx-auto text-status-error"></svg>
+        <p class="text-sm text-text-sub">{{ 'admin.reportsFailed' | t }}</p>
+        <button type="button" (click)="retry()" class="btn-ghost text-brand">
+          <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> {{ 'common.tryAgain' | t }}
+        </button>
+      </div>
+    } @else {
+      @for (row of skeletons; track row) {
+        <div class="flex items-center gap-3 p-3 rounded-xl border border-surface-border" aria-hidden="true">
+          <span class="skeleton w-10 h-10 rounded-xl"></span>
+          <span class="flex-1 space-y-1.5">
+            <span class="skeleton block h-3.5 w-48"></span>
+            <span class="skeleton block h-3 w-64"></span>
+          </span>
+        </div>
+      }
+    }
+  </div>
+
+  @if (rows() !== null && totalPages() > 1) {
+    <div class="shrink-0">
+      <app-pagination [page]="page()" [totalPages]="totalPages()" (pageChange)="goToPage($event)" />
+    </div>
+  }
+</section>
+
+@if (removing(); as report) {
+  <app-remove-task-dialog [taskId]="report.taskId!" [taskTitle]="report.taskTitle ?? ''"
+                          (removed)="onRemoved()" (dismissed)="removing.set(null)" />
+}

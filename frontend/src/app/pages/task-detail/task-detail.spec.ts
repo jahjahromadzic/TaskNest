@@ -113,6 +113,34 @@ describe('Task details page', () => {
     expect(text()).not.toContain('You posted this task');
   });
 
+  it('lets another signed-in user report the task', async () => {
+    logInAs('someone-else');
+    await open(task);
+    expect(text()).toContain('Report this task');
+
+    Array.from<HTMLButtonElement>(harness.routeNativeElement!.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Report this task'))!
+      .click();
+    await harness.fixture.whenStable();
+    expect(harness.routeNativeElement!.querySelector('app-report-dialog dialog')!.textContent).toContain('What is wrong?');
+  });
+
+  it('does not offer the report link to a visitor', async () => {
+    await open(task);
+
+    expect(text()).not.toContain('Report this task');
+  });
+
+  it('does not offer the report link to the owner', async () => {
+    logInAs('owner-1');
+
+    await open(task);
+    http.expectOne('/api/tasks/t1/offers').flush([]);
+    await harness.fixture.whenStable();
+
+    expect(text()).not.toContain('Report this task');
+  });
+
   it('explains that a cancelled task no longer takes offers', async () => {
     await open({ ...task, status: 'CANCELLED' });
 

@@ -66,6 +66,9 @@ single-page application that uses it.
   passes.
 - **Administration** — suspension, tasker verification and task removal, with
   the first administrator promoted from configuration.
+- **Reports** — any signed-in user can report a task or another user (from the task
+  page, a profile or a chat) with a reason. The admin panel lists the reports, and
+  removing the task or suspending the user resolves every open report about them.
 - **Reference data** — fourteen categories, each with a stable `slug`, and the
   municipalities under their local names, exposed as public endpoints.
 
@@ -76,7 +79,7 @@ single-page application that uses it.
 | Language | Java 21 |
 | Framework | Spring Boot 4.1.1 |
 | Database | PostgreSQL 17 |
-| Migrations | Liquibase (43 changesets, 17 tables) |
+| Migrations | Liquibase (44 changesets, 18 tables) |
 | Persistence | Spring Data JPA, Hibernate 7 (`ddl-auto: validate`) |
 | Security | Spring Security, JWT (jjwt 0.12.6) |
 | Messaging | RabbitMQ |
@@ -134,7 +137,7 @@ seeds reference data on first run.
 
 In the `dev` profile the application also fills an empty database with demo data
 on startup. The content is in Bosnian, as real users in Sarajevo would write it:
-nine accounts, twenty-five open tasks with offers, and a task in every other status
+fifteen accounts, forty-two open tasks with offers (at least three in every category), and a task in every other status
 (draft, assigned with an unread message, in progress, completed and waiting for the
 client, closed with reviews in both directions, cancelled, expired and removed by a
 moderator). Pending offers come with chats, so an offer can be accepted from the
@@ -155,6 +158,12 @@ Every demo account uses the password `demo12345` (`DEMO_DATA_PASSWORD`).
 | `selma@demo.tasknest.ba` | client, tasker | Cleaning, painting and gardening, verified, rating 5.00 |
 | `adnan@demo.tasknest.ba` | client, tasker | Moving, furniture assembly, carpentry and locks, rating 4.50 |
 | `tarik@demo.tasknest.ba` | client, tasker | Electrical, painting, air conditioning and computers, new on TaskNest |
+| `mirza@demo.tasknest.ba` | client, tasker | Carpentry, tiling and locks, verified |
+| `alen@demo.tasknest.ba` | client, tasker | Heating, air conditioning and appliances, new on TaskNest |
+| `lamija@demo.tasknest.ba` | client, tasker | Gardening, cleaning and computers, verified |
+| `dzenana@demo.tasknest.ba` | client | Open tasks, a chat with Mirza about a basement lock, a closed job |
+| `kenan@demo.tasknest.ba` | client | Open tasks, a chat with Alen about a boiler service, a closed job |
+| `sanela@demo.tasknest.ba` | client | Open tasks in heating, gardening, carpentry and computers |
 
 The seeder runs only once: it does nothing when `amra@demo.tasknest.ba` already
 exists. To start again from a clean database, remove the Docker volume:
@@ -513,14 +522,31 @@ All endpoints require the `ADMIN` role.
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/stats` | Overview for the panel: users, suspended users, taskers, taskers not yet verified, open and removed tasks |
+| GET | `/stats` | Overview for the panel: users, suspended users, taskers, taskers not yet verified, open and removed tasks, open reports |
+| GET | `/reports` | Reports, newest first, with the reporter, the reported task or user and how many open reports that target has. Filter: `status` (`OPEN`, `RESOLVED`, `DISMISSED`) |
+| POST | `/reports/{id}/dismiss` | Dismiss an open report without acting on it |
 | GET | `/users` | Users, newest first, with their tasker profile id and verified mark. Filters: `status`, `role`, `search` (email or name) |
 | GET | `/tasks` | Tasks for moderation, newest first, with the owner's name and email. Drafts are never shown. Filters: `status`, `search` (title, owner name or email) |
 | POST | `/users/{id}/suspend` | Suspend an account and revoke its refresh tokens |
 | POST | `/users/{id}/reactivate` | Restore a suspended account |
 | POST | `/tasker-profiles/{id}/verify` | Mark a tasker as verified |
 | POST | `/tasker-profiles/{id}/unverify` | Remove the verified mark |
-| POST | `/tasks/{id}/remove` | Remove a task; body `{ "reason": "..." }` is required |
+| POST | `/tasks/{id}/remove` | Remove a task; body `{ "reason": "..." }` is required. Resolves every open report about the task |
+
+### Reports — `/api`
+
+| Method | Path | Access | Description |
+|---|---|---|---|
+| POST | `/tasks/{taskId}/reports` | Authenticated | Report a task. Body: `reason` (`SPAM`, `FRAUD`, `INAPPROPRIATE`, `NO_SHOW`, `OTHER`) and an optional `comment` of up to 500 characters, required for `OTHER` |
+| POST | `/users/{userId}/reports` | Authenticated | Report a user, with the same body |
+
+Nobody can report their own task or themselves, a draft is invisible to everyone but
+its owner, and a removed task or a suspended account cannot be reported again. One
+person has at most one open report on the same task or user: a partial unique index
+(`WHERE status = 'OPEN'`) enforces it in the database, so two identical reports sent
+at the same moment still create only one. After a dismissal the same person may
+report again. Each user can send at most ten reports in 24 hours, so reports cannot
+be used to flood the administrators.
 
 ### Notifications — `/api/notifications`
 
@@ -753,6 +779,11 @@ are rejected, their conversations archived, and the owner receives the reason in
 a `TASK_REMOVED` notification. Work already `IN_PROGRESS` cannot be removed: the
 tasker is already on site, and a removed job could never be closed or reviewed.
 
+**Reports** close themselves when the admin acts: removing a task or suspending a user
+marks every open report about them as resolved, with the admin's name and the time.
+A report that needs no action is dismissed. The reported person never learns who
+reported them.
+
 **Known limitation:** administrative actions are logged with the acting admin's
 id but not stored in the database, so there is no audit trail to query.
 
@@ -827,13 +858,13 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **381 tests** and requires no manual setup — Testcontainers
+The suite contains **391 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 141 | Service business rules, the task state machine and the login attempt limiter |
-| Integration | 240 | Authentication, password reset, login throttling, account settings, task editing and search, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
+| Integration | 250 | Authentication, password reset, login throttling, account settings, task editing and search, reports, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
 
 Every integration test starts from an empty database: one `TRUNCATE ... CASCADE` after each test
 clears all application tables at once. Clearing them table by table left a window in which the
@@ -842,9 +873,9 @@ about to be deleted. The listener also ignores events for tasks that are no long
 left over from an earlier test cannot reach the next one. The suite passes in random class order
 (`./mvnw verify -Dsurefire.runOrder=random`).
 
-The frontend has its own suite of **249 tests** (Vitest), covering the session
+The frontend has its own suite of **260 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
-header, the task list and its search, task details, posting and editing a task, account settings, the client's own tasks, offers
+header, the task list and its search, task details, posting and editing a task, account settings, reports and the admin reports tab, the client's own tasks, offers
 and hiring, cancelling, reopening and closing a task, reviews, becoming a tasker and editing the tasker profile, sending and withdrawing offers,
 starting and finishing a job, the tasker dashboard, the user profile with its tasker and client sides, the notification bell and page, the messages page and chat helpers, live updates over WebSocket, the admin panel, translations and plural rules, the theme switch, the confirmation dialog, the dropdown, the progress
 timeline, date helpers and the category icons. The server is simulated with Angular's

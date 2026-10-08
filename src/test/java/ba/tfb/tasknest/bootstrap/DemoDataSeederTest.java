@@ -3,10 +3,12 @@ package ba.tfb.tasknest.bootstrap;
 import ba.tfb.tasknest.AbstractIntegrationTest;
 import ba.tfb.tasknest.dto.auth.AuthResponse;
 import ba.tfb.tasknest.dto.auth.LoginRequest;
+import ba.tfb.tasknest.entity.Category;
 import ba.tfb.tasknest.entity.Task;
 import ba.tfb.tasknest.entity.TaskerProfile;
 import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
+import ba.tfb.tasknest.repository.CategoryRepository;
 import ba.tfb.tasknest.repository.NotificationRepository;
 import ba.tfb.tasknest.repository.ReviewRepository;
 import ba.tfb.tasknest.repository.TaskRepository;
@@ -40,6 +42,7 @@ class DemoDataSeederTest extends AbstractIntegrationTest {
     @Autowired private DemoDataSeeder seeder;
     @Autowired private UserRepository userRepository;
     @Autowired private TaskRepository taskRepository;
+    @Autowired private CategoryRepository categoryRepository;
     @Autowired private TaskerProfileRepository taskerProfileRepository;
     @Autowired private ReviewRepository reviewRepository;
     @Autowired private NotificationRepository notificationRepository;
@@ -60,7 +63,7 @@ class DemoDataSeederTest extends AbstractIntegrationTest {
 
         seeder.seed();
 
-        assertThat(userRepository.count()).isEqualTo(users).isEqualTo(9);
+        assertThat(userRepository.count()).isEqualTo(users).isEqualTo(15);
         assertThat(taskRepository.count()).isEqualTo(tasks);
     }
 
@@ -69,7 +72,17 @@ class DemoDataSeederTest extends AbstractIntegrationTest {
     void seed_fillsThePublicListing() {
         long open = taskService.browseTasks(null, null, null, PageRequest.of(0, 50)).getTotalElements();
 
-        assertThat(open).isEqualTo(25);
+        assertThat(open).isEqualTo(42);
+    }
+
+    @Test
+    @DisplayName("Every category has at least three open tasks, so no category filter shows an empty list")
+    void seed_fillsEveryCategory() {
+        for (Category category : categoryRepository.findAll()) {
+            long open = taskService.browseTasks(category.getId(), null, null, PageRequest.of(0, 50)).getTotalElements();
+
+            assertThat(open).as(category.getSlug()).isGreaterThanOrEqualTo(3);
+        }
     }
 
     @Test

@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/{userId}/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reportUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tasks": {
         parameters: {
             query?: never;
@@ -110,6 +126,22 @@ export interface paths {
         get: operations["forTask"];
         put?: never;
         post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tasks/{taskId}/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reportTask"];
         delete?: never;
         options?: never;
         head?: never;
@@ -532,6 +564,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/reports/{id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["dismissReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/account/password": {
         parameters: {
             query?: never;
@@ -900,6 +948,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reports"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tasks/{taskId}/photos/{photoId}": {
         parameters: {
             query?: never;
@@ -1024,6 +1088,23 @@ export interface components {
             phone?: string;
             /** Format: date-time */
             memberSince?: string;
+        };
+        CreateReportRequest: {
+            /** @enum {string} */
+            reason: "SPAM" | "FRAUD" | "INAPPROPRIATE" | "NO_SHOW" | "OTHER";
+            comment?: string;
+        };
+        ReportResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            targetType?: "TASK" | "USER";
+            /** @enum {string} */
+            reason?: "SPAM" | "FRAUD" | "INAPPROPRIATE" | "NO_SHOW" | "OTHER";
+            /** @enum {string} */
+            status?: "OPEN" | "RESOLVED" | "DISMISSED";
+            /** Format: date-time */
+            createdAt?: string;
         };
         CreateTaskRequest: {
             title: string;
@@ -1409,6 +1490,53 @@ export interface components {
             openTasks?: number;
             /** Format: int64 */
             removedTasks?: number;
+            /** Format: int64 */
+            openReports?: number;
+        };
+        AdminReportResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            targetType?: "TASK" | "USER";
+            /** @enum {string} */
+            reason?: "SPAM" | "FRAUD" | "INAPPROPRIATE" | "NO_SHOW" | "OTHER";
+            comment?: string;
+            /** @enum {string} */
+            status?: "OPEN" | "RESOLVED" | "DISMISSED";
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: uuid */
+            reporterId?: string;
+            reporterName?: string;
+            /** Format: uuid */
+            taskId?: string;
+            taskTitle?: string;
+            /** @enum {string} */
+            taskStatus?: "DRAFT" | "PUBLISHED" | "ASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CLOSED" | "CANCELLED" | "EXPIRED" | "REMOVED";
+            /** Format: uuid */
+            reportedUserId?: string;
+            reportedUserName?: string;
+            reportedUserEmail?: string;
+            /** @enum {string} */
+            reportedUserStatus?: "ACTIVE" | "SUSPENDED" | "DEACTIVATED";
+            /** Format: int64 */
+            openReportsOnTarget?: number;
+            resolvedByName?: string;
+            /** Format: date-time */
+            resolvedAt?: string;
+        };
+        PagedResponseAdminReportResponse: {
+            content?: components["schemas"]["AdminReportResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            first?: boolean;
+            last?: boolean;
         };
     };
     responses: never;
@@ -1603,6 +1731,32 @@ export interface operations {
             };
         };
     };
+    reportUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReportRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReportResponse"];
+                };
+            };
+        };
+    };
     browse: {
         parameters: {
             query: {
@@ -1696,6 +1850,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ReviewResponse"];
+                };
+            };
+        };
+    };
+    reportTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                taskId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReportRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReportResponse"];
                 };
             };
         };
@@ -2339,6 +2519,26 @@ export interface operations {
             };
         };
     };
+    dismissReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     changePassword: {
         parameters: {
             query?: never;
@@ -2846,6 +3046,29 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AdminStatsResponse"];
+                };
+            };
+        };
+    };
+    reports: {
+        parameters: {
+            query: {
+                status?: "OPEN" | "RESOLVED" | "DISMISSED";
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PagedResponseAdminReportResponse"];
                 };
             };
         };

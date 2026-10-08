@@ -44,6 +44,8 @@ services:
     container_name: tasknest-backend
     environment:
       SPRING_PROFILES_ACTIVE: dev
+      DEMO_DATA_ENABLED: ${DEMO_DATA_ENABLED:-true}
+      TZ: Europe/Sarajevo
       DB_URL: jdbc:postgresql://postgres:5432/tasknest
       RABBITMQ_HOST: rabbitmq
       MAIL_HOST: mailpit

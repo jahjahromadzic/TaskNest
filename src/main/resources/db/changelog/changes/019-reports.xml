@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="044-create-reports" author="jahja">
+        <createTable tableName="reports">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="reporter_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="task_id" type="UUID"/>
+            <column name="reported_user_id" type="UUID"/>
+            <column name="reason" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="comment" type="VARCHAR(500)"/>
+            <column name="status" type="VARCHAR(20)" defaultValue="OPEN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="resolved_by_id" type="UUID"/>
+            <column name="resolved_at" type="TIMESTAMP"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="reports" baseColumnNames="reporter_id"
+                referencedTableName="users" referencedColumnNames="id"
+                constraintName="fk_reports_reporter"/>
+        <addForeignKeyConstraint
+                baseTableName="reports" baseColumnNames="task_id"
+                referencedTableName="tasks" referencedColumnNames="id"
+                constraintName="fk_reports_task"/>
+        <addForeignKeyConstraint
+                baseTableName="reports" baseColumnNames="reported_user_id"
+                referencedTableName="users" referencedColumnNames="id"
+                constraintName="fk_reports_reported_user"/>
+        <addForeignKeyConstraint
+                baseTableName="reports" baseColumnNames="resolved_by_id"
+                referencedTableName="users" referencedColumnNames="id"
+                constraintName="fk_reports_resolved_by"/>
+        <sql>
+            ALTER TABLE reports ADD CONSTRAINT chk_reports_target CHECK (
+                (target_type = 'TASK' AND task_id IS NOT NULL AND reported_user_id IS NULL)
+                OR (target_type = 'USER' AND reported_user_id IS NOT NULL AND task_id IS NULL));
+            ALTER TABLE reports ADD CONSTRAINT chk_reports_status CHECK (status IN ('OPEN', 'RESOLVED', 'DISMISSED'));
+            CREATE UNIQUE INDEX uq_reports_open_task ON reports (reporter_id, task_id) WHERE status = 'OPEN' AND task_id IS NOT NULL;
+            CREATE UNIQUE INDEX uq_reports_open_user ON reports (reporter_id, reported_user_id) WHERE status = 'OPEN' AND reported_user_id IS NOT NULL;
+            CREATE INDEX idx_reports_status_created ON reports (status, created_at);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

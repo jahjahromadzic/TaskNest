@@ -36,3 +36,4 @@ build/
 
 ### Uploaded photos in development ###
 /data/
+.env

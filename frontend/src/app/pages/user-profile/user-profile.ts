@@ -11,12 +11,14 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   Eye,
+  Flag,
   LoaderCircle,
   MapPin,
   MessageSquareQuote,
   SearchX,
   Star,
 } from 'lucide';
+import { ReportDialog } from '../../components/report-dialog/report-dialog';
 import { ClientHire, ClientProfile, Review, TaskerProfile } from '../../api/models';
 import { AuthService } from '../../auth/auth.service';
 import { CategoryIcon } from '../../components/category-icon/category-icon';
@@ -79,7 +81,7 @@ export class PagedList<T> {
 
 @Component({
   selector: 'app-user-profile',
-  imports: [NgTemplateOutlet, RouterLink, CategoryIcon, Icon, Stars, StatusBadge, TranslatePipe, CategoryPipe],
+  imports: [NgTemplateOutlet, RouterLink, CategoryIcon, Icon, ReportDialog, Stars, StatusBadge, TranslatePipe, CategoryPipe],
   templateUrl: './user-profile.html',
 })
 export class UserProfile implements OnInit {
@@ -89,6 +91,7 @@ export class UserProfile implements OnInit {
     BriefcaseBusiness,
     CalendarDays,
     Eye,
+    Flag,
     LoaderCircle,
     MapPin,
     MessageSquareQuote,
@@ -102,6 +105,7 @@ export class UserProfile implements OnInit {
   readonly section = signal<ClientSection>('reviews');
   readonly notFound = signal(false);
   readonly failed = signal(false);
+  readonly reporting = signal(false);
   readonly timeAgo = timeAgo;
   readonly formatDate = formatDate;
 
@@ -109,7 +113,7 @@ export class UserProfile implements OnInit {
   readonly clientReviews: PagedList<Review>;
   readonly hires: PagedList<ClientHire>;
 
-  private userId = '';
+  protected userId = '';
 
   constructor(
     private clientProfileService: ClientProfileService,
@@ -133,6 +137,11 @@ export class UserProfile implements OnInit {
 
   get isOwn(): boolean {
     return this.authService.currentUser?.id === this.userId;
+  }
+
+  get canReport(): boolean {
+    const viewer = this.authService.currentUser;
+    return viewer !== null && !this.isOwn && !viewer.roles.includes('ADMIN');
   }
 
   initials(name: string | undefined): string {

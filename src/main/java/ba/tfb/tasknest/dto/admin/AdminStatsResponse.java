@@ -6,6 +6,7 @@ public record AdminStatsResponse(
         long taskers,
         long unverifiedTaskers,
         long openTasks,
-        long removedTasks
+        long removedTasks,
+        long openReports
 ) {
 }

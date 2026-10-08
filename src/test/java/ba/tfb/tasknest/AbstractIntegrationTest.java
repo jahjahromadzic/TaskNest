@@ -18,7 +18,7 @@ public abstract class AbstractIntegrationTest {
     private static final String TRUNCATE = "TRUNCATE TABLE " + String.join(", ",
             "tasks", "task_photos", "tasker_profiles", "tasker_categories", "tasker_municipalities", "users", "user_roles",
             "notifications", "offers", "conversations", "messages", "reviews",
-            "refresh_tokens", "verification_tokens") + " CASCADE";
+            "refresh_tokens", "verification_tokens", "reports") + " CASCADE";
 
     private static final int ATTEMPTS = 3;
 

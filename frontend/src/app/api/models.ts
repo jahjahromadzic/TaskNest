@@ -43,3 +43,7 @@ export type AdminUserPage = Schemas['PagedResponseAdminUserResponse'];
 export type AdminStats = Schemas['AdminStatsResponse'];
 export type AdminTask = Schemas['AdminTaskResponse'];
 export type AdminTaskPage = Schemas['PagedResponseAdminTaskResponse'];
+export type CreateReportRequest = Schemas['CreateReportRequest'];
+export type ReportReason = NonNullable<CreateReportRequest['reason']>;
+export type AdminReport = Schemas['AdminReportResponse'];
+export type AdminReportPage = Schemas['PagedResponseAdminReportResponse'];

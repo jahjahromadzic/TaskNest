@@ -22,10 +22,18 @@
               [class]="tab() === 'tasks' ? 'bg-surface-card text-text-main shadow-subtle' : 'text-slate-500 hover:text-text-main'">
         {{ 'admin.tabTasks' | t }}
       </button>
+      <button type="button" role="tab" (click)="open('reports')" [attr.aria-selected]="tab() === 'reports'"
+              class="flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 inline-flex items-center justify-center gap-1.5"
+              [class]="tab() === 'reports' ? 'bg-surface-card text-text-main shadow-subtle' : 'text-slate-500 hover:text-text-main'">
+        {{ 'admin.tabReports' | t }}
+        @if (openReports() > 0) {
+          <span class="min-w-5 h-5 px-1.5 rounded-full bg-status-error text-white text-[11px] font-bold leading-5 tabular-nums animate-pop">{{ openReports() }}</span>
+        }
+      </button>
     </div>
   </div>
 
-  <div class="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3">
+  <div class="shrink-0 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
     @if (tiles(); as tiles) {
       @for (tile of tiles; track tile.filter; let i = $index) {
         <button type="button" (click)="open(tile.tab, tile.filter)"
@@ -62,8 +70,10 @@
   <div class="lg:flex-1 lg:min-h-0 flex flex-col">
     @if (tab() === 'users') {
       <app-admin-users class="contents" (changed)="loadStats()" />
-    } @else {
+    } @else if (tab() === 'tasks') {
       <app-admin-tasks class="contents" (changed)="loadStats()" />
+    } @else {
+      <app-admin-reports class="contents" (changed)="loadStats()" />
     }
   </div>
 </div>
