@@ -365,7 +365,9 @@ describe('Messages page', () => {
     TestBed.inject(ConfirmService).answer(true);
     await harness.fixture.whenStable();
 
-    http.expectOne({ method: 'POST', url: '/api/offers/o3/accept' }).flush({});
+    const accept = http.expectOne({ method: 'POST', url: '/api/offers/o3/accept' });
+    expect(accept.request.body).toEqual({ expectedPrice: 140 });
+    accept.flush({});
     await reloadWith({ ...pendingOffer, offerStatus: 'ACCEPTED', taskStatus: 'ASSIGNED' });
 
     expect(offerButton('Accept offer')).toBeUndefined();

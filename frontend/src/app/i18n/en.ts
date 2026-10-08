@@ -637,6 +637,7 @@ export const en = {
       TASK_AUTO_CLOSED: 'Task closed automatically',
       fallback: 'Notification',
       TASK_UPDATED: 'Task changed',
+      OFFER_UPDATED: 'Offer price changed',
     },
   },
   messages: {
@@ -799,6 +800,20 @@ export const en = {
     send: 'Send report',
     sending: 'Sending...',
     sent: 'Thank you. An administrator will review your report.',
+  },
+  offerPrice: {
+    change: 'Change price',
+    title: 'Change your price',
+    current: 'Your offer now: {price}',
+    newPrice: 'New price',
+    note: 'Note for the client',
+    notePlaceholder: 'e.g. As we agreed in the chat',
+    hint: 'The client is notified, and the change is posted in your chat. Once you are hired the price is locked.',
+    save: 'Save price',
+    priceRequired: 'Enter a price above zero',
+    samePrice: 'This is already your price',
+    saved: 'Your offer is now {price}.',
+    chatMessage: 'I changed my offer from {old} to {price}.',
   },
   remove: {
     title: 'Remove this task?',

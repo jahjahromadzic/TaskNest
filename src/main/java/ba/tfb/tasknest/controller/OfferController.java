@@ -1,6 +1,8 @@
 package ba.tfb.tasknest.controller;
 
+import ba.tfb.tasknest.dto.offer.AcceptOfferRequest;
 import ba.tfb.tasknest.dto.offer.CreateOfferRequest;
+import ba.tfb.tasknest.dto.offer.UpdateOfferPriceRequest;
 import ba.tfb.tasknest.dto.offer.OfferResponse;
 import ba.tfb.tasknest.dto.offer.TaskOfferResponse;
 import ba.tfb.tasknest.security.UserPrincipal;
@@ -50,8 +52,17 @@ public class OfferController {
     @PostMapping("/offers/{offerId}/accept")
     @PreAuthorize("hasRole('CLIENT')")
     public OfferResponse accept(@PathVariable UUID offerId,
+                                @RequestBody(required = false) AcceptOfferRequest request,
                                 @AuthenticationPrincipal UserPrincipal principal) {
-        return offerService.acceptOffer(offerId, principal.getId());
+        return offerService.acceptOffer(offerId, principal.getId(), request == null ? null : request.expectedPrice());
+    }
+
+    @PutMapping("/offers/{offerId}")
+    @PreAuthorize("hasRole('TASKER')")
+    public OfferResponse updatePrice(@PathVariable UUID offerId,
+                                     @Valid @RequestBody UpdateOfferPriceRequest request,
+                                     @AuthenticationPrincipal UserPrincipal principal) {
+        return offerService.updateOfferPrice(offerId, principal.getId(), request);
     }
 
     @PostMapping("/offers/{offerId}/withdraw")

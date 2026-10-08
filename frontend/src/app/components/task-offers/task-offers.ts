@@ -116,7 +116,7 @@ export class TaskOffers implements OnChanges {
     }
 
     this.accepting.set(offer.id!);
-    this.offerService.accept(offer.id!).subscribe({
+    this.offerService.accept(offer.id!, offer.price).subscribe({
       next: () => {
         this.accepting.set(null);
         this.toastService.success(t('offers.hiredToast', { name: offer.taskerName }));

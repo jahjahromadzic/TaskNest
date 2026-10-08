@@ -16,5 +16,6 @@ public enum NotificationType {
     OFFER_REACTIVATED,
     ASSIGNMENT_EXPIRED,
     TASK_AUTO_CLOSED,
-    TASK_UPDATED
+    TASK_UPDATED,
+    OFFER_UPDATED
 }

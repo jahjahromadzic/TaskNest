@@ -23,8 +23,12 @@ export class OfferService {
     return this.http.post<Offer>(`/api/tasks/${encodeURIComponent(taskId)}/offers`, request);
   }
 
-  accept(offerId: string): Observable<unknown> {
-    return this.http.post(`/api/offers/${encodeURIComponent(offerId)}/accept`, null);
+  accept(offerId: string, expectedPrice?: number): Observable<unknown> {
+    return this.http.post(`/api/offers/${encodeURIComponent(offerId)}/accept`, { expectedPrice });
+  }
+
+  updatePrice(offerId: string, price: number): Observable<Offer> {
+    return this.http.put<Offer>(`/api/offers/${encodeURIComponent(offerId)}`, { price });
   }
 
   withdraw(offerId: string): Observable<Offer> {

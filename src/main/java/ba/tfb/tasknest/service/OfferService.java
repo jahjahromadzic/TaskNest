@@ -4,6 +4,7 @@ import ba.tfb.tasknest.domain.TaskStateMachine;
 import ba.tfb.tasknest.dto.offer.CreateOfferRequest;
 import ba.tfb.tasknest.dto.offer.OfferResponse;
 import ba.tfb.tasknest.dto.offer.TaskOfferResponse;
+import ba.tfb.tasknest.dto.offer.UpdateOfferPriceRequest;
 import ba.tfb.tasknest.entity.Conversation;
 import ba.tfb.tasknest.entity.Offer;
 import ba.tfb.tasknest.entity.Task;
@@ -13,6 +14,7 @@ import ba.tfb.tasknest.entity.enums.ConversationStatus;
 import ba.tfb.tasknest.entity.enums.OfferStatus;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
 import ba.tfb.tasknest.exception.BusinessRuleException;
+import ba.tfb.tasknest.exception.ConflictException;
 import ba.tfb.tasknest.exception.NotResourceOwnerException;
 import ba.tfb.tasknest.exception.ResourceNotFoundException;
 import ba.tfb.tasknest.repository.ConversationRepository;
@@ -24,6 +26,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
@@ -95,9 +98,56 @@ public class OfferService {
     }
 
     @Transactional
-    public OfferResponse acceptOffer(UUID offerId, UUID clientId) {
+    public OfferResponse updateOfferPrice(UUID offerId, UUID taskerId, UpdateOfferPriceRequest request) {
         Offer offer = offerRepository.findById(offerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Offer", offerId));
+
+        if (!offer.getTasker().getId().equals(taskerId)) {
+            throw new NotResourceOwnerException("Offer does not belong to this user");
+        }
+
+        if (offer.getStatus() != OfferStatus.PENDING) {
+            throw new BusinessRuleException("Only a pending offer can be changed");
+        }
+
+        Task task = offer.getTask();
+
+        if (task.getStatus() != TaskStatus.PUBLISHED) {
+            throw new BusinessRuleException("Offers can only be submitted on published tasks");
+        }
+
+        if (task.getExpiresAt() != null && task.getExpiresAt().isBefore(LocalDateTime.now(clock))) {
+            throw new BusinessRuleException("This task has expired and no longer accepts offers");
+        }
+
+        BigDecimal oldPrice = offer.getPrice();
+
+        if (oldPrice.compareTo(request.price()) == 0) {
+            return OfferResponse.from(offer);
+        }
+
+        offer.setPrice(request.price());
+        offerRepository.flush();
+        notificationService.notifyOfferPriceChanged(offer, oldPrice);
+
+        return OfferResponse.from(offer);
+    }
+
+    @Transactional
+    public OfferResponse acceptOffer(UUID offerId, UUID clientId) {
+        return acceptOffer(offerId, clientId, null);
+    }
+
+    @Transactional
+    public OfferResponse acceptOffer(UUID offerId, UUID clientId, BigDecimal expectedPrice) {
+        Offer offer = offerRepository.findById(offerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Offer", offerId));
+
+        if (expectedPrice != null && expectedPrice.compareTo(offer.getPrice()) != 0) {
+            throw new ConflictException("The tasker changed the price to "
+                    + offer.getPrice().stripTrailingZeros().toPlainString()
+                    + " KM. Check the new price before accepting.");
+        }
 
         Task task = offer.getTask();
 
@@ -238,6 +288,7 @@ public class OfferService {
         }
 
         reopen(task, accepted, OfferStatus.REJECTED);
+        taskerProfileService.recordWithdrawnJob(accepted.getTasker());
         notificationService.notifyAssignmentExpired(task, accepted.getTasker());
     }
 

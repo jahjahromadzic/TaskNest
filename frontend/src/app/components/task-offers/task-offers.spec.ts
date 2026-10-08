@@ -97,7 +97,9 @@ describe('Task offers', () => {
     acceptButton('Emir').click();
     await fixture.whenStable();
 
-    http.expectOne({ method: 'POST', url: '/api/offers/o1/accept' }).flush({});
+    const request = http.expectOne({ method: 'POST', url: '/api/offers/o1/accept' });
+    expect(request.request.body).toEqual({ expectedPrice: 70 });
+    request.flush({});
     await fixture.whenStable();
     expect(accepted).toBe(true);
   });

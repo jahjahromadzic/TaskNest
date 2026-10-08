@@ -645,6 +645,7 @@ export const bs: SameShape<typeof en> = {
       TASK_AUTO_CLOSED: 'Oglas je automatski zatvoren',
       fallback: 'Obavještenje',
       TASK_UPDATED: 'Oglas je izmijenjen',
+      OFFER_UPDATED: 'Promijenjena cijena ponude',
     },
   },
   messages: {
@@ -807,6 +808,20 @@ export const bs: SameShape<typeof en> = {
     send: 'Pošalji prijavu',
     sending: 'Šaljem...',
     sent: 'Hvala. Administrator će pregledati prijavu.',
+  },
+  offerPrice: {
+    change: 'Izmijeni cijenu',
+    title: 'Izmijeni cijenu ponude',
+    current: 'Tvoja ponuda sada: {price}',
+    newPrice: 'Nova cijena',
+    note: 'Poruka klijentu',
+    notePlaceholder: 'npr. Kako smo se dogovorili u poruci',
+    hint: 'Klijent dobija obavijest, a promjena se upiše i u vaš razgovor. Kad te angažuje, cijena se više ne može mijenjati.',
+    save: 'Sačuvaj cijenu',
+    priceRequired: 'Upiši cijenu veću od nule',
+    samePrice: 'To je već tvoja cijena',
+    saved: 'Tvoja ponuda je sada {price}.',
+    chatMessage: 'Promijenio/la sam ponudu s {old} na {price}.',
   },
   remove: {
     title: 'Ukloniti ovaj oglas?',

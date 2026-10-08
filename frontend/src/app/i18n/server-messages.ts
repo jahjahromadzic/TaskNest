@@ -27,6 +27,7 @@ const EXACT: Record<string, string> = {
   'Describe the problem when the reason is Other': 'Opiši problem kad izabereš „Nešto drugo“',
   'You have sent too many reports today. Try again tomorrow.': 'Danas si poslao/la previše prijava. Pokušaj ponovo sutra.',
   'This report has already been handled': 'Ova prijava je već obrađena',
+  'Only a pending offer can be changed': 'Mijenjati se može samo ponuda na čekanju',
   'The new password must be different from the current one': 'Nova lozinka mora biti drugačija od trenutne',
   'This reset link is invalid or has expired. Ask for a new one.':
     'Ovaj link za promjenu lozinke nije važeći ili je istekao. Zatraži novi.',
@@ -64,6 +65,10 @@ const EXACT: Record<string, string> = {
 
 const PATTERNS: Rule[] = [
   [/^A task can have at most (\d+) photos$/, 'Oglas može imati najviše $1 fotografija'],
+  [
+    /^The tasker changed the price to (.*) KM\. Check the new price before accepting\.$/,
+    'Tasker je promijenio cijenu na $1 KM. Pogledaj novu cijenu prije prihvatanja.',
+  ],
   [/^Too many failed login attempts\. Try again in (\d+) min\.$/, 'Previše neuspjelih pokušaja prijave. Pokušaj ponovo za $1 min.'],
   [/^\w+ not found: .*$/s, 'Traženi podatak nije pronađen'],
   [/^Invalid task transition: .*$/s, 'Ova radnja nije moguća u trenutnom stanju oglasa'],
@@ -97,6 +102,10 @@ const NOTIFICATIONS: Rule[] = [
     /^Work did not start in time, so your task is open again: (.*)\. Earlier offers are active\.$/s,
     'Posao nije počeo na vrijeme pa je tvoj oglas ponovo otvoren: $1. Ranije ponude su aktivne.',
   ],
+  [
+    /^The task was reopened because work did not start in time: (.*)\. It counts as a withdrawal on your profile\.$/s,
+    'Oglas je ponovo otvoren jer posao nije počeo na vrijeme: $1. Na profilu ti se računa kao odustajanje.',
+  ],
   [/^The task was reopened because work did not start in time: (.*)$/s, 'Oglas je ponovo otvoren jer posao nije počeo na vrijeme: $1'],
   [/^Your completed task was closed automatically: (.*)$/s, 'Tvoj završeni oglas je automatski zatvoren: $1'],
   [
@@ -104,6 +113,7 @@ const NOTIFICATIONS: Rule[] = [
     'Oglas je automatski zatvoren i računa se kao završen: $1',
   ],
   [/^Your offer is active again: (.*)$/s, 'Tvoja ponuda je ponovo aktivna: $1'],
+  [/^(.*) changed the offer from (.*) KM to (.*) KM for: (.*)$/s, '$1 je promijenio/la ponudu s $2 KM na $3 KM za: $4'],
   [
     /^The client changed a task you made an offer on: (.*)\. Check that your offer still fits\.$/s,
     'Klijent je izmijenio oglas na koji si dao ponudu: $1. Provjeri da li ti ponuda još odgovara.',

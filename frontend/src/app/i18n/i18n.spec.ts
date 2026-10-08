@@ -115,6 +115,12 @@ describe('Translations', () => {
     expect(translateNotification('Your task was removed by a moderator: Old sofa. Reason: Spam or advertising')).toBe(
       'Moderator je uklonio tvoj oglas: Old sofa. Razlog: Spam or advertising',
     );
+    expect(
+      translateNotification('The task was reopened because work did not start in time: Leaking tap. It counts as a withdrawal on your profile.'),
+    ).toBe('Oglas je ponovo otvoren jer posao nije počeo na vrijeme: Leaking tap. Na profilu ti se računa kao odustajanje.');
+    expect(translateNotification('Emir K changed the offer from 70 KM to 60 KM for: Leaking tap')).toBe(
+      'Emir K je promijenio/la ponudu s 70 KM na 60 KM za: Leaking tap',
+    );
     expect(translateNotification('Something else')).toBe('Something else');
   });
 });

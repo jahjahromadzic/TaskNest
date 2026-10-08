@@ -18,6 +18,16 @@
         }
         <p class="text-xs text-text-sub">{{ 'panel.waiting' | t: { time: timeAgo(offer.createdAt), name: client } }}</p>
       </div>
+      @if (task.status === 'PUBLISHED') {
+        <button type="button" (click)="changingPrice.set(true)" [disabled]="running() !== null"
+                class="btn-ghost w-full border border-surface-border">
+          <svg [appIcon]="icons.PencilLine" class="w-4 h-4"></svg> {{ 'offerPrice.change' | t }}
+        </button>
+        @if (changingPrice()) {
+          <app-offer-price-dialog [offerId]="offer.id!" [currentPrice]="offer.price ?? 0"
+                                  (saved)="onPriceChanged($event)" (dismissed)="changingPrice.set(false)" />
+        }
+      }
       <button type="button" (click)="withdraw()" [disabled]="running() !== null"
               class="btn-ghost w-full text-status-error hover:bg-red-50 disabled:opacity-60">
         @if (running() === 'withdraw') {

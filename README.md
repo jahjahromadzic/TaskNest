@@ -41,6 +41,8 @@ single-page application that uses it.
   offers, and taskers who already sent an offer are told about the change.
 - **Offers** — taskers submit offers on published tasks. When a client accepts
   one, the task is assigned and the remaining offers are rejected automatically.
+  While an offer waits, the tasker can change its price, for example after agreeing
+  on a new one in the chat; the client is notified and the price locks once accepted.
 - **Tasker coverage** — taskers select the categories and municipalities they
   serve, which drives task matching.
 - **Task discovery** — a public listing with a text search and filters, a personalised feed of
@@ -457,9 +459,16 @@ Paged responses use the following shape:
 | POST | `/tasks/{taskId}/offers` | Tasker | Submit an offer |
 | GET | `/tasks/{taskId}/offers` | Task owner | List offers received on a task, each with the tasker's rating, review count, completed jobs and verification, from a single query |
 | GET | `/tasks/{taskId}/offers/mine` | Tasker | The caller's own offer on a task, or `204` when there is none |
-| POST | `/offers/{offerId}/accept` | Task owner | Accept an offer and assign the task |
+| POST | `/offers/{offerId}/accept` | Task owner | Accept an offer and assign the task. An optional body `{ "expectedPrice": 60 }` names the price the client saw; if the tasker has changed it since, the answer is `409` and nothing is accepted |
+| PUT | `/offers/{offerId}` | Offer owner | Change the price of a pending offer on a task that is still open. The client gets an `OFFER_UPDATED` notification with the old and the new price |
 | POST | `/offers/{offerId}/withdraw` | Offer owner | Withdraw a pending offer, or back out of an accepted one |
 | GET | `/offers/mine` | Tasker | Offers submitted by the caller |
+
+**Changing a price.** A client must never hire at a price they did not see. The
+frontend sends the price it shows with every acceptance, so an acceptance made from a
+stale page is refused with `409`. When the change and the acceptance happen at the
+same moment, the `@Version` column on the offer lets only one of them commit. After
+acceptance the offer is no longer pending, so its price is locked.
 
 ### Tasker profiles — `/api/tasker-profiles`
 
@@ -653,8 +662,8 @@ not only a convenience: a tasker can make one offer per task, so without it the
 most interested taskers could never bid on the task again. The dropped tasker's
 offer ends as `WITHDRAWN` or `REJECTED` and cannot be renewed.
 
-Backing out is recorded on the tasker's profile as `withdrawnJobsCount`. A
-client's release is not, because it cannot be verified and would let an unhappy
+Backing out is recorded on the tasker's profile as `withdrawnJobsCount`, and so is
+a missed start deadline (see Deadlines). A client's release is not, because it cannot be verified and would let an unhappy
 client penalise a tasker. Once work is `IN_PROGRESS` the task can no longer be
 reopened; cancellation remains available to the client.
 
@@ -840,12 +849,13 @@ someone remembering to click:
 | Waiting in | Nobody acts for | What happens |
 |---|---|---|
 | `PUBLISHED` | 30 days | expires |
-| `ASSIGNED` | 14 days without work starting | reopens, exactly as if the client had released the tasker |
+| `ASSIGNED` | 14 days without work starting | reopens like a release by the client, and counts as a withdrawal for the tasker |
 | `COMPLETED` | 7 days without the client closing | closes and is credited to the tasker |
 
 A reopened task gets a new 30-day window, so if nobody takes it up it still ends
-by expiring. An automatic reopen is not counted against the tasker, because it is
-not known whose fault the delay was.
+by expiring. An automatic reopen is recorded in the tasker's `withdrawnJobsCount`,
+and the tasker is told so in the notification: starting the work is the tasker's
+own step, and fourteen days without it means the job was in practice abandoned.
 
 The deadline scheduler processes each task in its own transaction. A task that
 changes between being listed and being processed, for example because work
@@ -858,13 +868,13 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **391 tests** and requires no manual setup — Testcontainers
+The suite contains **399 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 141 | Service business rules, the task state machine and the login attempt limiter |
-| Integration | 250 | Authentication, password reset, login throttling, account settings, task editing and search, reports, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
+| Integration | 258 | Authentication, password reset, login throttling, account settings, task editing and search, reports, offer price changes, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
 
 Every integration test starts from an empty database: one `TRUNCATE ... CASCADE` after each test
 clears all application tables at once. Clearing them table by table left a window in which the
@@ -873,7 +883,7 @@ about to be deleted. The listener also ignores events for tasks that are no long
 left over from an earlier test cannot reach the next one. The suite passes in random class order
 (`./mvnw verify -Dsurefire.runOrder=random`).
 
-The frontend has its own suite of **260 tests** (Vitest), covering the session
+The frontend has its own suite of **265 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
 header, the task list and its search, task details, posting and editing a task, account settings, reports and the admin reports tab, the client's own tasks, offers
 and hiring, cancelling, reopening and closing a task, reviews, becoming a tasker and editing the tasker profile, sending and withdrawing offers,

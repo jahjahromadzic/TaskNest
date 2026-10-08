@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, signa
 import { FormsModule, NgForm } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
-import { CircleCheckBig, Clock, Handshake, LoaderCircle, LogOut, MessageSquare, Play, Send, Undo2 } from 'lucide';
+import { CircleCheckBig, Clock, Handshake, LoaderCircle, LogOut, MessageSquare, PencilLine, Play, Send, Undo2 } from 'lucide';
 import { Offer, TaskDetail } from '../../api/models';
 import { OfferService } from '../../services/offer.service';
 import { TaskService } from '../../services/task.service';
@@ -10,6 +10,7 @@ import { readApiError } from '../../shared/api-error';
 import { ConfirmOptions, ConfirmService } from '../../shared/confirm/confirm.service';
 import { daysLeft, formatBudget, timeAgo } from '../../shared/format/format';
 import { ToastService } from '../../shared/toast/toast.service';
+import { OfferPriceDialog } from '../offer-price-dialog/offer-price-dialog';
 import { Icon } from '../icon/icon';
 import { AUTO_CLOSE_DAYS } from '../task-actions/task-actions';
 import { TranslatePipe } from '../../i18n/translate.pipe';
@@ -21,11 +22,11 @@ type TaskerAction = 'offer' | 'withdraw' | 'start' | 'complete';
 
 @Component({
   selector: 'app-tasker-panel',
-  imports: [FormsModule, RouterLink, Icon, TranslatePipe],
+  imports: [FormsModule, RouterLink, Icon, OfferPriceDialog, TranslatePipe],
   templateUrl: './tasker-panel.html',
 })
 export class TaskerPanel implements OnChanges {
-  protected readonly icons = { CircleCheckBig, Clock, Handshake, LoaderCircle, LogOut, MessageSquare, Play, Send, Undo2 };
+  protected readonly icons = { CircleCheckBig, Clock, Handshake, LoaderCircle, LogOut, MessageSquare, PencilLine, Play, Send, Undo2 };
 
   @Input({ required: true }) task!: TaskDetail;
   @Output() changed = new EventEmitter<void>();
@@ -33,6 +34,7 @@ export class TaskerPanel implements OnChanges {
   readonly messageMax = MESSAGE_MAX;
   readonly offer = signal<Offer | null | undefined>(undefined);
   readonly running = signal<TaskerAction | null>(null);
+  readonly changingPrice = signal(false);
   readonly attempted = signal(false);
   readonly formatBudget = formatBudget;
   readonly timeAgo = timeAgo;
@@ -54,6 +56,11 @@ export class TaskerPanel implements OnChanges {
         error: () => this.offer.set(null),
       });
     }
+  }
+
+  onPriceChanged(offer: Offer): void {
+    this.changingPrice.set(false);
+    this.offer.set(offer);
   }
 
   get client(): string {

@@ -79,7 +79,7 @@ class TaskDeadlineIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("An assigned task that never starts is reopened after the deadline, without penalising the tasker")
+    @DisplayName("An assigned task that never starts is reopened after the deadline and counts as a withdrawal for the tasker")
     void staleAssignment_isReopened() {
         // Arrange
         AssignedTask assigned = assignToEmir();
@@ -94,7 +94,7 @@ class TaskDeadlineIntegrationTest extends AbstractIntegrationTest {
         assertThat(task.getAssignedAt()).isNull();
         assertThat(offerStatus(assigned.emirOfferId())).isEqualTo(OfferStatus.REJECTED);
         assertThat(offerStatus(assigned.mirzaOfferId())).isEqualTo(OfferStatus.PENDING);
-        assertThat(profile(emirId).getWithdrawnJobsCount()).isZero();
+        assertThat(profile(emirId).getWithdrawnJobsCount()).isEqualTo(1);
         assertThat(notificationTypes(clientId)).contains(NotificationType.ASSIGNMENT_EXPIRED);
         assertThat(notificationTypes(emirId)).contains(NotificationType.ASSIGNMENT_EXPIRED);
         assertThat(notificationTypes(mirzaId)).contains(NotificationType.OFFER_REACTIVATED);

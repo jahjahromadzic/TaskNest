@@ -162,6 +162,15 @@
               <a [routerLink]="['/tasks', conversation.taskId]" class="btn-ghost text-xs py-1.5 border border-surface-border bg-surface-card">
                 <svg [appIcon]="icons.ExternalLink" class="w-3.5 h-3.5"></svg> {{ 'messages.openTask' | t }}
               </a>
+              @if (canChangePrice()) {
+                <button type="button" (click)="changingPrice.set(true)" class="btn-ghost text-xs py-1.5 border border-surface-border bg-surface-card">
+                  <svg [appIcon]="icons.PencilLine" class="w-3.5 h-3.5"></svg> {{ 'offerPrice.change' | t }}
+                </button>
+                @if (changingPrice()) {
+                  <app-offer-price-dialog [offerId]="conversation.offerId!" [currentPrice]="conversation.offerPrice ?? 0"
+                                          [conversationId]="conversation.id!" (saved)="onPriceChanged()" (dismissed)="changingPrice.set(false)" />
+                }
+              }
               @if (canAccept()) {
                 <button type="button" (click)="acceptOffer(conversation)" [disabled]="accepting()" class="btn-primary text-xs py-1.5">
                   @if (accepting()) {

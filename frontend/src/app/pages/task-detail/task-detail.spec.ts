@@ -3,14 +3,17 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import { Subject } from 'rxjs';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
-import { TaskDetail } from '../../api/models';
+import { AppNotification, TaskDetail } from '../../api/models';
 import { AuthService } from '../../auth/auth.service';
+import { RealtimeService } from '../../services/realtime.service';
 
 describe('Task details page', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
+  let live: { notifications$: Subject<AppNotification>; connected$: Subject<void> };
 
   const task: TaskDetail = {
     id: 't1',
@@ -32,8 +35,14 @@ describe('Task details page', () => {
   }, 60_000);
 
   beforeEach(async () => {
+    live = { notifications$: new Subject(), connected$: new Subject() };
     TestBed.configureTestingModule({
-      providers: [provideRouter(routes), provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideRouter(routes),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: RealtimeService, useValue: live },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
@@ -139,6 +148,27 @@ describe('Task details page', () => {
     await harness.fixture.whenStable();
 
     expect(text()).not.toContain('Report this task');
+  });
+
+  it('shows the close button as soon as the tasker reports the job done, without a reload', async () => {
+    logInAs('owner-1');
+    const working: TaskDetail = { ...task, status: 'IN_PROGRESS', assignedTaskerId: 'tasker-1', assignedTaskerName: 'Emir K' };
+    await open(working);
+    http.expectOne('/api/tasks/t1/offers').flush([]);
+    await harness.fixture.whenStable();
+    expect(text()).not.toContain('Confirm and close');
+
+    live.notifications$.next({ type: 'TASK_COMPLETED', relatedEntityId: 'other-task' });
+    http.expectNone('/api/tasks/t1');
+
+    live.notifications$.next({ type: 'TASK_COMPLETED', relatedEntityId: 't1' });
+    http.expectOne('/api/tasks/t1').flush({ ...working, status: 'COMPLETED', completedAt: new Date().toISOString() });
+    await harness.fixture.whenStable();
+    http.expectOne('/api/tasks/t1/offers').flush([]);
+    await harness.fixture.whenStable();
+
+    expect(text()).toContain('Confirm and close');
+    expect(harness.routeNativeElement!.querySelector('.skeleton')).toBeNull();
   });
 
   it('explains that a cancelled task no longer takes offers', async () => {

@@ -12,6 +12,7 @@ import {
   Flag,
   Handshake,
   LoaderCircle,
+  PencilLine,
   MessageSquare,
   MessagesSquare,
   RotateCcw,
@@ -19,6 +20,7 @@ import {
   SendHorizontal,
   Tag,
 } from 'lucide';
+import { OfferPriceDialog } from '../../components/offer-price-dialog/offer-price-dialog';
 import { ReportDialog } from '../../components/report-dialog/report-dialog';
 import { ChatMessagePage, Conversation } from '../../api/models';
 import { AuthService } from '../../auth/auth.service';
@@ -69,7 +71,7 @@ const SILENT_NOTIFICATIONS = new Set(['NEW_MESSAGE', 'NEW_TASK_IN_AREA', 'REVIEW
 
 @Component({
   selector: 'app-messages',
-  imports: [Icon, ReportDialog, RouterLink, StatusBadge, TranslatePipe],
+  imports: [Icon, OfferPriceDialog, ReportDialog, RouterLink, StatusBadge, TranslatePipe],
   templateUrl: './messages.html',
 })
 export class Messages implements OnInit {
@@ -83,6 +85,7 @@ export class Messages implements OnInit {
     Flag,
     Handshake,
     LoaderCircle,
+    PencilLine,
     MessageSquare,
     MessagesSquare,
     RotateCcw,
@@ -118,6 +121,11 @@ export class Messages implements OnInit {
     const selected = this.selected();
     return selected?.viewerRole === 'CLIENT' && selected.offerStatus === 'PENDING' && selected.taskStatus === 'PUBLISHED';
   });
+  readonly canChangePrice = computed(() => {
+    const selected = this.selected();
+    return selected?.viewerRole === 'TASKER' && selected.offerStatus === 'PENDING' && selected.taskStatus === 'PUBLISHED';
+  });
+  readonly changingPrice = signal(false);
   readonly offerHint = computed<TranslationKey | null>(() => {
     const selected = this.selected();
     return selected?.viewerRole && selected.offerStatus ? OFFER_HINTS[selected.viewerRole][selected.offerStatus] : null;
@@ -231,7 +239,7 @@ export class Messages implements OnInit {
       return;
     }
     this.accepting.set(true);
-    this.offerService.accept(conversation.offerId).subscribe({
+    this.offerService.accept(conversation.offerId, conversation.offerPrice).subscribe({
       next: () => {
         this.accepting.set(false);
         this.toastService.success(t('offers.hiredToast', { name }));
@@ -243,6 +251,12 @@ export class Messages implements OnInit {
         this.loadConversations();
       },
     });
+  }
+
+  onPriceChanged(): void {
+    this.changingPrice.set(false);
+    this.loadConversations();
+    this.retryThread();
   }
 
   retryThread(): void {

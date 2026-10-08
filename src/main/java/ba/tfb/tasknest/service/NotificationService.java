@@ -27,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -93,6 +94,16 @@ public class NotificationService {
         User tasker = offer.getTasker();
         save(task.getClient(), NotificationType.NEW_OFFER, task,
                 tasker.getFirstName() + " " + tasker.getLastName() + " offered "
+                        + offer.getPrice().stripTrailingZeros().toPlainString() + " KM for: " + task.getTitle());
+    }
+
+    @Transactional
+    public void notifyOfferPriceChanged(Offer offer, BigDecimal oldPrice) {
+        Task task = offer.getTask();
+        User tasker = offer.getTasker();
+        save(task.getClient(), NotificationType.OFFER_UPDATED, task,
+                tasker.getFirstName() + " " + tasker.getLastName() + " changed the offer from "
+                        + oldPrice.stripTrailingZeros().toPlainString() + " KM to "
                         + offer.getPrice().stripTrailingZeros().toPlainString() + " KM for: " + task.getTitle());
     }
 
@@ -169,7 +180,8 @@ public class NotificationService {
                 "Work did not start in time, so your task is open again: " + task.getTitle()
                         + ". Earlier offers are active.");
         save(tasker, NotificationType.ASSIGNMENT_EXPIRED, task,
-                "The task was reopened because work did not start in time: " + task.getTitle());
+                "The task was reopened because work did not start in time: " + task.getTitle()
+                        + ". It counts as a withdrawal on your profile.");
     }
 
     @Transactional

@@ -1,9 +1,10 @@
 import { Component, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { BehaviorSubject, Observable, catchError, map, of, startWith, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, filter, map, merge, of, startWith, switchMap, tap } from 'rxjs';
 import {
   ArrowLeft,
   CalendarClock,
@@ -34,6 +35,7 @@ import { RemoveTaskDialog } from '../../components/remove-task-dialog/remove-tas
 import { ReportDialog } from '../../components/report-dialog/report-dialog';
 import { TaskTimeline } from '../../components/task-timeline/task-timeline';
 import { TaskPhotos } from '../../components/task-photos/task-photos';
+import { RealtimeService } from '../../services/realtime.service';
 import { TaskService } from '../../services/task.service';
 import { daysLeft, formatBudget, formatDate, timeAgo } from '../../shared/format/format';
 import { isStopped } from '../../shared/task-status/task-status';
@@ -111,8 +113,17 @@ export class TaskDetailPage {
     private toastService: ToastService,
     private route: ActivatedRoute,
     private title: Title,
+    realtime: RealtimeService,
   ) {
     this.user$ = this.authService.user$;
+    merge(
+      realtime.notifications$.pipe(
+        filter((notification) => notification.relatedEntityId === this.route.snapshot.paramMap.get('id')),
+      ),
+      realtime.connected$,
+    )
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.retry());
     this.state$ = this.route.paramMap.pipe(
       map((params) => params.get('id') ?? ''),
       switchMap((id) =>

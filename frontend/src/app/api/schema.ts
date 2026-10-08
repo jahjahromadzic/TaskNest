@@ -68,6 +68,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/offers/{offerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updatePrice"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/account": {
         parameters: {
             query?: never;
@@ -1074,6 +1090,25 @@ export interface components {
         UpdateCoverageRequest: {
             ids: string[];
         };
+        UpdateOfferPriceRequest: {
+            price: number;
+        };
+        OfferResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            taskId?: string;
+            taskTitle?: string;
+            /** Format: uuid */
+            taskerId?: string;
+            taskerName?: string;
+            price?: number;
+            message?: string;
+            /** @enum {string} */
+            status?: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN";
+            /** Format: date-time */
+            createdAt?: string;
+        };
         UpdateAccountRequest: {
             firstName: string;
             lastName: string;
@@ -1141,27 +1176,14 @@ export interface components {
             price: number;
             message?: string;
         };
-        OfferResponse: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: uuid */
-            taskId?: string;
-            taskTitle?: string;
-            /** Format: uuid */
-            taskerId?: string;
-            taskerName?: string;
-            price?: number;
-            message?: string;
-            /** @enum {string} */
-            status?: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN";
-            /** Format: date-time */
-            createdAt?: string;
+        AcceptOfferRequest: {
+            expectedPrice?: number;
         };
         NotificationResponse: {
             /** Format: uuid */
             id?: string;
             /** @enum {string} */
-            type?: "NEW_TASK_IN_AREA" | "NEW_OFFER" | "OFFER_ACCEPTED" | "NEW_MESSAGE" | "TASK_STARTED" | "TASK_COMPLETED" | "TASK_CLOSED" | "TASK_EXPIRED" | "REVIEW_RECEIVED" | "TASK_REMOVED" | "TASKER_WITHDREW" | "ASSIGNMENT_RELEASED" | "OFFER_REACTIVATED" | "ASSIGNMENT_EXPIRED" | "TASK_AUTO_CLOSED" | "TASK_UPDATED";
+            type?: "NEW_TASK_IN_AREA" | "NEW_OFFER" | "OFFER_ACCEPTED" | "NEW_MESSAGE" | "TASK_STARTED" | "TASK_COMPLETED" | "TASK_CLOSED" | "TASK_EXPIRED" | "REVIEW_RECEIVED" | "TASK_REMOVED" | "TASKER_WITHDREW" | "ASSIGNMENT_RELEASED" | "OFFER_REACTIVATED" | "ASSIGNMENT_EXPIRED" | "TASK_AUTO_CLOSED" | "TASK_UPDATED" | "OFFER_UPDATED";
             content?: string;
             /** Format: uuid */
             relatedEntityId?: string;
@@ -1687,6 +1709,32 @@ export interface operations {
             };
         };
     };
+    updatePrice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOfferPriceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OfferResponse"];
+                };
+            };
+        };
+    };
     get: {
         parameters: {
             query?: never;
@@ -2120,7 +2168,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AcceptOfferRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
