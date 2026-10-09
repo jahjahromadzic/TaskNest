@@ -69,7 +69,8 @@ class OfferPriceEndpointTest extends AbstractIntegrationTest {
         tasker = authService.login(new LoginRequest("price.tasker@test.ba", "password123"));
         Category category = categoryRepository.findAll().stream().filter(Category::isActive).findFirst().orElseThrow();
         taskId = taskService.createTask(client.userId(), new CreateTaskRequest("Curi bojler", null,
-                category.getId(), municipalityRepository.findAll().getFirst().getId(), new BigDecimal("80"))).id();
+                category.getId(), municipalityRepository.findAll().getFirst().getId(),
+                "Zmaja od Bosne 12", new BigDecimal("80"))).id();
         taskService.publishTask(taskId, client.userId());
         offerId = offerService.submitOffer(taskId, tasker.userId(), new CreateOfferRequest(new BigDecimal("70"), "Mogu danas")).id();
     }

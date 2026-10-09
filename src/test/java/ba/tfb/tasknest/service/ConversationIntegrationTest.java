@@ -421,7 +421,7 @@ class ConversationIntegrationTest extends AbstractIntegrationTest {
     private UUID publishedTask() {
         UUID taskId = taskService.createTask(clientId, new CreateTaskRequest(
                 "Popravka slavine", "Curi ispod sudopera",
-                category.getId(), municipality.getId(), new BigDecimal("80.00"))).id();
+                category.getId(), municipality.getId(), "Zmaja od Bosne 12", new BigDecimal("80.00"))).id();
         taskService.publishTask(taskId, clientId);
         return taskId;
     }

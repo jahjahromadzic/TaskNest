@@ -413,8 +413,8 @@ out the device that just changed the password. A deleted token is simply unknown
 |---|---|---|---|
 | GET | `/` | Public | List published tasks. Filters: `q` (text, at most 100 characters), `categoryId`, `region` (a canton, Republika Srpska or Brčko District), `municipalityId` |
 | GET | `/{id}` | Public | Task details, including the hired tasker. Drafts are visible to the owner only |
-| POST | `/` | Client | Create a task as a draft |
-| PUT | `/{id}` | Client | Change the title, description, category, municipality and budget of a draft or a task open for offers. Taskers with a pending offer are notified, unless nothing changed |
+| POST | `/` | Client | Create a task as a draft. The street address is required and is turned into coordinates through OpenRouteService; an address that cannot be found is refused with 400 |
+| PUT | `/{id}` | Client | Change the title, description, category, municipality, address and budget of a draft or a task open for offers. The address is looked up again only when it or the municipality changed. Taskers with a pending offer are notified, unless nothing changed |
 | POST | `/{id}/publish` | Client | Publish a draft |
 | POST | `/{id}/cancel` | Client | Cancel a task |
 | POST | `/{id}/reopen` | Client | Release the assigned tasker and reopen the task |
@@ -871,13 +871,13 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **404 tests** and requires no manual setup — Testcontainers
+The suite contains **412 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
-| Unit | 144 | Service business rules, the task state machine, the login attempt limiter and the geocoder against a simulated OpenRouteService |
-| Integration | 260 | Authentication, password reset, login throttling, account settings, task editing and search, reports, offer price changes, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
+| Unit | 146 | Service business rules, the task state machine, the login attempt limiter and the geocoder against a simulated OpenRouteService |
+| Integration | 266 | Authentication, password reset, login throttling, account settings, task editing and search, task addresses, reports, offer price changes, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
 
 Every integration test starts from an empty database: one `TRUNCATE ... CASCADE` after each test
 clears all application tables at once. Clearing them table by table left a window in which the

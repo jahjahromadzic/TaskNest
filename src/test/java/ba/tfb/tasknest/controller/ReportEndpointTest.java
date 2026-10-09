@@ -105,7 +105,7 @@ class ReportEndpointTest extends AbstractIntegrationTest {
     void report_refusesOwnTaskSelfAndDrafts() throws Exception {
         // Arrange
         UUID draft = taskService.createTask(owner.userId(), new CreateTaskRequest("Nacrt", null,
-                category().getId(), municipality().getId(), null)).id();
+                category().getId(), municipality().getId(), "Zmaja od Bosne 12", null)).id();
 
         // Act & Assert
         reportTask(owner, SPAM)
@@ -256,7 +256,7 @@ class ReportEndpointTest extends AbstractIntegrationTest {
 
     private UUID publishedTask(AuthResponse client) {
         UUID id = taskService.createTask(client.userId(), new CreateTaskRequest("Zarada od kuće", "Javite se na WhatsApp",
-                category().getId(), municipality().getId(), new BigDecimal("500"))).id();
+                category().getId(), municipality().getId(), "Zmaja od Bosne 12", new BigDecimal("500"))).id();
         taskService.publishTask(id, client.userId());
         return id;
     }

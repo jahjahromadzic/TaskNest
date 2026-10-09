@@ -23,6 +23,10 @@ public record UpdateTaskRequest(
         @NotNull
         UUID municipalityId,
 
+        @NotBlank
+        @Size(max = 200)
+        String address,
+
         @DecimalMin("0.0")
         BigDecimal budget
 ) {

@@ -265,7 +265,8 @@ class TaskPhotoEndpointTest extends AbstractIntegrationTest {
 
     private UUID publishedTask() {
         UUID taskId = taskService.createTask(client.userId(), new CreateTaskRequest(
-                "Curi slavina", "Kapa i kad je zatvorena", category.getId(), municipality.getId(), new BigDecimal("60"))).id();
+                "Curi slavina", "Kapa i kad je zatvorena", category.getId(), municipality.getId(),
+                "Zmaja od Bosne 12", new BigDecimal("60"))).id();
         taskService.publishTask(taskId, client.userId());
         return taskId;
     }

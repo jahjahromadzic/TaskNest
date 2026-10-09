@@ -12,6 +12,8 @@ import ba.tfb.tasknest.entity.User;
 import ba.tfb.tasknest.entity.enums.OfferStatus;
 import ba.tfb.tasknest.entity.enums.TaskStatus;
 import ba.tfb.tasknest.exception.BusinessRuleException;
+import ba.tfb.tasknest.geo.GeoPoint;
+import ba.tfb.tasknest.geo.Geocoder;
 import ba.tfb.tasknest.messaging.TaskExpiredEvent;
 import ba.tfb.tasknest.exception.NotResourceOwnerException;
 import ba.tfb.tasknest.exception.ResourceNotFoundException;
@@ -73,6 +75,7 @@ class TaskServiceTest {
     @Mock private TaskerProfileService taskerProfileService;
     @Mock private NotificationService notificationService;
     @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private Geocoder geocoder;
 
     private final Clock clock = Clock.fixed(NOW.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
 
@@ -82,7 +85,7 @@ class TaskServiceTest {
     void setUp() {
         taskService = new TaskService(taskRepository, userRepository, categoryRepository,
                 municipalityRepository, offerService, taskerProfileService, notificationService,
-                eventPublisher, clock);
+                eventPublisher, clock, geocoder);
     }
 
     @Nested
@@ -144,18 +147,40 @@ class TaskServiceTest {
             when(userRepository.findById(CLIENT_ID)).thenReturn(Optional.of(aClient()));
             when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(aCategory()));
             when(municipalityRepository.findById(MUNICIPALITY_ID)).thenReturn(Optional.of(aMunicipality()));
+            when(geocoder.geocode("Zmaja od Bosne 12", "Centar")).thenReturn(Optional.of(new GeoPoint(
+                    new BigDecimal("43.854947"), new BigDecimal("18.393707"))));
             when(taskRepository.save(any(Task.class))).thenAnswer(call -> call.getArgument(0));
 
             // Act
             TaskResponse response = taskService.createTask(CLIENT_ID, aRequest());
 
             // Assert
+            ArgumentCaptor<Task> saved = ArgumentCaptor.forClass(Task.class);
+            verify(taskRepository).save(saved.capture());
+            assertThat(saved.getValue().getAddressLine()).isEqualTo("Zmaja od Bosne 12");
+            assertThat(saved.getValue().getLatitude()).isEqualByComparingTo("43.854947");
+            assertThat(saved.getValue().getLongitude()).isEqualByComparingTo("18.393707");
             assertThat(response.status()).isEqualTo(TaskStatus.DRAFT);
             assertThat(response.publishedAt()).isNull();
             assertThat(response.expiresAt()).isNull();
             assertThat(response.title()).isEqualTo("Popravka slavine");
             assertThat(response.categoryName()).isEqualTo("Vodoinstalacije");
             assertThat(response.municipalityName()).isEqualTo("Centar");
+        }
+
+        @Test
+        void createTask_throwsBusinessRule_whenAddressIsNotFound() {
+            // Arrange
+            when(userRepository.findById(CLIENT_ID)).thenReturn(Optional.of(aClient()));
+            when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(aCategory()));
+            when(municipalityRepository.findById(MUNICIPALITY_ID)).thenReturn(Optional.of(aMunicipality()));
+            when(geocoder.geocode("Zmaja od Bosne 12", "Centar")).thenReturn(Optional.empty());
+
+            // Act + Assert
+            assertThatThrownBy(() -> taskService.createTask(CLIENT_ID, aRequest()))
+                    .isInstanceOf(BusinessRuleException.class)
+                    .hasMessage("The address could not be found");
+            verify(taskRepository, never()).save(any());
         }
     }
 
@@ -790,7 +815,7 @@ class TaskServiceTest {
                 "Popravka slavine",
                 "Curi ispod sudopera",
                 CATEGORY_ID,
-                MUNICIPALITY_ID,
+                MUNICIPALITY_ID, "Zmaja od Bosne 12",
                 new BigDecimal("50.00"));
     }
 

@@ -99,7 +99,7 @@ class TaskPublishedNotificationTest extends AbstractIntegrationTest {
 
         // Act
         taskService.createTask(clientId, new CreateTaskRequest(
-                "Nacrt", null, category.getId(), municipality.getId(), new BigDecimal("50.00")));
+                "Nacrt", null, category.getId(), municipality.getId(), "Zmaja od Bosne 12", new BigDecimal("50.00")));
 
         // Assert
         await().during(Duration.ofSeconds(3))
@@ -113,7 +113,8 @@ class TaskPublishedNotificationTest extends AbstractIntegrationTest {
         // Arrange
         registerTaskerCovering("notify.stale@test.ba", category.getId(), municipality.getId());
         UUID cancelled = taskService.createTask(clientId, new CreateTaskRequest(
-                "Otkazano", "Opis", category.getId(), municipality.getId(), new BigDecimal("50.00"))).id();
+                "Otkazano", "Opis", category.getId(), municipality.getId(),
+                "Zmaja od Bosne 12", new BigDecimal("50.00"))).id();
         taskService.cancelTask(cancelled, clientId);
 
         // Act
@@ -131,7 +132,8 @@ class TaskPublishedNotificationTest extends AbstractIntegrationTest {
 
     private UUID publishTask(String title) {
         UUID taskId = taskService.createTask(clientId, new CreateTaskRequest(
-                title, "Opis", category.getId(), municipality.getId(), new BigDecimal("50.00"))).id();
+                title, "Opis", category.getId(), municipality.getId(),
+                "Zmaja od Bosne 12", new BigDecimal("50.00"))).id();
         taskService.publishTask(taskId, clientId);
         return taskId;
     }

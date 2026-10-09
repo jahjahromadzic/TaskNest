@@ -254,7 +254,7 @@ class RealtimeIntegrationTest extends AbstractIntegrationTest {
         UUID taskId = taskService.createTask(client.userId(), new CreateTaskRequest(
                 "Fix the tap", "It drips",
                 categoryRepository.findAll().getFirst().getId(),
-                municipalityRepository.findAll().getFirst().getId(),
+                municipalityRepository.findAll().getFirst().getId(), "Zmaja od Bosne 12",
                 new BigDecimal("50"))).id();
         taskService.publishTask(taskId, client.userId());
         return taskId;

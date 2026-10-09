@@ -213,7 +213,7 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
                 "Seed task",
                 "Created through the service, not the endpoint under test",
                 categoryRepository.findAll().getFirst().getId(),
-                municipalityRepository.findAll().getFirst().getId(),
+                municipalityRepository.findAll().getFirst().getId(), "Zmaja od Bosne 12",
                 new java.math.BigDecimal("50.00"));
     }
 
@@ -221,6 +221,7 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
         return "{\"title\":\"Test task\","
                 + "\"categoryId\":\"" + categoryRepository.findAll().getFirst().getId() + "\","
                 + "\"municipalityId\":\"" + municipalityRepository.findAll().getFirst().getId() + "\","
+                + "\"address\":\"Zmaja od Bosne 12\","
                 + "\"budget\":50.00}";
     }
 }

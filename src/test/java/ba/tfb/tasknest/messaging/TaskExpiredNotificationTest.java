@@ -104,7 +104,8 @@ class TaskExpiredNotificationTest extends AbstractIntegrationTest {
     void expireOverdueTasks_ignoresDrafts() {
         // Arrange
         UUID taskId = taskService.createTask(clientId, new CreateTaskRequest(
-                "Nacrt", "Opis", category.getId(), municipality.getId(), new BigDecimal("50.00"))).id();
+                "Nacrt", "Opis", category.getId(), municipality.getId(),
+                "Zmaja od Bosne 12", new BigDecimal("50.00"))).id();
         backdateDeadline(taskId, LocalDateTime.now().minusDays(60));
 
         // Act
@@ -138,7 +139,8 @@ class TaskExpiredNotificationTest extends AbstractIntegrationTest {
 
     private UUID publishTask(String title) {
         UUID taskId = taskService.createTask(clientId, new CreateTaskRequest(
-                title, "Opis", category.getId(), municipality.getId(), new BigDecimal("50.00"))).id();
+                title, "Opis", category.getId(), municipality.getId(),
+                "Zmaja od Bosne 12", new BigDecimal("50.00"))).id();
         taskService.publishTask(taskId, clientId);
         return taskId;
     }

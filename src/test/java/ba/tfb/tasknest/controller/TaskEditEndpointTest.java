@@ -78,7 +78,7 @@ class TaskEditEndpointTest extends AbstractIntegrationTest {
         // Act
         edit(taskId, client, """
                 {"title": "Popravka česme i bojlera", "description": "Česma curi, bojler ne grije.",
-                 "categoryId": "%s", "municipalityId": "%s", "budget": 120}
+                 "categoryId": "%s", "municipalityId": "%s", "address": "Zmaja od Bosne 12", "budget": 120}
                 """.formatted(otherCategory.getId(), otherMunicipality.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Popravka česme i bojlera"))
@@ -108,7 +108,7 @@ class TaskEditEndpointTest extends AbstractIntegrationTest {
         // Act
         edit(taskId, client, """
                 {"title": "Popravka česme", "description": "Curi česma u kuhinji",
-                 "categoryId": "%s", "municipalityId": "%s", "budget": 50.00}
+                 "categoryId": "%s", "municipalityId": "%s", "address": "Zmaja od Bosne 12", "budget": 50.00}
                 """.formatted(category.getId(), municipality.getId()))
                 .andExpect(status().isOk());
 
@@ -172,7 +172,7 @@ class TaskEditEndpointTest extends AbstractIntegrationTest {
 
     private String body(String title) {
         return """
-                {"title": "%s", "categoryId": "%s", "municipalityId": "%s"}
+                {"title": "%s", "categoryId": "%s", "municipalityId": "%s", "address": "Zmaja od Bosne 12"}
                 """.formatted(title, category.getId(), municipality.getId());
     }
 
@@ -191,7 +191,7 @@ class TaskEditEndpointTest extends AbstractIntegrationTest {
 
     private UUID draft() {
         return taskService.createTask(client.userId(), new CreateTaskRequest("Popravka česme", "Curi česma u kuhinji",
-                category.getId(), municipality.getId(), new BigDecimal("50"))).id();
+                category.getId(), municipality.getId(), "Zmaja od Bosne 12", new BigDecimal("50"))).id();
     }
 
     private UUID publishedTask() {

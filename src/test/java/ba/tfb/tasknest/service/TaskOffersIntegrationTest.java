@@ -196,7 +196,8 @@ class TaskOffersIntegrationTest extends AbstractIntegrationTest {
 
     private UUID publishedTask() {
         UUID taskId = taskService.createTask(clientId, new CreateTaskRequest(
-                "Fix the tap", "It drips", category.getId(), municipality.getId(), new BigDecimal("80"))).id();
+                "Fix the tap", "It drips", category.getId(), municipality.getId(),
+                "Zmaja od Bosne 12", new BigDecimal("80"))).id();
         taskService.publishTask(taskId, clientId);
         return taskId;
     }

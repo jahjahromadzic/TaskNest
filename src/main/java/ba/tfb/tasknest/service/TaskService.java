@@ -14,6 +14,8 @@ import ba.tfb.tasknest.entity.enums.TaskStatus;
 import ba.tfb.tasknest.exception.BusinessRuleException;
 import ba.tfb.tasknest.exception.NotResourceOwnerException;
 import ba.tfb.tasknest.exception.ResourceNotFoundException;
+import ba.tfb.tasknest.geo.GeoPoint;
+import ba.tfb.tasknest.geo.Geocoder;
 import ba.tfb.tasknest.repository.CategoryRepository;
 import ba.tfb.tasknest.repository.MunicipalityRepository;
 import ba.tfb.tasknest.repository.TaskRepository;
@@ -64,6 +66,7 @@ public class TaskService {
     private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
+    private final Geocoder geocoder;
 
     @Transactional
     public TaskResponse createTask(UUID clientId, CreateTaskRequest request) {
@@ -80,6 +83,8 @@ public class TaskService {
         Municipality municipality = municipalityRepository.findById(request.municipalityId())
                 .orElseThrow(() -> new ResourceNotFoundException("Municipality", request.municipalityId()));
 
+        GeoPoint point = locate(request.address(), municipality);
+
         Task task = new Task();
         task.setClient(client);
         task.setCategory(category);
@@ -87,6 +92,9 @@ public class TaskService {
         task.setTitle(request.title());
         task.setDescription(request.description());
         task.setBudget(request.budget());
+        task.setAddressLine(request.address().strip());
+        task.setLatitude(point.latitude());
+        task.setLongitude(point.longitude());
         task.setStatus(TaskStatus.DRAFT);
 
         return TaskResponse.from(taskRepository.save(task));
@@ -115,14 +123,25 @@ public class TaskService {
         Municipality municipality = municipalityRepository.findById(request.municipalityId())
                 .orElseThrow(() -> new ResourceNotFoundException("Municipality", request.municipalityId()));
 
+        String address = request.address().strip();
+        boolean moved = !address.equals(task.getAddressLine())
+                || !municipality.equals(task.getMunicipality());
+
         boolean changed = !request.title().equals(task.getTitle())
                 || !Objects.equals(request.description(), task.getDescription())
                 || !category.equals(task.getCategory())
-                || !municipality.equals(task.getMunicipality())
-                || !sameAmount(request.budget(), task.getBudget());
+                || !sameAmount(request.budget(), task.getBudget())
+                || moved;
 
         if (!changed) {
             return TaskResponse.from(task);
+        }
+
+        if (moved) {
+            GeoPoint point = locate(address, municipality);
+            task.setAddressLine(address);
+            task.setLatitude(point.latitude());
+            task.setLongitude(point.longitude());
         }
 
         task.setTitle(request.title());
@@ -141,6 +160,11 @@ public class TaskService {
 
     private static boolean sameAmount(BigDecimal first, BigDecimal second) {
         return first == null || second == null ? first == second : first.compareTo(second) == 0;
+    }
+
+    private GeoPoint locate(String address, Municipality municipality) {
+        return geocoder.geocode(address.strip(), municipality.getName())
+                .orElseThrow(() -> new BusinessRuleException("The address could not be found"));
     }
 
     @Transactional
