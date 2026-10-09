@@ -79,6 +79,72 @@ public class DemoDataSeeder {
     private static final UUID ILIDZA = UUID.fromString("b2000000-0000-0000-0000-000000000005");
     private static final UUID VOGOSCA = UUID.fromString("b2000000-0000-0000-0000-000000000006");
 
+    private static final Place AMRAS_HOME = new Place("Zmaja od Bosne 12", "43.854947", "18.393707");
+
+    private static final Map<UUID, List<Place>> PLACES = Map.of(
+            CENTAR, List.of(
+                    new Place("Antuna Hangija 9", "43.860403", "18.403761"),
+                    new Place("Kranjčevićeva 17", "43.857957", "18.404534"),
+                    new Place("Alipašina 41", "43.861830", "18.410979"),
+                    new Place("Koševo 12", "43.860632", "18.414180"),
+                    new Place("Patriotske lige 30", "43.867934", "18.412994"),
+                    new Place("Čekaluša 41", "43.862770", "18.416351"),
+                    new Place("Branilaca Sarajeva 20", "43.857973", "18.419262"),
+                    new Place("Valtera Perića 12", "43.856273", "18.410832"),
+                    new Place("Skenderija 30", "43.854787", "18.418806"),
+                    new Place("Kotromanića 5", "43.855082", "18.409944"),
+                    new Place("Reisa Džemaludina Čauševića 4", "43.857000", "18.414107"),
+                    new Place("Fra Anđela Zvizdovića 1", "43.857123", "18.405855"),
+                    new Place("Mehmeda Spahe 10", "43.859714", "18.419904"),
+                    new Place("Džidžikovac 7", "43.860333", "18.415506"),
+                    new Place("Višnjik 20", "43.866484", "18.418206"),
+                    new Place("Maršala Tita 28", "43.856674", "18.409748")),
+            NOVO_SARAJEVO, List.of(
+                    new Place("Kolodvorska 12", "43.856426", "18.389188"),
+                    new Place("Grbavička 15", "43.852412", "18.400209"),
+                    new Place("Splitska 7", "43.850612", "18.403651"),
+                    new Place("Zmaja od Bosne 74", "43.852818", "18.384289"),
+                    new Place("Vrbanja 1", "43.855382", "18.407331"),
+                    new Place("Džemala Bijedića 2", "43.852075", "18.378497"),
+                    new Place("Hasana Brkića 2", "43.850671", "18.391308"),
+                    new Place("Behdžeta Mutevelića 4", "43.849491", "18.390651"),
+                    new Place("Hamdije Čemerlića 2", "43.855531", "18.394100"),
+                    new Place("Azize Šaćirbegović 80", "43.849751", "18.379651"),
+                    new Place("Trg heroja 10", "43.849648", "18.385751")),
+            NOVI_GRAD, List.of(
+                    new Place("Bulevar Meše Selimovića 85", "43.846350", "18.360584"),
+                    new Place("Džemala Bijedića 160", "43.849723", "18.352354"),
+                    new Place("Safeta Zajke 30", "43.852376", "18.355212"),
+                    new Place("Adema Buće 303", "43.857673", "18.357433"),
+                    new Place("Bosanska 2", "43.842177", "18.349743"),
+                    new Place("Nerkeza Smailagića 10", "43.843074", "18.343637"),
+                    new Place("Geteova 5", "43.843418", "18.349446"),
+                    new Place("Omladinskih radnih brigada 5", "43.829590", "18.347133"),
+                    new Place("Rajlovačka cesta 10", "43.880789", "18.311633")),
+            STARI_GRAD, List.of(
+                    new Place("Ferhadija 15", "43.858920", "18.424659"),
+                    new Place("Saraći 70", "43.859266", "18.430841"),
+                    new Place("Bistrik 12", "43.856232", "18.429501"),
+                    new Place("Kovači 19", "43.860373", "18.432123"),
+                    new Place("Logavina 32", "43.861951", "18.428536"),
+                    new Place("Mula Mustafe Bašeskije 21", "43.859881", "18.425176")),
+            ILIDZA, List.of(
+                    new Place("Butmirska cesta 14", "43.829065", "18.311927"),
+                    new Place("Dr. Mustafe Pintola 1", "43.830168", "18.310685"),
+                    new Place("Mala aleja 13", "43.829792", "18.307103"),
+                    new Place("Hrasnička cesta 3", "43.823884", "18.308512"),
+                    new Place("Ibrahima Ljubovića 15", "43.831922", "18.303780"),
+                    new Place("Velika aleja 2", "43.821616", "18.290438"),
+                    new Place("Lužansko polje 5", "43.833986", "18.296522"),
+                    new Place("Stupska 2", "43.841557", "18.326944")),
+            VOGOSCA, List.of(
+                    new Place("Jošanička 10", "43.900346", "18.347226"),
+                    new Place("Jošanička 100", "43.901229", "18.339903"),
+                    new Place("Igmanska 50", "43.901868", "18.344189"),
+                    new Place("Hotonj II 3", "43.900699", "18.370470"),
+                    new Place("Hotonj IV 2", "43.896876", "18.374995"),
+                    new Place("Ugorsko II 5", "43.892983", "18.353641")));
+
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final CategoryRepository categoryRepository;
@@ -98,6 +164,7 @@ public class DemoDataSeeder {
     private final Map<User, TaskerProfile> profiles = new HashMap<>();
     private final Map<User, List<Integer>> ratings = new HashMap<>();
     private final List<Runnable> backdating = new ArrayList<>();
+    private final Map<UUID, Integer> placesUsed = new HashMap<>();
     private LocalDateTime now;
     private String passwordHash;
 
@@ -450,6 +517,7 @@ public class DemoDataSeeder {
     private void seedAmraStory(User amra, User emir, User selma, User adnan) {
         Task siphon = published(amra, PLUMBING, CENTAR, "Zamjena sifona i ventila ispod sudopera",
                 "Sifon ispod sudopera je napukao, a ventil za toplu vodu ne zatvara do kraja.", 90, 6 * 24);
+        locate(siphon, AMRAS_HOME);
         Offer siphonOffer = offer(siphon, emir, 85, "Imam oba dijela na lageru i mogu doći u četvrtak.",
                 OfferStatus.ACCEPTED, 5 * 24);
         offer(siphon, adnan, 95, "Mogu i ja pomoći, ponijeću alat.", OfferStatus.REJECTED, 5 * 24);
@@ -484,6 +552,7 @@ public class DemoDataSeeder {
         draft.setClient(amra);
         draft.setCategory(category(FURNITURE));
         draft.setMunicipality(municipality(CENTAR));
+        locate(draft, CENTAR);
         draft.setTitle("Postavljanje laminata u spavaćoj sobi");
         draft.setDescription("Soba od 14 m², laminat još nije kupljen.");
         draft.setBudget(new BigDecimal("250"));
@@ -589,6 +658,7 @@ public class DemoDataSeeder {
         task.setClient(client);
         task.setCategory(category(categoryId));
         task.setMunicipality(municipality(municipalityId));
+        locate(task, municipalityId);
         task.setTitle(title);
         task.setDescription(description);
         task.setBudget(budget == null ? null : new BigDecimal(budget));
@@ -598,6 +668,18 @@ public class DemoDataSeeder {
         Task saved = taskRepository.save(task);
         backdate("tasks", saved.getId(), publishedAt.minusMinutes(30));
         return saved;
+    }
+
+    private void locate(Task task, UUID municipalityId) {
+        List<Place> places = PLACES.get(municipalityId);
+        int used = placesUsed.merge(municipalityId, 1, Integer::sum) - 1;
+        locate(task, places.get(used % places.size()));
+    }
+
+    private void locate(Task task, Place place) {
+        task.setAddressLine(place.address());
+        task.setLatitude(new BigDecimal(place.latitude()));
+        task.setLongitude(new BigDecimal(place.longitude()));
     }
 
     private Offer offer(Task task, User tasker, int price, String message, OfferStatus status, int hoursAgo) {
@@ -709,5 +791,8 @@ public class DemoDataSeeder {
     private Municipality municipality(UUID id) {
         return municipalityRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("Seed municipality is missing: " + id));
+    }
+
+    private record Place(String address, String latitude, String longitude) {
     }
 }

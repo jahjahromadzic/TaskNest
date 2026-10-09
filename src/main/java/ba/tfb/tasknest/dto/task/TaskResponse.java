@@ -20,6 +20,9 @@ public record TaskResponse(
         String categoryName,
         UUID municipalityId,
         String municipalityName,
+        String addressLine,
+        BigDecimal latitude,
+        BigDecimal longitude,
         UUID clientId,
         String clientName,
         UUID assignedTaskerId,
@@ -32,7 +35,8 @@ public record TaskResponse(
         LocalDateTime createdAt,
         List<TaskPhotoResponse> photos
 ) {
-    public static TaskResponse from(Task task) {
+    public static TaskResponse from(Task task, UUID viewerId) {
+        boolean showAddress = canSeeAddress(task, viewerId);
         return new TaskResponse(
                 task.getId(),
                 task.getTitle(),
@@ -44,6 +48,9 @@ public record TaskResponse(
                 task.getCategory().getName(),
                 task.getMunicipality().getId(),
                 task.getMunicipality().getName(),
+                showAddress ? task.getAddressLine() : null,
+                showAddress ? task.getLatitude() : null,
+                showAddress ? task.getLongitude() : null,
                 task.getClient().getId(),
                 task.getClient().getFirstName() + " " + task.getClient().getLastName(),
                 assignedTasker(task) == null ? null : assignedTasker(task).getId(),
@@ -58,6 +65,16 @@ public record TaskResponse(
                 task.getPhotos().stream().map(TaskPhotoResponse::from).toList()
         );
     }
+
+    private static boolean canSeeAddress(Task task, UUID viewerId) {
+        if (viewerId == null) {
+            return false;
+        }
+        User tasker = assignedTasker(task);
+        return viewerId.equals(task.getClient().getId())
+                || (tasker != null && viewerId.equals(tasker.getId()));
+    }
+
 
     private static User assignedTasker(Task task) {
         return task.getAcceptedOffer() == null ? null : task.getAcceptedOffer().getTasker();

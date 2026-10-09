@@ -32,6 +32,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @TestPropertySource(properties = {
         "app.demo-data.enabled=true",
@@ -83,6 +84,21 @@ class DemoDataSeederTest extends AbstractIntegrationTest {
 
             assertThat(open).as(category.getSlug()).isGreaterThanOrEqualTo(3);
         }
+    }
+
+    @Test
+    @DisplayName("Every demo task has its own street address inside Sarajevo, without asking the geocoder")
+    void seed_givesEveryTaskAnAddress() {
+        var tasks = taskRepository.findAll();
+
+        assertThat(tasks).allSatisfy(task -> {
+            assertThat(task.getAddressLine()).as(task.getTitle()).isNotBlank();
+            assertThat(task.getLatitude()).as(task.getTitle()).isBetween(new BigDecimal("43.80"), new BigDecimal("43.95"));
+            assertThat(task.getLongitude()).as(task.getTitle()).isBetween(new BigDecimal("18.25"), new BigDecimal("18.45"));
+        });
+        assertThat(tasks.stream().filter(task -> task.getTitle().startsWith("Zamjena sifona")))
+                .singleElement().extracting(Task::getAddressLine).isEqualTo("Zmaja od Bosne 12");
+        verifyNoInteractions(geocoder);
     }
 
     @Test

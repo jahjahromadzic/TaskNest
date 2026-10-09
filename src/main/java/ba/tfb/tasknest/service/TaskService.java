@@ -97,11 +97,11 @@ public class TaskService {
         task.setLongitude(point.longitude());
         task.setStatus(TaskStatus.DRAFT);
 
-        return TaskResponse.from(taskRepository.save(task));
+        return TaskResponse.from(taskRepository.save(task), clientId);
     }
 
     @Transactional
-    public TaskResponse updateTask(UUID taskId, UUID clientId, UpdateTaskRequest request) {
+    public TaskResponse updateTask(UUID taskId, UUID clientId,  UpdateTaskRequest request) {
         Task task = taskRepository.findWithWriteLockById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
 
@@ -134,7 +134,7 @@ public class TaskService {
                 || moved;
 
         if (!changed) {
-            return TaskResponse.from(task);
+            return TaskResponse.from(task, clientId);
         }
 
         if (moved) {
@@ -155,7 +155,7 @@ public class TaskService {
             notificationService.notifyTaskUpdated(task, offerService.taskersWithPendingOffers(task));
         }
 
-        return TaskResponse.from(task);
+        return TaskResponse.from(task, clientId);
     }
 
     private static boolean sameAmount(BigDecimal first, BigDecimal second) {
@@ -185,7 +185,7 @@ public class TaskService {
                 task.getMunicipality().getId(),
                 task.getClient().getId()));
 
-        return TaskResponse.from(task);
+        return TaskResponse.from(task, clientId);
     }
 
     @Transactional
@@ -200,7 +200,7 @@ public class TaskService {
 
         offerService.rejectActiveOffers(task);
 
-        return TaskResponse.from(task);
+        return TaskResponse.from(task, clientId);
     }
 
     @Transactional
@@ -209,7 +209,7 @@ public class TaskService {
 
         offerService.releaseAssignment(task);
 
-        return TaskResponse.from(task);
+        return TaskResponse.from(task, clientId);
     }
 
     @Transactional
@@ -223,7 +223,7 @@ public class TaskService {
 
         notificationService.notifyTaskStarted(task);
 
-        return TaskResponse.from(task);
+        return TaskResponse.from(task, taskerId);
     }
 
     @Transactional
@@ -237,7 +237,7 @@ public class TaskService {
 
         notificationService.notifyTaskCompleted(task);
 
-        return TaskResponse.from(task);
+        return TaskResponse.from(task, taskerId);
     }
 
     @Transactional
@@ -247,7 +247,7 @@ public class TaskService {
         User tasker = close(task);
         notificationService.notifyTaskClosed(task, tasker);
 
-        return TaskResponse.from(task);
+        return TaskResponse.from(task,clientId);
     }
 
     @Transactional(readOnly = true)
@@ -318,7 +318,7 @@ public class TaskService {
         offerService.rejectActiveOffers(task);
         notificationService.notifyTaskRemoved(task, reason);
 
-        return TaskResponse.from(task);
+        return TaskResponse.from(task, null);
     }
 
     @Transactional
@@ -347,7 +347,7 @@ public class TaskService {
             throw new ResourceNotFoundException("Task", taskId);
         }
 
-        return TaskResponse.from(task);
+        return TaskResponse.from(task, viewerId);
     }
 
     private Task loadAssignedTask(UUID taskId, UUID taskerId) {
