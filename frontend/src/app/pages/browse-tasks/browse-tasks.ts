@@ -10,6 +10,7 @@ import {
   catchError,
   combineLatest,
   debounceTime,
+  distinctUntilChanged,
   map,
   of,
   shareReplay,
@@ -33,6 +34,13 @@ import { Category, Municipality, TaskPage } from '../../api/models';
 import { CategoryIcon } from '../../components/category-icon/category-icon';
 import { Pagination } from '../../components/pagination/pagination';
 import { Select, SelectOption } from '../../components/select/select';
+import {
+  SEARCHABLE_FROM,
+  municipalityOptions,
+  regionLabel,
+  regionOf,
+  regionOptions,
+} from '../../shared/municipalities/municipalities';
 import { TaskCard } from '../../components/task-card/task-card';
 import { ReferenceService } from '../../services/reference.service';
 import { TASK_SORTS, TaskFilters, TaskService, TaskSort } from '../../services/task.service';
@@ -57,6 +65,7 @@ export function readFilters(params: ParamMap): TaskFilters {
   return {
     search: (params.get('q') ?? '').trim().slice(0, SEARCH_MAX),
     categoryId: params.get('category'),
+    region: params.get('region'),
     municipalityId: params.get('municipality'),
     sort: sort && sort in TASK_SORTS ? (sort as TaskSort) : 'newest',
     page: Number.isInteger(page) && page > 1 ? page - 1 : 0,
@@ -102,9 +111,13 @@ export class BrowseTasks {
     },
   }));
   readonly skeletonCards = [1, 2, 3];
+  readonly searchableFrom = SEARCHABLE_FROM;
+  protected readonly regionLabel = regionLabel;
 
   readonly categories$: Observable<Category[]>;
   readonly municipalities$: Observable<Municipality[]>;
+  readonly regionOptions$: Observable<SelectOption[]>;
+  readonly region$: Observable<string | null>;
   readonly municipalityOptions$: Observable<SelectOption[]>;
   readonly filters$: Observable<TaskFilters>;
   readonly state$: Observable<ListState>;
@@ -128,18 +141,38 @@ export class BrowseTasks {
       catchError(() => of([])),
       shareReplay(1),
     );
-    this.municipalityOptions$ = this.municipalities$.pipe(
+    this.filters$ = this.route.queryParamMap.pipe(map(readFilters), shareReplay(1));
+    this.regionOptions$ = this.municipalities$.pipe(
       map((municipalities) => [
         {
           value: '',
           get label() {
-            return t('browse.allMunicipalities');
+            return t('browse.allRegions');
           },
         },
-        ...municipalities.map((municipality) => ({ value: municipality.id ?? '', label: municipality.name ?? '' })),
+        ...regionOptions(municipalities),
       ]),
     );
-    this.filters$ = this.route.queryParamMap.pipe(map(readFilters), shareReplay(1));
+    this.region$ = combineLatest([this.municipalities$, this.filters$]).pipe(
+      map(([municipalities, filters]) => filters.region ?? regionOf(municipalities, filters.municipalityId)),
+      distinctUntilChanged(),
+      shareReplay(1),
+    );
+    this.municipalityOptions$ = combineLatest([this.municipalities$, this.region$]).pipe(
+      map(([municipalities, region]) =>
+        region
+          ? [
+              {
+                value: '',
+                get label() {
+                  return t('browse.allMunicipalities');
+                },
+              },
+              ...municipalityOptions(municipalities, region),
+            ]
+          : [],
+      ),
+    );
     this.filters$.pipe(takeUntilDestroyed()).subscribe((filters) => {
       if (filters.search !== this.searchText().trim()) {
         this.searchText.set(filters.search);
@@ -192,6 +225,10 @@ export class BrowseTasks {
 
   setCategory(categoryId: string | null): void {
     this.updateQuery({ category: categoryId });
+  }
+
+  setRegion(region: string): void {
+    this.updateQuery({ region: region || null, municipality: null });
   }
 
   setMunicipality(municipalityId: string): void {

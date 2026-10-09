@@ -41,6 +41,15 @@ public class Task extends BaseEntity {
     @Column(name = "budget", precision = 10, scale = 2)
     private BigDecimal budget;
 
+    @Column(name = "address_line", length = 200)
+    private String addressLine;
+
+    @Column(name = "latitude", precision = 9, scale = 6)
+    private BigDecimal latitude;
+
+    @Column(name = "longitude", precision = 9, scale = 6)
+    private BigDecimal longitude;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private TaskStatus status = TaskStatus.DRAFT;

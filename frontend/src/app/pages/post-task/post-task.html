@@ -1,5 +1,5 @@
 @if (
-  { categories: categories$ | async, municipalities: municipalities$ | async, municipalityOptions: municipalityOptions$ | async };
+  { categories: categories$ | async, municipalities: municipalities$ | async };
   as vm
 ) {
   <div class="space-y-3">
@@ -86,11 +86,22 @@
           }
         </fieldset>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div>
+            <label for="task-region" class="form-label">{{ 'postTask.region' | t }}</label>
+            <app-select inputId="task-region" [placeholder]="'postTask.regionPlaceholder' | t"
+                        [options]="regionChoices()" [ngModel]="region()" (ngModelChange)="pickRegion($event)"
+                        [ngModelOptions]="{ standalone: true }"
+                        [class.select-invalid]="!region() && municipalityField.invalid && (municipalityField.touched || attempted())" />
+          </div>
+
           <div>
             <label for="task-municipality" class="form-label">{{ 'postTask.municipality' | t }}</label>
-            <app-select inputId="task-municipality" name="municipalityId" [placeholder]="'postTask.municipalityPlaceholder' | t"
-                        [options]="vm.municipalityOptions ?? []" [(ngModel)]="municipalityId"
+            <app-select inputId="task-municipality" name="municipalityId"
+                        [placeholder]="(region() ? 'postTask.municipalityPlaceholder' : 'postTask.regionFirst') | t"
+                        [options]="municipalityChoices()" [(ngModel)]="municipalityId"
+                        [searchable]="municipalityChoices().length > searchableFrom"
+                        [searchPlaceholder]="'common.search' | t" [noMatchesText]="'common.noMatches' | t"
                         (ngModelChange)="clearServerError('municipalityId')" #municipalityField="ngModel" required
                         [class.select-invalid]="municipalityField.invalid && (municipalityField.touched || attempted())" />
             @if (serverError('municipalityId'); as message) {

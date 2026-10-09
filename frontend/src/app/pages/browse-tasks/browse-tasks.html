@@ -3,6 +3,8 @@
     filters: filters$ | async,
     categories: categories$ | async,
     municipalities: municipalities$ | async,
+    regionOptions: regionOptions$ | async,
+    region: region$ | async,
     municipalityOptions: municipalityOptions$ | async,
     state: state$ | async,
   };
@@ -45,7 +47,7 @@
             <h2 class="font-semibold text-sm flex items-center gap-1.5">
               <svg [appIcon]="icons.SlidersHorizontal" class="w-4 h-4 text-brand"></svg> {{ 'browse.filters' | t }}
             </h2>
-            @if (vm.filters?.search || vm.filters?.categoryId || vm.filters?.municipalityId) {
+            @if (vm.filters?.search || vm.filters?.categoryId || vm.filters?.region || vm.filters?.municipalityId) {
               <button type="button" (click)="resetFilters()"
                       class="text-xs text-brand font-semibold hover:underline flex items-center gap-1 animate-fade-in">
                 <svg [appIcon]="icons.RotateCcw" class="w-3 h-3"></svg> {{ 'browse.reset' | t }}
@@ -54,13 +56,24 @@
           </div>
 
           <div class="space-y-1.5">
-            <label for="filter-municipality" class="form-label flex items-center gap-1">
-              <svg [appIcon]="icons.MapPin" class="w-3.5 h-3.5 text-brand"></svg> {{ 'browse.municipality' | t }}
+            <label for="filter-region" class="form-label flex items-center gap-1">
+              <svg [appIcon]="icons.MapPin" class="w-3.5 h-3.5 text-brand"></svg> {{ 'browse.region' | t }}
             </label>
-            <app-select inputId="filter-municipality" [placeholder]="'browse.allMunicipalities' | t"
-                        [options]="vm.municipalityOptions ?? []"
-                        [ngModel]="vm.filters?.municipalityId ?? ''" (ngModelChange)="setMunicipality($event)" />
+            <app-select inputId="filter-region" [placeholder]="'browse.allRegions' | t"
+                        [options]="vm.regionOptions ?? []"
+                        [ngModel]="vm.region ?? ''" (ngModelChange)="setRegion($event)" />
           </div>
+
+          @if (vm.region) {
+            <div class="space-y-1.5 animate-fade-in">
+              <label for="filter-municipality" class="form-label">{{ 'browse.municipality' | t }}</label>
+              <app-select inputId="filter-municipality" [placeholder]="'browse.allMunicipalities' | t"
+                          [options]="vm.municipalityOptions ?? []"
+                          [searchable]="(vm.municipalityOptions?.length ?? 0) > searchableFrom"
+                          [searchPlaceholder]="'common.search' | t" [noMatchesText]="'common.noMatches' | t"
+                          [ngModel]="vm.filters?.municipalityId ?? ''" (ngModelChange)="setMunicipality($event)" />
+            </div>
+          }
 
           <div class="space-y-2">
             <span class="form-label">{{ 'browse.category' | t }}</span>
@@ -104,6 +117,8 @@
             }
             @if (nameOf(vm.municipalities, vm.filters?.municipalityId ?? null); as municipalityName) {
               · <span class="text-brand font-semibold">{{ municipalityName }}</span>
+            } @else if (vm.region) {
+              · <span class="text-brand font-semibold">{{ regionLabel(vm.region) }}</span>
             }
           </p>
           <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -133,7 +148,7 @@
                     {{ 'browse.emptyText' | t }}
                   }
                 </p>
-                @if (vm.filters?.search || vm.filters?.categoryId || vm.filters?.municipalityId) {
+                @if (vm.filters?.search || vm.filters?.categoryId || vm.filters?.region || vm.filters?.municipalityId) {
                   <button type="button" (click)="resetFilters()" class="btn-primary py-2">
                     <svg [appIcon]="icons.RotateCcw" class="w-4 h-4"></svg> {{ 'browse.showAll' | t }}
                   </button>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="045-tasks-address" author="jahja">
+        <addColumn tableName="tasks">
+            <column name="address_line" type="VARCHAR(200)"/>
+            <column name="latitude" type="NUMERIC(9,6)"/>
+            <column name="longitude" type="NUMERIC(9,6)"/>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="tasks" columnName="longitude"/>
+            <dropColumn tableName="tasks" columnName="latitude"/>
+            <dropColumn tableName="tasks" columnName="address_line"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

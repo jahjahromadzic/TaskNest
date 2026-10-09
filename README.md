@@ -71,8 +71,11 @@ single-page application that uses it.
 - **Reports** — any signed-in user can report a task or another user (from the task
   page, a profile or a chat) with a reason. The admin panel lists the reports, and
   removing the task or suspending the user resolves every open report about them.
-- **Reference data** — fourteen categories, each with a stable `slug`, and the
-  municipalities under their local names, exposed as public endpoints.
+- **Reference data** — fourteen categories, each with a stable `slug`, and all 143
+  municipalities of Bosnia and Herzegovina under their local names, grouped by region (the ten
+  cantons, Republika Srpska and Brčko District), exposed as public endpoints. Everywhere a place is
+  chosen the region comes first and then its municipalities, so the task list can also be filtered by a
+  whole canton.
 
 ## Tech stack
 
@@ -81,7 +84,7 @@ single-page application that uses it.
 | Language | Java 21 |
 | Framework | Spring Boot 4.1.1 |
 | Database | PostgreSQL 17 |
-| Migrations | Liquibase (44 changesets, 18 tables) |
+| Migrations | Liquibase (46 changesets, 18 tables) |
 | Persistence | Spring Data JPA, Hibernate 7 (`ddl-auto: validate`) |
 | Security | Spring Security, JWT (jjwt 0.12.6) |
 | Messaging | RabbitMQ |
@@ -408,7 +411,7 @@ out the device that just changed the password. A deleted token is simply unknown
 
 | Method | Path | Access | Description |
 |---|---|---|---|
-| GET | `/` | Public | List published tasks. Filters: `q` (text, at most 100 characters), `categoryId`, `municipalityId` |
+| GET | `/` | Public | List published tasks. Filters: `q` (text, at most 100 characters), `categoryId`, `region` (a canton, Republika Srpska or Brčko District), `municipalityId` |
 | GET | `/{id}` | Public | Task details, including the hired tasker. Drafts are visible to the owner only |
 | POST | `/` | Client | Create a task as a draft |
 | PUT | `/{id}` | Client | Change the title, description, category, municipality and budget of a draft or a task open for offers. Taskers with a pending offer are notified, unless nothing changed |
@@ -486,7 +489,7 @@ acceptance the offer is no longer pending, so its price is locked.
 | Method | Path | Access | Description |
 |---|---|---|---|
 | GET | `/categories` | Public | Active service categories |
-| GET | `/municipalities` | Public | Municipalities, ordered by name |
+| GET | `/municipalities` | Public | All municipalities of Bosnia and Herzegovina with their region, ordered by name |
 
 ### Task photos — `/api`
 
@@ -868,13 +871,13 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **399 tests** and requires no manual setup — Testcontainers
+The suite contains **401 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 141 | Service business rules, the task state machine and the login attempt limiter |
-| Integration | 258 | Authentication, password reset, login throttling, account settings, task editing and search, reports, offer price changes, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
+| Integration | 260 | Authentication, password reset, login throttling, account settings, task editing and search, reports, offer price changes, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
 
 Every integration test starts from an empty database: one `TRUNCATE ... CASCADE` after each test
 clears all application tables at once. Clearing them table by table left a window in which the
@@ -883,11 +886,11 @@ about to be deleted. The listener also ignores events for tasks that are no long
 left over from an earlier test cannot reach the next one. The suite passes in random class order
 (`./mvnw verify -Dsurefire.runOrder=random`).
 
-The frontend has its own suite of **265 tests** (Vitest), covering the session
+The frontend has its own suite of **272 tests** (Vitest), covering the session
 service, token renewal and the interceptor, the route guards, the login form, the
 header, the task list and its search, task details, posting and editing a task, account settings, reports and the admin reports tab, the client's own tasks, offers
 and hiring, cancelling, reopening and closing a task, reviews, becoming a tasker and editing the tasker profile, sending and withdrawing offers,
-starting and finishing a job, the tasker dashboard, the user profile with its tasker and client sides, the notification bell and page, the messages page and chat helpers, live updates over WebSocket, the admin panel, translations and plural rules, the theme switch, the confirmation dialog, the dropdown, the progress
+starting and finishing a job, the tasker dashboard, the user profile with its tasker and client sides, the notification bell and page, the messages page and chat helpers, live updates over WebSocket, the admin panel, translations and plural rules, the theme switch, the confirmation dialog, the dropdown and its search, the region picker, the progress
 timeline, date helpers and the category icons. The server is simulated with Angular's
 `HttpTestingController`.
 

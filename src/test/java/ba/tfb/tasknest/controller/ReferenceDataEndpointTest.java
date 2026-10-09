@@ -45,4 +45,21 @@ class ReferenceDataEndpointTest extends AbstractIntegrationTest {
 
         assertThat(names).contains("Ilidža", "Vogošća", "Novi Grad Sarajevo");
     }
+
+    @Test
+    @DisplayName("Municipalities cover every canton, Republika Srpska and Brčko District")
+    void municipalities_coverTheWholeCountry() throws Exception {
+        String body = mockMvc.perform(get("/api/municipalities"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+
+        List<String> names = JsonPath.read(body, "$[*].name");
+        List<String> regions = JsonPath.read(body, "$[*].region");
+
+        assertThat(names).hasSize(143).doesNotHaveDuplicates().contains("Bihać", "Mostar", "Banja Luka", "Brčko");
+        assertThat(regions).doesNotContainNull().containsOnly(
+                "Una-Sana Canton", "Posavina Canton", "Tuzla Canton", "Zenica-Doboj Canton",
+                "Bosnian-Podrinje Canton Goražde", "Central Bosnia Canton", "Herzegovina-Neretva Canton",
+                "West Herzegovina Canton", "Sarajevo Canton", "Canton 10", "Republika Srpska", "Brčko District");
+    }
 }

@@ -50,6 +50,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
         where t.status = :status
           and (t.expiresAt is null or t.expiresAt > :now)
           and (:categoryId is null or c.id = :categoryId)
+          and (:region = '' or m.region = :region)
           and (:municipalityId is null or m.id = :municipalityId)
           and (:search = ''
                or cast(function('translate', lower(t.title), 'čćšđžČĆŠĐŽ', 'ccsdzccsdz') as String) like concat('%', :search, '%') escape '!'
@@ -59,6 +60,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     Page<TaskSummaryResponse> findOpenTasks(@Param("status") TaskStatus status,
                                             @Param("now") LocalDateTime now,
                                             @Param("categoryId") UUID categoryId,
+                                            @Param("region") String region,
                                             @Param("municipalityId") UUID municipalityId,
                                             @Param("search") String search,
                                             Pageable pageable);

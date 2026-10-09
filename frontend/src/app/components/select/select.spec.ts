@@ -94,3 +94,65 @@ describe('Select', () => {
     expect(fixture.componentInstance.city).toBe('tz');
   });
 });
+
+@Component({
+  imports: [FormsModule, Select],
+  template: `<app-select inputId="place" [options]="options" [searchable]="true" noMatchesText="Nothing" [(ngModel)]="place" />`,
+})
+class SearchHost {
+  options: SelectOption[] = [
+    { value: 'il', label: 'Ilidža', group: 'Sarajevo Canton' },
+    { value: 'ce', label: 'Centar Sarajevo', group: 'Sarajevo Canton' },
+    { value: 'tz', label: 'Tuzla', group: 'Tuzla Canton' },
+  ];
+  place = '';
+}
+
+describe('Select with search', () => {
+  let fixture: ComponentFixture<SearchHost>;
+
+  beforeEach(async () => {
+    fixture = TestBed.createComponent(SearchHost);
+    await fixture.whenStable();
+    fixture.nativeElement.querySelector('#place').click();
+    await fixture.whenStable();
+  });
+
+  function search(): HTMLInputElement {
+    return fixture.nativeElement.querySelector('input[type=search]');
+  }
+
+  function labels(selector: string): string[] {
+    return Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll(selector)).map((item) => item.textContent!.trim());
+  }
+
+  async function type(text: string): Promise<void> {
+    search().value = text;
+    search().dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+  }
+
+  it('shows a heading for each group', () => {
+    expect(labels('[role=option]')).toEqual(['Ilidža', 'Centar Sarajevo', 'Tuzla']);
+    expect(labels('li[role=presentation]')).toEqual(['Sarajevo Canton', 'Tuzla Canton']);
+  });
+
+  it('filters by name without caring about diacritics and picks with Enter', async () => {
+    await type('ilidza');
+    expect(labels('[role=option]')).toEqual(['Ilidža']);
+
+    search().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.place).toBe('il');
+  });
+
+  it('matches the group name and says when nothing matches', async () => {
+    await type('tuzla canton');
+    expect(labels('[role=option]')).toEqual(['Tuzla']);
+
+    await type('zzz');
+    expect(labels('[role=option]')).toEqual([]);
+    expect(labels('li[role=presentation]')).toEqual(['Nothing']);
+  });
+});

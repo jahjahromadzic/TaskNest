@@ -24,5 +24,7 @@
     <include file="db/changelog/changes/017-tasker-rating-as-tasker.xml"/>
     <include file="db/changelog/changes/018-task-photos.xml"/>
     <include file="db/changelog/changes/019-reports.xml"/>
+    <include file="db/changelog/changes/020-task-address.xml"/>
+    <include file="db/changelog/changes/021-all-municipalities.xml"/>
 
 </databaseChangeLog>

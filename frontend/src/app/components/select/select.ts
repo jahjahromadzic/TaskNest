@@ -6,6 +6,15 @@ import { Icon } from '../icon/icon';
 export interface SelectOption {
   value: string;
   label: string;
+  group?: string;
+}
+
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd');
 }
 
 let nextId = 0;
@@ -24,11 +33,15 @@ export class Select implements ControlValueAccessor {
   @Input() placeholder = 'Select';
   @Input() inputId = `app-select-${nextId++}`;
   @Input() compact = false;
+  @Input() searchable = false;
+  @Input() searchPlaceholder = 'Search...';
+  @Input() noMatchesText = 'No matches';
 
   readonly value = signal<string | null>(null);
   readonly open = signal(false);
   readonly activeIndex = signal(-1);
   readonly disabled = signal(false);
+  readonly query = signal('');
 
   private onChange: (value: string) => void = () => undefined;
   private onTouched: () => void = () => undefined;
@@ -41,6 +54,26 @@ export class Select implements ControlValueAccessor {
 
   get selectedLabel(): string | undefined {
     return this.options.find((option) => option.value === this.value())?.label;
+  }
+
+  get visibleOptions(): SelectOption[] {
+    const query = normalize(this.query().trim());
+    if (!query) {
+      return this.options;
+    }
+    return this.options.filter(
+      (option) => normalize(option.label).includes(query) || normalize(option.group ?? '').includes(query),
+    );
+  }
+
+  startsGroup(options: SelectOption[], index: number): boolean {
+    const group = options[index].group;
+    return !!group && (index === 0 || options[index - 1].group !== group);
+  }
+
+  search(text: string): void {
+    this.query.set(text);
+    this.setActive(this.visibleOptions.length > 0 ? 0 : -1);
   }
 
   optionId(index: number): string {
@@ -71,7 +104,18 @@ export class Select implements ControlValueAccessor {
       }
       return;
     }
+    this.onListKeydown(event);
+  }
 
+  onSearchKeydown(event: KeyboardEvent): void {
+    if (event.key === ' ' || event.key === 'Home' || event.key === 'End') {
+      return;
+    }
+    this.onListKeydown(event);
+  }
+
+  private onListKeydown(event: KeyboardEvent): void {
+    const options = this.visibleOptions;
     switch (event.key) {
       case 'ArrowDown':
         event.preventDefault();
@@ -87,13 +131,13 @@ export class Select implements ControlValueAccessor {
         break;
       case 'End':
         event.preventDefault();
-        this.setActive(this.options.length - 1);
+        this.setActive(options.length - 1);
         break;
       case 'Enter':
       case ' ':
         event.preventDefault();
-        if (this.options[this.activeIndex()]) {
-          this.choose(this.options[this.activeIndex()]);
+        if (options[this.activeIndex()]) {
+          this.choose(options[this.activeIndex()]);
         }
         break;
       case 'Escape':
@@ -134,8 +178,12 @@ export class Select implements ControlValueAccessor {
       return;
     }
     const selected = this.options.findIndex((option) => option.value === this.value());
+    this.query.set('');
     this.open.set(true);
     this.setActive(selected >= 0 ? selected : 0);
+    if (this.searchable) {
+      setTimeout(() => this.host.nativeElement.querySelector<HTMLInputElement>('input[type=search]')?.focus());
+    }
   }
 
   private close(focusButton = false): void {
@@ -143,6 +191,7 @@ export class Select implements ControlValueAccessor {
       return;
     }
     this.open.set(false);
+    this.query.set('');
     this.onTouched();
     if (focusButton) {
       this.host.nativeElement.querySelector<HTMLButtonElement>('button')?.focus();
@@ -150,7 +199,10 @@ export class Select implements ControlValueAccessor {
   }
 
   private moveActive(step: number): void {
-    const count = this.options.length;
+    const count = this.visibleOptions.length;
+    if (count === 0) {
+      return;
+    }
     this.setActive((this.activeIndex() + step + count) % count);
   }
 

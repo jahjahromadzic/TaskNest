@@ -91,11 +91,12 @@ public class TaskController {
     @GetMapping
     public PagedResponse<TaskSummaryResponse> browse(
             @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) @Size(max = 100) String region,
             @RequestParam(required = false) UUID municipalityId,
             @RequestParam(name = "q", required = false) @Size(max = 100) String search,
             @PageableDefault(size = 20, sort = "publishedAt",
                     direction = Sort.Direction.DESC) Pageable pageable) {
-        return PagedResponse.from(taskService.browseTasks(categoryId, municipalityId, search, pageable));
+        return PagedResponse.from(taskService.browseTasks(categoryId, region, municipalityId, search, pageable));
     }
 
     @GetMapping("/matching")

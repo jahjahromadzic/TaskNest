@@ -362,11 +362,13 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public Page<TaskSummaryResponse> browseTasks(UUID categoryId,
+                                                 String region,
                                                  UUID municipalityId,
                                                  String search,
                                                  Pageable pageable) {
         return taskRepository.findOpenTasks(TaskStatus.PUBLISHED, LocalDateTime.now(clock),
-                categoryId, municipalityId, searchPattern(search), sortable(pageable));
+                categoryId, region == null ? "" : region.strip(), municipalityId, searchPattern(search),
+                sortable(pageable));
     }
 
     static String searchPattern(String search) {

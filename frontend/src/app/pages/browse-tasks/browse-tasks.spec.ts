@@ -39,7 +39,10 @@ describe('Browse tasks page', () => {
   async function open(url: string): Promise<void> {
     await harness.navigateByUrl(url);
     http.expectOne('/api/categories').flush([{ id: 'c1', name: 'Plumbing' }]);
-    http.expectOne('/api/municipalities').flush([{ id: 'm1', name: 'Centar Sarajevo' }]);
+    http.expectOne('/api/municipalities').flush([
+      { id: 'm1', name: 'Centar Sarajevo', region: 'Sarajevo Canton' },
+      { id: 'm2', name: 'Tuzla', region: 'Tuzla Canton' },
+    ]);
     await harness.fixture.whenStable();
   }
 
@@ -134,6 +137,31 @@ describe('Browse tasks page', () => {
     expect(router.url).toBe('/tasks?category=c1&q=ves%20masina');
   });
 
+  it('asks for the region first and then narrows it down to one of its municipalities', async () => {
+    await open('/tasks');
+    taskRequest().flush(page([task]));
+    await harness.fixture.whenStable();
+    expect(harness.routeNativeElement!.querySelector('#filter-municipality')).toBeNull();
+
+    await choose('#filter-region', 'Tuzla Canton');
+    expect(router.url).toBe('/tasks?region=Tuzla%20Canton');
+    expect(taskRequest().request.params.get('region')).toBe('Tuzla Canton');
+    await harness.fixture.whenStable();
+
+    await choose('#filter-municipality', 'Tuzla');
+    expect(router.url).toBe('/tasks?region=Tuzla%20Canton&municipality=m2');
+    expect(taskRequest().request.params.get('municipalityId')).toBe('m2');
+  });
+
+  async function choose(select: string, label: string): Promise<void> {
+    harness.routeNativeElement!.querySelector<HTMLButtonElement>(select)!.click();
+    await harness.fixture.whenStable();
+    Array.from(harness.routeNativeElement!.querySelectorAll<HTMLElement>('[role=option]'))
+      .find((option) => option.textContent?.trim() === label)!
+      .click();
+    await harness.fixture.whenStable();
+  }
+
   it('says what was searched for when nothing matches and clears the search in one click', async () => {
     await open('/tasks?q=perilica');
     const request = taskRequest();
@@ -162,6 +190,7 @@ describe('readFilters', () => {
     expect(readFilters(convertToParamMap({ sort: 'hack', page: '-4' }))).toEqual({
       search: '',
       categoryId: null,
+      region: null,
       municipalityId: null,
       sort: 'newest',
       page: 0,

@@ -1,9 +1,10 @@
-import { Component, OnDestroy, signal } from '@angular/core';
+import { Component, OnDestroy, computed, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Observable, catchError, concat, defaultIfEmpty, from, map, of, shareReplay, switchMap, toArray } from 'rxjs';
+import { Observable, catchError, concat, defaultIfEmpty, from, map, of, shareReplay, switchMap, take, toArray } from 'rxjs';
 import { ArrowLeft, CircleAlert, Eye, Images, Lightbulb, LoaderCircle, Lock, MapPin, Save, Send, X } from 'lucide';
 import { Category, CreateTaskRequest, Municipality, TaskDetail, TaskSummary } from '../../api/models';
 import { AuthService } from '../../auth/auth.service';
@@ -17,6 +18,12 @@ import { TaskService } from '../../services/task.service';
 import { ApiError, readApiError } from '../../shared/api-error';
 import { ToastService } from '../../shared/toast/toast.service';
 import { MAX_PHOTOS, PhotoPreparer } from '../../shared/photos/photos';
+import {
+  SEARCHABLE_FROM,
+  municipalityOptions,
+  regionOf,
+  regionOptions,
+} from '../../shared/municipalities/municipalities';
 import { CategoryPipe, TranslatePipe } from '../../i18n/translate.pipe';
 import { t } from '../../i18n/translate';
 
@@ -45,6 +52,7 @@ export class PostTask implements OnDestroy {
 
   readonly titleMax = TITLE_MAX;
   readonly descriptionMax = DESCRIPTION_MAX;
+  readonly searchableFrom = SEARCHABLE_FROM;
 
   title = '';
   description = '';
@@ -62,7 +70,12 @@ export class PostTask implements OnDestroy {
 
   readonly categories$: Observable<Category[]>;
   readonly municipalities$: Observable<Municipality[]>;
-  readonly municipalityOptions$: Observable<SelectOption[]>;
+  readonly region = signal<string | null>(null);
+  private readonly municipalityList: () => Municipality[];
+  readonly regionChoices = computed<SelectOption[]>(() => regionOptions(this.municipalityList()));
+  readonly municipalityChoices = computed<SelectOption[]>(() =>
+    municipalityOptions(this.municipalityList(), this.region()),
+  );
 
   private readonly previewExpiry = new Date(Date.now() + 30 * 86_400_000).toISOString();
   private readonly previewPublished = new Date().toISOString();
@@ -86,11 +99,16 @@ export class PostTask implements OnDestroy {
     }
     this.categories$ = this.referenceService.getCategories().pipe(shareReplay(1));
     this.municipalities$ = this.referenceService.getMunicipalities().pipe(shareReplay(1));
-    this.municipalityOptions$ = this.municipalities$.pipe(
-      map((municipalities) =>
-        municipalities.map((municipality) => ({ value: municipality.id ?? '', label: municipality.name ?? '' })),
-      ),
-    );
+    this.municipalityList = toSignal(this.municipalities$, { initialValue: [] });
+  }
+
+  pickRegion(region: string): void {
+    if (region === this.region()) {
+      return;
+    }
+    this.region.set(region);
+    this.municipalityId = null;
+    this.clearServerError('municipalityId');
   }
 
   preview(categories: Category[] | null, municipalities: Municipality[] | null): TaskSummary {
@@ -126,6 +144,9 @@ export class PostTask implements OnDestroy {
     this.description = task.description ?? '';
     this.categoryId = task.categoryId ?? null;
     this.municipalityId = task.municipalityId ?? null;
+    this.municipalities$
+      .pipe(take(1))
+      .subscribe((municipalities) => this.region.set(regionOf(municipalities, task.municipalityId)));
     this.budget = task.budget ?? null;
     this.load.set('ready');
   }

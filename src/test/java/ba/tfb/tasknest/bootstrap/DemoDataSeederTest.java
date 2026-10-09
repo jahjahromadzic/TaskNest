@@ -70,7 +70,7 @@ class DemoDataSeederTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("Every open demo task shows up in the public listing")
     void seed_fillsThePublicListing() {
-        long open = taskService.browseTasks(null, null, null, PageRequest.of(0, 50)).getTotalElements();
+        long open = taskService.browseTasks(null, null, null, null, PageRequest.of(0, 50)).getTotalElements();
 
         assertThat(open).isEqualTo(42);
     }
@@ -79,7 +79,7 @@ class DemoDataSeederTest extends AbstractIntegrationTest {
     @DisplayName("Every category has at least three open tasks, so no category filter shows an empty list")
     void seed_fillsEveryCategory() {
         for (Category category : categoryRepository.findAll()) {
-            long open = taskService.browseTasks(category.getId(), null, null, PageRequest.of(0, 50)).getTotalElements();
+            long open = taskService.browseTasks(category.getId(), null, null, null, PageRequest.of(0, 50)).getTotalElements();
 
             assertThat(open).as(category.getSlug()).isGreaterThanOrEqualTo(3);
         }

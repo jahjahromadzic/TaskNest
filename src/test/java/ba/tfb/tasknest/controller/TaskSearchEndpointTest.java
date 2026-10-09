@@ -48,7 +48,7 @@ class TaskSearchEndpointTest extends AbstractIntegrationTest {
         List<Category> categories = categoryRepository.findAll().stream().filter(Category::isActive).toList();
         cleaning = categories.get(0);
         repairs = categories.get(1);
-        municipality = municipalityRepository.findAll().getFirst();
+        municipality = named("Centar Sarajevo");
 
         publish("Čišćenje stana poslije renoviranja", "Dvosoban stan, 60 m2", cleaning);
         publish("Popravka veš mašine", "Perilica ne izbacuje vodu, 50% bubnja je puno", repairs);
@@ -96,6 +96,25 @@ class TaskSearchEndpointTest extends AbstractIntegrationTest {
     }
 
     @Test
+    @DisplayName("Choosing a region shows the tasks from every municipality in it")
+    void browse_filtersByRegion() throws Exception {
+        Municipality tuzla = named("Tuzla");
+        UUID taskId = taskService.createTask(client.userId(),
+                new CreateTaskRequest("Selidba u Tuzli", null, repairs.getId(), tuzla.getId(), null)).id();
+        taskService.publishTask(taskId, client.userId());
+
+        mockMvc.perform(get("/api/tasks").param("region", "Tuzla Canton"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].title").value(contains("Selidba u Tuzli")));
+        mockMvc.perform(get("/api/tasks").param("region", "Republika Srpska"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").value(empty()));
+        mockMvc.perform(get("/api/tasks").param("region", ""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(4));
+    }
+
+    @Test
     @DisplayName("A search longer than 100 characters is refused")
     void search_refusesVeryLongText() throws Exception {
         mockMvc.perform(get("/api/tasks").param("q", "a".repeat(101)))
@@ -104,6 +123,12 @@ class TaskSearchEndpointTest extends AbstractIntegrationTest {
 
     private ResultActions search(String text) throws Exception {
         return mockMvc.perform(get("/api/tasks").param("q", text)).andExpect(status().isOk());
+    }
+
+    private Municipality named(String name) {
+        return municipalityRepository.findAll().stream()
+                .filter(candidate -> candidate.getName().equals(name))
+                .findFirst().orElseThrow();
     }
 
     private void publish(String title, String description, Category category) {

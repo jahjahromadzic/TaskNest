@@ -18,18 +18,28 @@ describe('TaskService', () => {
   afterEach(() => http.verify());
 
   it('asks for the newest tasks without filters', () => {
-    service.browse({ search: '', categoryId: null, municipalityId: null, sort: 'newest', page: 0 }).subscribe();
+    service.browse({ search: '', categoryId: null, region: null, municipalityId: null, sort: 'newest', page: 0 }).subscribe();
 
     const request = http.expectOne((req) => req.url === '/api/tasks');
     expect(request.request.params.toString()).toBe('page=0&size=10&sort=publishedAt,desc');
   });
 
   it('sends the chosen filters, sort and page', () => {
-    service.browse({ search: 'veš mašina', categoryId: 'c1', municipalityId: 'm1', sort: 'budgetHigh', page: 2 }).subscribe();
+    service
+      .browse({
+        search: 'veš mašina',
+        categoryId: 'c1',
+        region: 'Sarajevo Canton',
+        municipalityId: 'm1',
+        sort: 'budgetHigh',
+        page: 2,
+      })
+      .subscribe();
 
     const params = http.expectOne((req) => req.url === '/api/tasks').request.params;
     expect(params.get('q')).toBe('veš mašina');
     expect(params.get('categoryId')).toBe('c1');
+    expect(params.get('region')).toBe('Sarajevo Canton');
     expect(params.get('municipalityId')).toBe('m1');
     expect(params.get('sort')).toBe('budget,desc');
     expect(params.get('page')).toBe('2');

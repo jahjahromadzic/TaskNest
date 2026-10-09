@@ -1,0 +1,701 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="046-seed-all-municipalities" author="jahja">
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000007"/>
+            <column name="name" value="Bihać"/>
+            <column name="region" value="Una-Sana Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000008"/>
+            <column name="name" value="Bosanska Krupa"/>
+            <column name="region" value="Una-Sana Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000009"/>
+            <column name="name" value="Bosanski Petrovac"/>
+            <column name="region" value="Una-Sana Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000010"/>
+            <column name="name" value="Bužim"/>
+            <column name="region" value="Una-Sana Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000011"/>
+            <column name="name" value="Cazin"/>
+            <column name="region" value="Una-Sana Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000012"/>
+            <column name="name" value="Ključ"/>
+            <column name="region" value="Una-Sana Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000013"/>
+            <column name="name" value="Sanski Most"/>
+            <column name="region" value="Una-Sana Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000014"/>
+            <column name="name" value="Velika Kladuša"/>
+            <column name="region" value="Una-Sana Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000015"/>
+            <column name="name" value="Domaljevac-Šamac"/>
+            <column name="region" value="Posavina Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000016"/>
+            <column name="name" value="Odžak"/>
+            <column name="region" value="Posavina Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000017"/>
+            <column name="name" value="Orašje"/>
+            <column name="region" value="Posavina Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000018"/>
+            <column name="name" value="Banovići"/>
+            <column name="region" value="Tuzla Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000019"/>
+            <column name="name" value="Čelić"/>
+            <column name="region" value="Tuzla Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000020"/>
+            <column name="name" value="Doboj Istok"/>
+            <column name="region" value="Tuzla Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000021"/>
+            <column name="name" value="Gračanica"/>
+            <column name="region" value="Tuzla Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000022"/>
+            <column name="name" value="Gradačac"/>
+            <column name="region" value="Tuzla Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000023"/>
+            <column name="name" value="Kalesija"/>
+            <column name="region" value="Tuzla Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000024"/>
+            <column name="name" value="Kladanj"/>
+            <column name="region" value="Tuzla Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000025"/>
+            <column name="name" value="Lukavac"/>
+            <column name="region" value="Tuzla Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000026"/>
+            <column name="name" value="Sapna"/>
+            <column name="region" value="Tuzla Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000027"/>
+            <column name="name" value="Srebrenik"/>
+            <column name="region" value="Tuzla Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000028"/>
+            <column name="name" value="Teočak"/>
+            <column name="region" value="Tuzla Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000029"/>
+            <column name="name" value="Tuzla"/>
+            <column name="region" value="Tuzla Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000030"/>
+            <column name="name" value="Živinice"/>
+            <column name="region" value="Tuzla Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000031"/>
+            <column name="name" value="Breza"/>
+            <column name="region" value="Zenica-Doboj Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000032"/>
+            <column name="name" value="Doboj Jug"/>
+            <column name="region" value="Zenica-Doboj Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000033"/>
+            <column name="name" value="Kakanj"/>
+            <column name="region" value="Zenica-Doboj Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000034"/>
+            <column name="name" value="Maglaj"/>
+            <column name="region" value="Zenica-Doboj Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000035"/>
+            <column name="name" value="Olovo"/>
+            <column name="region" value="Zenica-Doboj Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000036"/>
+            <column name="name" value="Tešanj"/>
+            <column name="region" value="Zenica-Doboj Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000037"/>
+            <column name="name" value="Usora"/>
+            <column name="region" value="Zenica-Doboj Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000038"/>
+            <column name="name" value="Vareš"/>
+            <column name="region" value="Zenica-Doboj Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000039"/>
+            <column name="name" value="Visoko"/>
+            <column name="region" value="Zenica-Doboj Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000040"/>
+            <column name="name" value="Zavidovići"/>
+            <column name="region" value="Zenica-Doboj Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000041"/>
+            <column name="name" value="Zenica"/>
+            <column name="region" value="Zenica-Doboj Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000042"/>
+            <column name="name" value="Žepče"/>
+            <column name="region" value="Zenica-Doboj Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000043"/>
+            <column name="name" value="Foča-Ustikolina"/>
+            <column name="region" value="Bosnian-Podrinje Canton Goražde"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000044"/>
+            <column name="name" value="Goražde"/>
+            <column name="region" value="Bosnian-Podrinje Canton Goražde"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000045"/>
+            <column name="name" value="Pale-Prača"/>
+            <column name="region" value="Bosnian-Podrinje Canton Goražde"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000046"/>
+            <column name="name" value="Bugojno"/>
+            <column name="region" value="Central Bosnia Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000047"/>
+            <column name="name" value="Busovača"/>
+            <column name="region" value="Central Bosnia Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000048"/>
+            <column name="name" value="Dobretići"/>
+            <column name="region" value="Central Bosnia Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000049"/>
+            <column name="name" value="Donji Vakuf"/>
+            <column name="region" value="Central Bosnia Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000050"/>
+            <column name="name" value="Fojnica"/>
+            <column name="region" value="Central Bosnia Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000051"/>
+            <column name="name" value="Gornji Vakuf-Uskoplje"/>
+            <column name="region" value="Central Bosnia Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000052"/>
+            <column name="name" value="Jajce"/>
+            <column name="region" value="Central Bosnia Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000053"/>
+            <column name="name" value="Kiseljak"/>
+            <column name="region" value="Central Bosnia Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000054"/>
+            <column name="name" value="Kreševo"/>
+            <column name="region" value="Central Bosnia Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000055"/>
+            <column name="name" value="Novi Travnik"/>
+            <column name="region" value="Central Bosnia Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000056"/>
+            <column name="name" value="Travnik"/>
+            <column name="region" value="Central Bosnia Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000057"/>
+            <column name="name" value="Vitez"/>
+            <column name="region" value="Central Bosnia Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000058"/>
+            <column name="name" value="Čapljina"/>
+            <column name="region" value="Herzegovina-Neretva Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000059"/>
+            <column name="name" value="Čitluk"/>
+            <column name="region" value="Herzegovina-Neretva Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000060"/>
+            <column name="name" value="Jablanica"/>
+            <column name="region" value="Herzegovina-Neretva Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000061"/>
+            <column name="name" value="Konjic"/>
+            <column name="region" value="Herzegovina-Neretva Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000062"/>
+            <column name="name" value="Mostar"/>
+            <column name="region" value="Herzegovina-Neretva Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000063"/>
+            <column name="name" value="Neum"/>
+            <column name="region" value="Herzegovina-Neretva Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000064"/>
+            <column name="name" value="Prozor-Rama"/>
+            <column name="region" value="Herzegovina-Neretva Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000065"/>
+            <column name="name" value="Ravno"/>
+            <column name="region" value="Herzegovina-Neretva Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000066"/>
+            <column name="name" value="Stolac"/>
+            <column name="region" value="Herzegovina-Neretva Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000067"/>
+            <column name="name" value="Grude"/>
+            <column name="region" value="West Herzegovina Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000068"/>
+            <column name="name" value="Ljubuški"/>
+            <column name="region" value="West Herzegovina Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000069"/>
+            <column name="name" value="Posušje"/>
+            <column name="region" value="West Herzegovina Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000070"/>
+            <column name="name" value="Široki Brijeg"/>
+            <column name="region" value="West Herzegovina Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000071"/>
+            <column name="name" value="Hadžići"/>
+            <column name="region" value="Sarajevo Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000072"/>
+            <column name="name" value="Ilijaš"/>
+            <column name="region" value="Sarajevo Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000073"/>
+            <column name="name" value="Trnovo"/>
+            <column name="region" value="Sarajevo Canton"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000074"/>
+            <column name="name" value="Bosansko Grahovo"/>
+            <column name="region" value="Canton 10"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000075"/>
+            <column name="name" value="Drvar"/>
+            <column name="region" value="Canton 10"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000076"/>
+            <column name="name" value="Glamoč"/>
+            <column name="region" value="Canton 10"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000077"/>
+            <column name="name" value="Kupres"/>
+            <column name="region" value="Canton 10"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000078"/>
+            <column name="name" value="Livno"/>
+            <column name="region" value="Canton 10"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000079"/>
+            <column name="name" value="Tomislavgrad"/>
+            <column name="region" value="Canton 10"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000080"/>
+            <column name="name" value="Banja Luka"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000081"/>
+            <column name="name" value="Berkovići"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000082"/>
+            <column name="name" value="Bijeljina"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000083"/>
+            <column name="name" value="Bileća"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000084"/>
+            <column name="name" value="Bratunac"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000085"/>
+            <column name="name" value="Brod"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000086"/>
+            <column name="name" value="Čajniče"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000087"/>
+            <column name="name" value="Čelinac"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000088"/>
+            <column name="name" value="Derventa"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000089"/>
+            <column name="name" value="Doboj"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000090"/>
+            <column name="name" value="Donji Žabar"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000091"/>
+            <column name="name" value="Foča"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000092"/>
+            <column name="name" value="Gacko"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000093"/>
+            <column name="name" value="Gradiška"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000094"/>
+            <column name="name" value="Han Pijesak"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000095"/>
+            <column name="name" value="Istočna Ilidža"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000096"/>
+            <column name="name" value="Istočni Drvar"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000097"/>
+            <column name="name" value="Istočni Mostar"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000098"/>
+            <column name="name" value="Istočni Stari Grad"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000099"/>
+            <column name="name" value="Istočno Novo Sarajevo"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000100"/>
+            <column name="name" value="Jezero"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000101"/>
+            <column name="name" value="Kalinovik"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000102"/>
+            <column name="name" value="Kneževo"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000103"/>
+            <column name="name" value="Kostajnica"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000104"/>
+            <column name="name" value="Kotor Varoš"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000105"/>
+            <column name="name" value="Kozarska Dubica"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000106"/>
+            <column name="name" value="Krupa na Uni"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000107"/>
+            <column name="name" value="Kupres (RS)"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000108"/>
+            <column name="name" value="Laktaši"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000109"/>
+            <column name="name" value="Ljubinje"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000110"/>
+            <column name="name" value="Lopare"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000111"/>
+            <column name="name" value="Milići"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000112"/>
+            <column name="name" value="Modriča"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000113"/>
+            <column name="name" value="Mrkonjić Grad"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000114"/>
+            <column name="name" value="Nevesinje"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000115"/>
+            <column name="name" value="Novi Grad"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000116"/>
+            <column name="name" value="Novo Goražde"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000117"/>
+            <column name="name" value="Osmaci"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000118"/>
+            <column name="name" value="Oštra Luka"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000119"/>
+            <column name="name" value="Pale"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000120"/>
+            <column name="name" value="Pelagićevo"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000121"/>
+            <column name="name" value="Petrovac"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000122"/>
+            <column name="name" value="Petrovo"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000123"/>
+            <column name="name" value="Prijedor"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000124"/>
+            <column name="name" value="Prnjavor"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000125"/>
+            <column name="name" value="Ribnik"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000126"/>
+            <column name="name" value="Rogatica"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000127"/>
+            <column name="name" value="Rudo"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000128"/>
+            <column name="name" value="Šamac"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000129"/>
+            <column name="name" value="Šekovići"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000130"/>
+            <column name="name" value="Šipovo"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000131"/>
+            <column name="name" value="Sokolac"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000132"/>
+            <column name="name" value="Srbac"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000133"/>
+            <column name="name" value="Srebrenica"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000134"/>
+            <column name="name" value="Stanari"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000135"/>
+            <column name="name" value="Teslić"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000136"/>
+            <column name="name" value="Trebinje"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000137"/>
+            <column name="name" value="Trnovo (RS)"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000138"/>
+            <column name="name" value="Ugljevik"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000139"/>
+            <column name="name" value="Višegrad"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000140"/>
+            <column name="name" value="Vlasenica"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000141"/>
+            <column name="name" value="Vukosavlje"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000142"/>
+            <column name="name" value="Zvornik"/>
+            <column name="region" value="Republika Srpska"/>
+        </insert>
+        <insert tableName="municipalities">
+            <column name="id" value="b2000000-0000-0000-0000-000000000143"/>
+            <column name="name" value="Brčko"/>
+            <column name="region" value="Brčko District"/>
+        </insert>
+        <rollback>
+            <delete tableName="municipalities">
+                <where>id &gt;= 'b2000000-0000-0000-0000-000000000007' AND id &lt;= 'b2000000-0000-0000-0000-000000000143'</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -39,7 +39,10 @@ describe('Post a task page', () => {
     harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/tasks/new');
     http.expectOne('/api/categories').flush([{ id: 'c1', name: 'Plumbing' }]);
-    http.expectOne('/api/municipalities').flush([{ id: 'm1', name: 'Centar Sarajevo' }]);
+    http.expectOne('/api/municipalities').flush([
+      { id: 'm1', name: 'Centar Sarajevo', region: 'Sarajevo Canton' },
+      { id: 'm2', name: 'Tuzla', region: 'Tuzla Canton' },
+    ]);
     await harness.fixture.whenStable();
   });
 
@@ -59,10 +62,28 @@ describe('Post a task page', () => {
     budget.value = '60';
     budget.dispatchEvent(new Event('input'));
     page().querySelector<HTMLButtonElement>('.category-tile')!.click();
-    page().querySelector<HTMLButtonElement>('#task-municipality')!.click();
+    await choose('#task-region', 'Sarajevo Canton');
+    await choose('#task-municipality', 'Centar Sarajevo');
+  }
+
+  async function choose(select: string, label: string): Promise<void> {
+    page().querySelector<HTMLButtonElement>(select)!.click();
     await harness.fixture.whenStable();
-    page().querySelector<HTMLElement>('[role=option]')!.click();
+    Array.from(page().querySelectorAll<HTMLElement>('[role=option]'))
+      .find((option) => option.textContent?.trim() === label)!
+      .click();
     await harness.fixture.whenStable();
+  }
+
+  async function options(select: string): Promise<string[]> {
+    page().querySelector<HTMLButtonElement>(select)!.click();
+    await harness.fixture.whenStable();
+    const labels = Array.from(page().querySelectorAll<HTMLElement>('[role=option]')).map((option) =>
+      option.textContent!.trim(),
+    );
+    page().querySelector<HTMLButtonElement>(select)!.click();
+    await harness.fixture.whenStable();
+    return labels;
   }
 
   async function click(label: string): Promise<void> {
@@ -71,6 +92,19 @@ describe('Post a task page', () => {
       .click();
     await harness.fixture.whenStable();
   }
+
+  it('offers the municipalities of the chosen region only and starts over when the region changes', async () => {
+    expect(await options('#task-municipality')).toEqual([]);
+    expect(text()).toContain('Choose a region first');
+
+    await choose('#task-region', 'Tuzla Canton');
+    expect(await options('#task-municipality')).toEqual(['Tuzla']);
+    await choose('#task-municipality', 'Tuzla');
+
+    await choose('#task-region', 'Sarajevo Canton');
+    expect(await options('#task-municipality')).toEqual(['Centar Sarajevo']);
+    expect(page().querySelector('#task-municipality')!.textContent).toContain('Where is the job?');
+  });
 
   it('lists what is missing and sends nothing when the form is empty', async () => {
     await click('Publish task');

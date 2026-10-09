@@ -17,6 +17,7 @@ export type TaskSort = keyof typeof TASK_SORTS;
 export interface TaskFilters {
   search: string;
   categoryId: string | null;
+  region: string | null;
   municipalityId: string | null;
   sort: TaskSort;
   page: number;
@@ -38,6 +39,9 @@ export class TaskService {
     }
     if (filters.categoryId) {
       params = params.set('categoryId', filters.categoryId);
+    }
+    if (filters.region) {
+      params = params.set('region', filters.region);
     }
     if (filters.municipalityId) {
       params = params.set('municipalityId', filters.municipalityId);
