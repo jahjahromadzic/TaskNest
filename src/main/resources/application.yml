@@ -92,6 +92,9 @@ app:
     reset-requests-per-address: ${RESET_REQUESTS_PER_ADDRESS:10}
     reset-window-minutes: ${RESET_WINDOW_MINUTES:60}
 
+  geo:
+    ors-api-key: ${ORS_API_KEY:}
+
   demo-data:
     enabled: ${DEMO_DATA_ENABLED:false}
     password: ${DEMO_DATA_PASSWORD:}

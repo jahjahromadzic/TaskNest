@@ -45,6 +45,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       DEMO_DATA_ENABLED: ${DEMO_DATA_ENABLED:-true}
+      ORS_API_KEY: ${ORS_API_KEY:-}
       TZ: Europe/Sarajevo
       DB_URL: jdbc:postgresql://postgres:5432/tasknest
       RABBITMQ_HOST: rabbitmq
