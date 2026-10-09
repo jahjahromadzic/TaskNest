@@ -40,7 +40,7 @@ class OpenRouteServiceGeocoderTest {
                 .andExpect(header("Authorization", "test-key"))
                 .andExpect(queryParam("boundary.country", "BA"))
                 .andExpect(queryParam("size", "1"))
-                .andRespond(found("address", 18.393707, 43.854947, null));
+                .andRespond(found("address", "Zmaja od Bosne", 18.393707, 43.854947, null));
 
         Optional<GeoPoint> point = geocoder.geocode("Zmaja od Bosne 12", "Centar Sarajevo");
 
@@ -53,9 +53,19 @@ class OpenRouteServiceGeocoderTest {
     void geocode_sendsAddressAndMunicipality() {
         ors.expect(requestTo(startsWith(SEARCH)))
                 .andExpect(queryParam("text", "Titova%205,%20Tuzla"))
-                .andRespond(found("street", 18.6763, 44.5384, null));
+                .andRespond(found("street", "Titova", 18.6763, 44.5384, null));
 
         assertThat(geocoder.geocode("Titova 5", "Tuzla")).contains(point("44.5384", "18.6763"));
+        ors.verify();
+    }
+
+    @Test
+    @DisplayName("The street may be written without its first name or Bosnian letters")
+    void geocode_acceptsAShorterFormOfTheStreet() {
+        ors.expect(requestTo(startsWith(SEARCH)))
+                .andRespond(found("address", "Vladimira Valtera Perića", 18.410832, 43.856273, null));
+
+        assertThat(geocoder.geocode("valtera perica 12", "Centar Sarajevo")).contains(point("43.856273", "18.410832"));
         ors.verify();
     }
 
@@ -67,7 +77,24 @@ class OpenRouteServiceGeocoderTest {
                         {"features": []}
                         """, MediaType.APPLICATION_JSON));
 
-        assertThat(geocoder.geocode("asdfgh 99", "Ilidža")).isEmpty();
+        assertThat(geocoder.geocode("Nepostojeća 999", "Ilidža")).isEmpty();
+        ors.verify();
+    }
+
+    @Test
+    @DisplayName("Another street with the same house number is not taken for the one that was asked for")
+    void geocode_returnsEmpty_whenTheAnswerIsAnotherStreet() {
+        ors.expect(requestTo(startsWith(SEARCH)))
+                .andRespond(found("address", "Miljevići", 18.410799, 43.831944, null));
+
+        assertThat(geocoder.geocode("asdfgh 99", "Novo Sarajevo")).isEmpty();
+        ors.verify();
+    }
+
+    @Test
+    @DisplayName("An address without a street name is refused without asking the service")
+    void geocode_returnsEmpty_withoutAStreetName() {
+        assertThat(geocoder.geocode("99", "Ilidža")).isEmpty();
         ors.verify();
     }
 
@@ -77,12 +104,12 @@ class OpenRouteServiceGeocoderTest {
         ors.expect(requestTo(startsWith(SEARCH)))
                 .andExpect(queryParam("text", "Kolodvorska%2012,%20Novo%20Sarajevo"))
                 .andExpect(queryParamCount(3))
-                .andRespond(found("county", 18.393866, 43.855579, null));
+                .andRespond(found("county", "Novo Sarajevo", 18.393866, 43.855579, null));
         ors.expect(requestTo(startsWith(SEARCH)))
                 .andExpect(queryParam("text", "Kolodvorska%2012"))
                 .andExpect(queryParam("focus.point.lat", "43.855579"))
                 .andExpect(queryParam("focus.point.lon", "18.393866"))
-                .andRespond(found("address", 18.389188, 43.856426, "0.387"));
+                .andRespond(found("address", "Kolodvorska", 18.389188, 43.856426, "0.387"));
 
         Optional<GeoPoint> point = geocoder.geocode("Kolodvorska 12", "Novo Sarajevo");
 
@@ -94,9 +121,9 @@ class OpenRouteServiceGeocoderTest {
     @DisplayName("A street of the same name in another town is not taken for this one")
     void geocode_returnsEmpty_whenTheRetryLandsFarAway() {
         ors.expect(requestTo(startsWith(SEARCH)))
-                .andRespond(found("county", 18.393866, 43.855579, null));
+                .andRespond(found("county", "Novo Sarajevo", 18.393866, 43.855579, null));
         ors.expect(requestTo(startsWith(SEARCH)))
-                .andRespond(found("address", 18.645160, 44.456757, "69.867"));
+                .andRespond(found("address", "Bosanska", 18.645160, 44.456757, "69.867"));
 
         assertThat(geocoder.geocode("Bosanska 20", "Novo Sarajevo")).isEmpty();
         ors.verify();
@@ -106,9 +133,9 @@ class OpenRouteServiceGeocoderTest {
     @DisplayName("The centre of the municipality alone is never returned as the address")
     void geocode_returnsEmpty_whenTheRetryIsAlsoImprecise() {
         ors.expect(requestTo(startsWith(SEARCH)))
-                .andRespond(found("locality", 18.300030, 43.829390, null));
+                .andRespond(found("locality", "Ilidža", 18.300030, 43.829390, null));
         ors.expect(requestTo(startsWith(SEARCH)))
-                .andRespond(found("locality", 18.300030, 43.829390, "0"));
+                .andRespond(found("locality", "Ilidža", 18.300030, 43.829390, "0"));
 
         assertThat(geocoder.geocode("kod velike džamije", "Ilidža")).isEmpty();
         ors.verify();
@@ -118,12 +145,13 @@ class OpenRouteServiceGeocoderTest {
         return new GeoPoint(new BigDecimal(latitude), new BigDecimal(longitude));
     }
 
-    private static ResponseCreator found(String layer, double longitude, double latitude, String distance) {
-        String properties = distance == null
-                ? "{\"layer\": \"%s\"}".formatted(layer)
-                : "{\"layer\": \"%s\", \"distance\": %s}".formatted(layer, distance);
+    private static ResponseCreator found(String layer, String name, double longitude, double latitude,
+                                         String distance) {
+        String street = layer.equals("address") ? ", \"street\": \"%s\"".formatted(name) : "";
+        String away = distance == null ? "" : ", \"distance\": " + distance;
         return withSuccess("""
-                {"features": [{"geometry": {"coordinates": [%s, %s]}, "properties": %s}]}
-                """.formatted(longitude, latitude, properties), MediaType.APPLICATION_JSON);
+                {"features": [{"geometry": {"coordinates": [%s, %s]},
+                               "properties": {"layer": "%s", "name": "%s"%s%s}}]}
+                """.formatted(longitude, latitude, layer, name, street, away), MediaType.APPLICATION_JSON);
     }
 }

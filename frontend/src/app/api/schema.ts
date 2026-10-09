@@ -1007,6 +1007,7 @@ export interface components {
             categoryId: string;
             /** Format: uuid */
             municipalityId: string;
+            address: string;
             budget?: number;
         };
         TaskPhotoResponse: {
@@ -1033,6 +1034,9 @@ export interface components {
             /** Format: uuid */
             municipalityId?: string;
             municipalityName?: string;
+            addressLine?: string;
+            latitude?: number;
+            longitude?: number;
             /** Format: uuid */
             clientId?: string;
             clientName?: string;
@@ -1148,6 +1152,7 @@ export interface components {
             categoryId: string;
             /** Format: uuid */
             municipalityId: string;
+            address: string;
             budget?: number;
         };
         CreateReviewRequest: {
@@ -1809,6 +1814,7 @@ export interface operations {
         parameters: {
             query: {
                 categoryId?: string;
+                region?: string;
                 municipalityId?: string;
                 q?: string;
                 pageable: components["schemas"]["Pageable"];

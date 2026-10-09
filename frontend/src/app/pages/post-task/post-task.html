@@ -131,6 +131,21 @@
         </div>
 
         <div>
+          <label for="task-address" class="form-label">{{ 'postTask.address' | t }}</label>
+          <input id="task-address" name="address" [(ngModel)]="address" (ngModelChange)="clearServerError('address')"
+                 #addressField="ngModel" required [maxlength]="addressMax" autocomplete="street-address"
+                 [placeholder]="'postTask.addressPlaceholder' | t" class="form-input"
+                 [class.form-input-invalid]="(addressField.invalid && (addressField.touched || attempted())) || serverError('address')">
+          @if (serverError('address'); as message) {
+            <p class="form-error">{{ message }}</p>
+          } @else if (addressField.invalid && (addressField.touched || attempted())) {
+            <p class="form-error">{{ 'postTask.addressRequired' | t }}</p>
+          } @else {
+            <p class="text-xs text-text-sub mt-1">{{ 'postTask.addressPrivate' | t }}</p>
+          }
+        </div>
+
+        <div>
           <div class="flex items-baseline justify-between">
             <label for="task-description" class="form-label">
               {{ 'postTask.details' | t }} <span class="font-normal text-text-sub">{{ 'common.optional' | t }}</span>

@@ -25,8 +25,13 @@
               </div>
               <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-balance">{{ task.title }}</h1>
               <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-sub">
-                <span class="flex items-center gap-1 font-medium text-text-main">
-                  <svg [appIcon]="icons.MapPin" class="w-4 h-4 text-brand"></svg> {{ task.municipalityName }}
+                <span class="flex items-center gap-1 font-medium text-text-main" id="task-location">
+                  <svg [appIcon]="icons.MapPin" class="w-4 h-4 text-brand"></svg>
+                  @if (task.addressLine) {
+                    {{ task.addressLine }}, {{ task.municipalityName }}
+                  } @else {
+                    {{ task.municipalityName }}
+                  }
                 </span>
                 @if (task.publishedAt) {
                   <span>{{ 'detail.postedBy' | t: { time: timeAgo(task.publishedAt), name: task.clientName } }}</span>

@@ -20,6 +20,7 @@ describe('Edit a task page', () => {
     status: 'PUBLISHED',
     categoryId: 'c1',
     municipalityId: 'm1',
+    addressLine: 'Zmaja od Bosne 12',
     budget: 60,
     clientId: 'u1',
     publishedAt: new Date().toISOString(),
@@ -96,6 +97,7 @@ describe('Edit a task page', () => {
     expect(text()).toContain('Taskers who already sent an offer will be told about the change.');
     expect(page().querySelector<HTMLInputElement>('#task-title')!.value).toBe('Fix the sink');
     expect(page().querySelector<HTMLTextAreaElement>('#task-description')!.value).toBe('It drips all night');
+    expect(page().querySelector<HTMLInputElement>('#task-address')!.value).toBe('Zmaja od Bosne 12');
     expect(page().querySelector('aside app-task-card img')?.getAttribute('src')).toBe('/api/photos/p1');
     expect(text()).toContain('Photos (1/5) are added and removed on the task page.');
 
@@ -110,6 +112,7 @@ describe('Edit a task page', () => {
       description: 'It drips all night',
       categoryId: 'c2',
       municipalityId: 'm1',
+      address: 'Zmaja od Bosne 12',
       budget: 90,
     });
     save.flush({ ...open, title: 'Fix the sink and the tap' });

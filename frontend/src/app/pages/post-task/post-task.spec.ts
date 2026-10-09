@@ -64,6 +64,14 @@ describe('Post a task page', () => {
     page().querySelector<HTMLButtonElement>('.category-tile')!.click();
     await choose('#task-region', 'Sarajevo Canton');
     await choose('#task-municipality', 'Centar Sarajevo');
+    await type('#task-address', '  Zmaja od Bosne 12 ');
+  }
+
+  async function type(selector: string, value: string): Promise<void> {
+    const input = page().querySelector<HTMLInputElement>(selector)!;
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+    await harness.fixture.whenStable();
   }
 
   async function choose(select: string, label: string): Promise<void> {
@@ -112,6 +120,7 @@ describe('Post a task page', () => {
     expect(text()).toContain('Give your task a short title');
     expect(text()).toContain('Choose the kind of work');
     expect(text()).toContain('Choose a municipality');
+    expect(text()).toContain('Enter the street and number');
     http.expectNone('/api/tasks');
   });
 
@@ -134,6 +143,7 @@ describe('Post a task page', () => {
       description: undefined,
       categoryId: 'c1',
       municipalityId: 'm1',
+      address: 'Zmaja od Bosne 12',
       budget: 60,
     });
     create.flush(draft);
@@ -212,5 +222,25 @@ describe('Post a task page', () => {
 
     expect(text()).toContain('Size must be between 0 and 200');
     expect(TestBed.inject(Router).url).toBe('/tasks/new');
+  });
+
+  it('says under the address field when the address is not on the map', async () => {
+    expect(text()).toContain('Only the tasker you hire will see the exact address.');
+    await fillValidForm();
+    await click('Publish task');
+
+    http
+      .expectOne({ method: 'POST', url: '/api/tasks' })
+      .flush({ detail: 'The address could not be found' }, { status: 400, statusText: 'Bad Request' });
+    await harness.fixture.whenStable();
+
+    const field = page().querySelector('#task-address')!;
+    expect(field.classList).toContain('form-input-invalid');
+    expect(field.parentElement!.textContent).toContain('This address was not found on the map.');
+    expect(text()).not.toContain('Only the tasker you hire will see the exact address.');
+    http.expectNone({ method: 'POST', url: '/api/tasks/t1/publish' });
+
+    await type('#task-address', 'Ferhadija 15');
+    expect(field.classList).not.toContain('form-input-invalid');
   });
 });

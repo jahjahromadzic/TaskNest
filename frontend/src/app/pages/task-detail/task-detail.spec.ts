@@ -88,6 +88,28 @@ describe('Task details page', () => {
     expect(TestBed.inject(Title).getTitle()).toBe('Fix the kitchen sink · TaskNest');
   });
 
+  it('shows the street next to the municipality to someone the server shares it with', async () => {
+    logInAs('owner-1');
+
+    await open({ ...task, addressLine: 'Zmaja od Bosne 12', latitude: 43.854947, longitude: 18.393707 });
+    http.expectOne('/api/tasks/t1/offers').flush([]);
+    await harness.fixture.whenStable();
+
+    expect(location()).toBe('Zmaja od Bosne 12, Centar Sarajevo');
+  });
+
+  it('shows only the municipality when the server keeps the street private', async () => {
+    await open(task);
+
+    expect(location()).toBe('Centar Sarajevo');
+    expect(text()).not.toContain('Zmaja od Bosne');
+  });
+
+  function location(): string {
+    const element = harness.routeNativeElement!.querySelector('#task-location')!;
+    return element.textContent!.replace(/\s+/g, ' ').trim();
+  }
+
   it('invites a visitor to log in and come back to this task', async () => {
     await open(task);
 

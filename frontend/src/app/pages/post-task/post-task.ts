@@ -28,12 +28,14 @@ import { CategoryPipe, TranslatePipe } from '../../i18n/translate.pipe';
 import { t } from '../../i18n/translate';
 
 export const TITLE_MAX = 200;
+export const ADDRESS_MAX = 200;
 export const DESCRIPTION_MAX = 5000;
 
 type SubmitMode = 'draft' | 'publish';
 type LoadState = 'ready' | 'loading' | 'locked' | 'missing' | 'failed';
 
 const EDITABLE_STATUSES = ['DRAFT', 'PUBLISHED'];
+const ADDRESS_NOT_FOUND = 'The address could not be found';
 
 interface PendingPhoto {
   file: File;
@@ -51,6 +53,7 @@ export class PostTask implements OnDestroy {
   readonly photos = signal<PendingPhoto[]>([]);
 
   readonly titleMax = TITLE_MAX;
+  readonly addressMax = ADDRESS_MAX;
   readonly descriptionMax = DESCRIPTION_MAX;
   readonly searchableFrom = SEARCHABLE_FROM;
 
@@ -58,6 +61,7 @@ export class PostTask implements OnDestroy {
   description = '';
   categoryId: string | null = null;
   municipalityId: string | null = null;
+  address = '';
   budget: number | null = null;
 
   readonly editId: string | null;
@@ -144,11 +148,19 @@ export class PostTask implements OnDestroy {
     this.description = task.description ?? '';
     this.categoryId = task.categoryId ?? null;
     this.municipalityId = task.municipalityId ?? null;
+    this.address = task.addressLine ?? '';
     this.municipalities$
       .pipe(take(1))
       .subscribe((municipalities) => this.region.set(regionOf(municipalities, task.municipalityId)));
     this.budget = task.budget ?? null;
     this.load.set('ready');
+  }
+
+  private readError(error: unknown): ApiError {
+    if (error instanceof HttpErrorResponse && error.error?.detail === ADDRESS_NOT_FOUND) {
+      return { message: t('errors.fixFields'), fieldErrors: { address: t('postTask.addressNotFound') } };
+    }
+    return readApiError(error);
   }
 
   serverError(field: string): string | undefined {
@@ -208,7 +220,7 @@ export class PostTask implements OnDestroy {
       .subscribe({
         next: (result) => this.finish(result.task, result.published, 'publishFailed' in result),
         error: (error) => {
-          this.error.set(readApiError(error));
+          this.error.set(this.readError(error));
           this.submitting.set(null);
         },
       });
@@ -220,6 +232,7 @@ export class PostTask implements OnDestroy {
       description: this.description.trim() || undefined,
       categoryId: this.categoryId!,
       municipalityId: this.municipalityId!,
+      address: this.address.trim(),
       budget: this.budget ?? undefined,
     };
   }
@@ -235,7 +248,7 @@ export class PostTask implements OnDestroy {
           this.router.navigate(['/tasks', task.id]);
         },
         error: (error) => {
-          this.error.set(readApiError(error));
+          this.error.set(this.readError(error));
           this.submitting.set(null);
         },
       });
