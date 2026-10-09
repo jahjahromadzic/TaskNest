@@ -872,13 +872,13 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **422 tests** and requires no manual setup — Testcontainers
+The suite contains **423 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 149 | Service business rules, the task state machine, the login attempt limiter and the geocoder against a simulated OpenRouteService |
-| Integration | 273 | Authentication, password reset, login throttling, account settings, task editing and search, task addresses and who may see them, reports, offer price changes, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
+| Integration | 274 | Authentication, password reset, login throttling, account settings, task editing and search, task addresses and who may see them, reports, offer price changes, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
 
 Every integration test starts from an empty database: one `TRUNCATE ... CASCADE` after each test
 clears all application tables at once. Clearing them table by table left a window in which the
