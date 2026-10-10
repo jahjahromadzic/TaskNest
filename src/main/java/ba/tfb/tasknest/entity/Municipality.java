@@ -11,6 +11,7 @@ import lombok.Setter;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -30,6 +31,12 @@ public class Municipality {
 
     @Column(name = "region", length = 100)
     private String region;
+
+    @Column(name = "latitude", nullable = false, precision = 9, scale = 6)
+    private BigDecimal latitude;
+
+    @Column(name = "longitude", nullable = false, precision = 9, scale = 6)
+    private BigDecimal longitude;
 
     @Override
     public final boolean equals(Object o) {

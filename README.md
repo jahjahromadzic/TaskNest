@@ -73,7 +73,7 @@ single-page application that uses it.
   removing the task or suspending the user resolves every open report about them.
 - **Reference data** — fourteen categories, each with a stable `slug`, and all 143
   municipalities of Bosnia and Herzegovina under their local names, grouped by region (the ten
-  cantons, Republika Srpska and Brčko District), exposed as public endpoints. Everywhere a place is
+  cantons, Republika Srpska and Brčko District) with the coordinates of each municipality's seat, exposed as public endpoints. Everywhere a place is
   chosen the region comes first and then its municipalities, so the task list can also be filtered by a
   whole canton.
 
@@ -84,7 +84,7 @@ single-page application that uses it.
 | Language | Java 21 |
 | Framework | Spring Boot 4.1.1 |
 | Database | PostgreSQL 17 |
-| Migrations | Liquibase (46 changesets, 18 tables) |
+| Migrations | Liquibase (47 changesets, 18 tables) |
 | Persistence | Spring Data JPA, Hibernate 7 (`ddl-auto: validate`) |
 | Security | Spring Security, JWT (jjwt 0.12.6) |
 | Messaging | RabbitMQ |
@@ -490,7 +490,7 @@ acceptance the offer is no longer pending, so its price is locked.
 | Method | Path | Access | Description |
 |---|---|---|---|
 | GET | `/categories` | Public | Active service categories |
-| GET | `/municipalities` | Public | All municipalities of Bosnia and Herzegovina with their region, ordered by name |
+| GET | `/municipalities` | Public | All municipalities of Bosnia and Herzegovina with their region and the coordinates of their seat, ordered by name |
 
 ### Task photos — `/api`
 
@@ -872,13 +872,13 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **427 tests** and requires no manual setup — Testcontainers
+The suite contains **428 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 153 | Service business rules, the task state machine, the login attempt limiter and the geocoder against a simulated OpenRouteService |
-| Integration | 274 | Authentication, password reset, login throttling, account settings, task editing and search, task addresses and who may see them, reports, offer price changes, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
+| Integration | 275 | Authentication, password reset, login throttling, account settings, task editing and search, task addresses and who may see them, reports, offer price changes, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
 
 Every integration test starts from an empty database: one `TRUNCATE ... CASCADE` after each test
 clears all application tables at once. Clearing them table by table left a window in which the

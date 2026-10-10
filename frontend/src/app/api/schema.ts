@@ -1073,6 +1073,8 @@ export interface components {
             id?: string;
             name?: string;
             region?: string;
+            latitude?: number;
+            longitude?: number;
         };
         TaskerProfileResponse: {
             /** Format: uuid */

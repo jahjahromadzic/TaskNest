@@ -43,6 +43,8 @@ class TaskBrowseIntegrationTest extends AbstractIntegrationTest {
 
         municipality = new Municipality();
         municipality.setName("Browse opstina " + UUID.randomUUID());
+        municipality.setLatitude(new BigDecimal("43.856430"));
+        municipality.setLongitude(new BigDecimal("18.413029"));
         municipality = municipalityRepository.saveAndFlush(municipality);
 
         client = new User();

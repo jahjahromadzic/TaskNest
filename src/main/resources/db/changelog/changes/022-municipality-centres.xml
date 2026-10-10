@@ -1,0 +1,736 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="047-municipality-centres" author="jahja">
+        <addColumn tableName="municipalities">
+            <column name="latitude" type="NUMERIC(9,6)"/>
+            <column name="longitude" type="NUMERIC(9,6)"/>
+        </addColumn>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.858200"/>
+            <column name="longitude" valueNumeric="18.410800"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000001'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.855579"/>
+            <column name="longitude" valueNumeric="18.393866"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000002'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.858060"/>
+            <column name="longitude" valueNumeric="18.320000"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000003'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.859700"/>
+            <column name="longitude" valueNumeric="18.431300"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000004'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.829390"/>
+            <column name="longitude" valueNumeric="18.300030"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000005'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.902250"/>
+            <column name="longitude" valueNumeric="18.344380"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000006'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.816940"/>
+            <column name="longitude" valueNumeric="15.870830"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000007'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.882500"/>
+            <column name="longitude" valueNumeric="16.151390"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000008'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.555370"/>
+            <column name="longitude" valueNumeric="16.368970"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000009'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="45.053610"/>
+            <column name="longitude" valueNumeric="16.032540"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000010'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.966940"/>
+            <column name="longitude" valueNumeric="15.943060"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000011'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.532510"/>
+            <column name="longitude" valueNumeric="16.776820"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000012'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.766700"/>
+            <column name="longitude" valueNumeric="16.667000"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000013'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="45.184970"/>
+            <column name="longitude" valueNumeric="15.805790"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000014'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="45.061100"/>
+            <column name="longitude" valueNumeric="18.586120"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000015'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="45.010380"/>
+            <column name="longitude" valueNumeric="18.327200"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000016'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="45.033660"/>
+            <column name="longitude" valueNumeric="18.693340"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000017'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.405960"/>
+            <column name="longitude" valueNumeric="18.526480"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000018'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.720960"/>
+            <column name="longitude" valueNumeric="18.823110"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000019'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.732900"/>
+            <column name="longitude" valueNumeric="18.188840"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000020'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.703070"/>
+            <column name="longitude" valueNumeric="18.310100"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000021'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.878510"/>
+            <column name="longitude" valueNumeric="18.427640"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000022'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.437650"/>
+            <column name="longitude" valueNumeric="18.907130"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000023'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.226690"/>
+            <column name="longitude" valueNumeric="18.692740"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000024'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.542450"/>
+            <column name="longitude" valueNumeric="18.526180"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000025'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.503800"/>
+            <column name="longitude" valueNumeric="18.998180"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000026'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.708190"/>
+            <column name="longitude" valueNumeric="18.488340"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000027'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.603210"/>
+            <column name="longitude" valueNumeric="18.979670"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000028'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.538420"/>
+            <column name="longitude" valueNumeric="18.667090"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000029'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.449290"/>
+            <column name="longitude" valueNumeric="18.649780"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000030'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.018620"/>
+            <column name="longitude" valueNumeric="18.260630"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000031'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.687760"/>
+            <column name="longitude" valueNumeric="18.048850"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000032'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.133110"/>
+            <column name="longitude" valueNumeric="18.122920"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000033'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.547710"/>
+            <column name="longitude" valueNumeric="18.100030"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000034'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.127700"/>
+            <column name="longitude" valueNumeric="18.580650"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000035'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.611910"/>
+            <column name="longitude" valueNumeric="17.985520"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000036'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.683970"/>
+            <column name="longitude" valueNumeric="18.001160"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000037'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.164440"/>
+            <column name="longitude" valueNumeric="18.328330"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000038'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.988890"/>
+            <column name="longitude" valueNumeric="18.178060"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000039'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.445830"/>
+            <column name="longitude" valueNumeric="18.149720"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000040'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.201690"/>
+            <column name="longitude" valueNumeric="17.903970"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000041'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.426670"/>
+            <column name="longitude" valueNumeric="18.037780"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000042'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.583380"/>
+            <column name="longitude" valueNumeric="18.791060"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000043'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.667950"/>
+            <column name="longitude" valueNumeric="18.975640"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000044'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.763670"/>
+            <column name="longitude" valueNumeric="18.765120"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000045'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.057220"/>
+            <column name="longitude" valueNumeric="17.450830"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000046'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.097690"/>
+            <column name="longitude" valueNumeric="17.878300"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000047'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.393756"/>
+            <column name="longitude" valueNumeric="17.426527"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000048'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.143610"/>
+            <column name="longitude" valueNumeric="17.400000"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000049'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.959520"/>
+            <column name="longitude" valueNumeric="17.902880"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000050'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.938060"/>
+            <column name="longitude" valueNumeric="17.588330"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000051'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.342030"/>
+            <column name="longitude" valueNumeric="17.270590"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000052'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.942950"/>
+            <column name="longitude" valueNumeric="18.081320"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000053'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.865560"/>
+            <column name="longitude" valueNumeric="18.043330"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000054'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.171330"/>
+            <column name="longitude" valueNumeric="17.658160"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000055'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.226370"/>
+            <column name="longitude" valueNumeric="17.665820"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000056'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.154240"/>
+            <column name="longitude" valueNumeric="17.790080"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000057'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.121390"/>
+            <column name="longitude" valueNumeric="17.684440"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000058'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.228610"/>
+            <column name="longitude" valueNumeric="17.700830"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000059'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.660280"/>
+            <column name="longitude" valueNumeric="17.761670"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000060'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.651260"/>
+            <column name="longitude" valueNumeric="17.960820"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000061'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.343330"/>
+            <column name="longitude" valueNumeric="17.808060"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000062'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="42.923330"/>
+            <column name="longitude" valueNumeric="17.615560"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000063'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.822220"/>
+            <column name="longitude" valueNumeric="17.609170"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000064'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="42.887410"/>
+            <column name="longitude" valueNumeric="17.965550"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000065'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.084000"/>
+            <column name="longitude" valueNumeric="17.959950"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000066'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.383560"/>
+            <column name="longitude" valueNumeric="17.395060"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000067'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.196940"/>
+            <column name="longitude" valueNumeric="17.545000"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000068'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.472810"/>
+            <column name="longitude" valueNumeric="17.326210"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000069'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.386069"/>
+            <column name="longitude" valueNumeric="17.586428"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000070'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.822220"/>
+            <column name="longitude" valueNumeric="18.206670"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000071'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.951280"/>
+            <column name="longitude" valueNumeric="18.271280"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000072'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.665600"/>
+            <column name="longitude" valueNumeric="18.447900"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000073'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.179440"/>
+            <column name="longitude" valueNumeric="16.363890"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000074'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.373890"/>
+            <column name="longitude" valueNumeric="16.380830"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000075'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.045830"/>
+            <column name="longitude" valueNumeric="16.848610"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000076'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.992730"/>
+            <column name="longitude" valueNumeric="17.276390"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000077'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.826950"/>
+            <column name="longitude" valueNumeric="17.007460"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000078'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.718480"/>
+            <column name="longitude" valueNumeric="17.225150"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000079'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.775830"/>
+            <column name="longitude" valueNumeric="17.185560"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000080'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.100000"/>
+            <column name="longitude" valueNumeric="18.166700"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000081'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.758740"/>
+            <column name="longitude" valueNumeric="19.214370"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000082'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="42.876450"/>
+            <column name="longitude" valueNumeric="18.429670"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000083'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.184550"/>
+            <column name="longitude" valueNumeric="19.330850"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000084'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="45.137470"/>
+            <column name="longitude" valueNumeric="17.987220"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000085'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.557120"/>
+            <column name="longitude" valueNumeric="19.071860"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000086'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.724530"/>
+            <column name="longitude" valueNumeric="17.324310"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000087'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.978390"/>
+            <column name="longitude" valueNumeric="17.907790"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000088'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.731790"/>
+            <column name="longitude" valueNumeric="18.086980"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000089'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.943170"/>
+            <column name="longitude" valueNumeric="18.646730"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000090'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.506460"/>
+            <column name="longitude" valueNumeric="18.778540"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000091'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.167220"/>
+            <column name="longitude" valueNumeric="18.535280"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000092'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="45.145300"/>
+            <column name="longitude" valueNumeric="17.253900"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000093'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.081610"/>
+            <column name="longitude" valueNumeric="18.952580"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000094'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.797930"/>
+            <column name="longitude" valueNumeric="18.388470"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000095'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.416700"/>
+            <column name="longitude" valueNumeric="16.566700"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000096'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.409060"/>
+            <column name="longitude" valueNumeric="18.001290"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000097'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.878000"/>
+            <column name="longitude" valueNumeric="18.496990"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000098'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.826930"/>
+            <column name="longitude" valueNumeric="18.383180"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000099'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.349540"/>
+            <column name="longitude" valueNumeric="17.168800"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000100'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.504640"/>
+            <column name="longitude" valueNumeric="18.446490"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000101'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.490710"/>
+            <column name="longitude" valueNumeric="17.381610"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000102'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="45.219700"/>
+            <column name="longitude" valueNumeric="16.542200"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000103'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.618310"/>
+            <column name="longitude" valueNumeric="17.372040"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000104'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="45.176670"/>
+            <column name="longitude" valueNumeric="16.809440"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000105'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.890210"/>
+            <column name="longitude" valueNumeric="16.325100"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000106'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.970000"/>
+            <column name="longitude" valueNumeric="17.380000"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000107'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.908570"/>
+            <column name="longitude" valueNumeric="17.301350"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000108'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="42.951200"/>
+            <column name="longitude" valueNumeric="18.087020"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000109'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.634980"/>
+            <column name="longitude" valueNumeric="18.843400"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000110'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.170160"/>
+            <column name="longitude" valueNumeric="19.091950"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000111'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.957810"/>
+            <column name="longitude" valueNumeric="18.302020"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000112'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.417290"/>
+            <column name="longitude" valueNumeric="17.082880"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000113'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.258610"/>
+            <column name="longitude" valueNumeric="18.113330"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000114'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="45.046430"/>
+            <column name="longitude" valueNumeric="16.377820"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000115'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.678330"/>
+            <column name="longitude" valueNumeric="19.028450"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000116'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.401590"/>
+            <column name="longitude" valueNumeric="18.916380"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000117'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.860270"/>
+            <column name="longitude" valueNumeric="16.660690"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000118'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.816640"/>
+            <column name="longitude" valueNumeric="18.569490"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000119'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.901050"/>
+            <column name="longitude" valueNumeric="18.591860"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000120'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.570000"/>
+            <column name="longitude" valueNumeric="16.450000"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000121'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.628040"/>
+            <column name="longitude" valueNumeric="18.353230"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000122'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.979910"/>
+            <column name="longitude" valueNumeric="16.714010"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000123'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.870210"/>
+            <column name="longitude" valueNumeric="17.662560"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000124'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.431672"/>
+            <column name="longitude" valueNumeric="16.787623"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000125'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.798940"/>
+            <column name="longitude" valueNumeric="19.003630"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000126'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.617810"/>
+            <column name="longitude" valueNumeric="19.367190"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000127'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="45.060600"/>
+            <column name="longitude" valueNumeric="18.468600"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000128'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.298960"/>
+            <column name="longitude" valueNumeric="18.855320"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000129'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.282370"/>
+            <column name="longitude" valueNumeric="17.085970"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000130'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.937800"/>
+            <column name="longitude" valueNumeric="18.800800"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000131'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="45.097300"/>
+            <column name="longitude" valueNumeric="17.523310"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000132'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.107480"/>
+            <column name="longitude" valueNumeric="19.296690"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000133'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.744760"/>
+            <column name="longitude" valueNumeric="17.827140"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000134'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.606390"/>
+            <column name="longitude" valueNumeric="17.859720"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000135'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="42.711970"/>
+            <column name="longitude" valueNumeric="18.343620"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000136'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.600000"/>
+            <column name="longitude" valueNumeric="18.530000"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000137'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.663610"/>
+            <column name="longitude" valueNumeric="19.020280"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000138'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="43.782600"/>
+            <column name="longitude" valueNumeric="19.292560"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000139'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.181830"/>
+            <column name="longitude" valueNumeric="18.940960"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000140'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.980120"/>
+            <column name="longitude" valueNumeric="18.277130"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000141'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.386050"/>
+            <column name="longitude" valueNumeric="19.102470"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000142'</where>
+        </update>
+        <update tableName="municipalities">
+            <column name="latitude" valueNumeric="44.872780"/>
+            <column name="longitude" valueNumeric="18.808330"/>
+            <where>id = 'b2000000-0000-0000-0000-000000000143'</where>
+        </update>
+        <addNotNullConstraint tableName="municipalities" columnName="latitude" columnDataType="NUMERIC(9,6)"/>
+        <addNotNullConstraint tableName="municipalities" columnName="longitude" columnDataType="NUMERIC(9,6)"/>
+        <rollback>
+            <dropColumn tableName="municipalities" columnName="longitude"/>
+            <dropColumn tableName="municipalities" columnName="latitude"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

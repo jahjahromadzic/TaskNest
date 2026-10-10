@@ -15,6 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,6 +44,8 @@ class TaskerMatchingIntegrationTest extends AbstractIntegrationTest {
 
         municipality = new Municipality();
         municipality.setName("Test opstina " + UUID.randomUUID());
+        municipality.setLatitude(new BigDecimal("43.856430"));
+        municipality.setLongitude(new BigDecimal("18.413029"));
         municipality = municipalityRepository.saveAndFlush(municipality);
 
         tasker = new User();

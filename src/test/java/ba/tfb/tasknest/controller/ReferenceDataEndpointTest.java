@@ -62,4 +62,21 @@ class ReferenceDataEndpointTest extends AbstractIntegrationTest {
                 "Bosnian-Podrinje Canton Goražde", "Central Bosnia Canton", "Herzegovina-Neretva Canton",
                 "West Herzegovina Canton", "Sarajevo Canton", "Canton 10", "Republika Srpska", "Brčko District");
     }
+
+    @Test
+    @DisplayName("Every municipality has the coordinates of its seat inside Bosnia and Herzegovina")
+    void municipalities_haveTheirSeatInsideTheCountry() throws Exception {
+        String body = mockMvc.perform(get("/api/municipalities"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+
+        List<Double> latitudes = JsonPath.read(body, "$[*].latitude");
+        List<Double> longitudes = JsonPath.read(body, "$[*].longitude");
+        List<String> points = JsonPath.<List<Object>>read(body, "$[*]['latitude','longitude']").stream()
+                .map(Object::toString).toList();
+
+        assertThat(latitudes).hasSize(143).allSatisfy(latitude -> assertThat(latitude).isBetween(42.55, 45.28));
+        assertThat(longitudes).hasSize(143).allSatisfy(longitude -> assertThat(longitude).isBetween(15.72, 19.63));
+        assertThat(points).doesNotHaveDuplicates();
+    }
 }

@@ -26,5 +26,6 @@
     <include file="db/changelog/changes/019-reports.xml"/>
     <include file="db/changelog/changes/020-task-address.xml"/>
     <include file="db/changelog/changes/021-all-municipalities.xml"/>
+    <include file="db/changelog/changes/022-municipality-centres.xml"/>
 
 </databaseChangeLog>
