@@ -75,6 +75,19 @@
             }
           </section>
 
+          @if (task.latitude && task.longitude) {
+            <section class="bg-surface-card p-5 sm:p-6 rounded-card border border-surface-border shadow-subtle space-y-3 animate-fade-in [animation-delay:85ms]">
+              <div class="flex items-center justify-between gap-3">
+                <h2 class="font-semibold">{{ 'detail.location' | t }}</h2>
+                <a [href]="'https://www.google.com/maps/dir/?api=1&destination=' + task.latitude + ',' + task.longitude"
+                   target="_blank" rel="noopener" class="text-sm font-medium text-brand hover:underline underline-offset-2">
+                  {{ 'detail.openInMaps' | t }}
+                </a>
+              </div>
+              <app-map-view [points]="[{ latitude: task.latitude, longitude: task.longitude, label: task.addressLine ?? '' }]" />
+            </section>
+          }
+
           <app-task-photos [task]="task" [editable]="canEditPhotos(task, vm.user)" class="block [animation-delay:90ms]" />
 
           @if ((isOwner(task, vm.user) || isAssignedTasker(task, vm.user)) && task.status === 'CLOSED') {

@@ -326,6 +326,8 @@ export const bs: SameShape<typeof en> = {
     removedText: 'jer je prekršio pravila zajednice.',
     progress: 'Tok',
     about: 'O poslu',
+    location: 'Lokacija',
+    openInMaps: 'Otvori u Google Maps',
     noDescription: 'Klijent nije dodao opis.',
     openBudgetHint: 'Klijent čeka ponude sa cijenom.',
     client: 'Klijent',

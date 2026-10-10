@@ -347,4 +347,19 @@ html.theme-switching::view-transition-new(root) {
   .category-option.active {
     @apply bg-brand-50 text-brand font-semibold border-brand/20 shadow-subtle;
   }
+
+  .map-pin span {
+    display: block;
+    width: 28px;
+    height: 28px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    background: var(--color-brand);
+    border: 3px solid white;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
+  }
+
+  [data-theme="dark"] .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);
+  }
 }

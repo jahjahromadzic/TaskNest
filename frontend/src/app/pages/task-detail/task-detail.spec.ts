@@ -96,6 +96,11 @@ describe('Task details page', () => {
     await harness.fixture.whenStable();
 
     expect(location()).toBe('Zmaja od Bosne 12, Centar Sarajevo');
+    expect(harness.routeNativeElement!.querySelector('app-map-view .leaflet-container')).not.toBeNull();
+    expect(harness.routeNativeElement!.querySelectorAll('app-map-view .map-pin')).toHaveLength(1);
+    const directions = harness.routeNativeElement!.querySelector<HTMLAnchorElement>('a[href*="google.com/maps"]')!;
+    expect(directions.textContent).toContain('Open in Google Maps');
+    expect(directions.href).toBe('https://www.google.com/maps/dir/?api=1&destination=43.854947,18.393707');
   });
 
   it('shows only the municipality when the server keeps the street private', async () => {
@@ -103,6 +108,8 @@ describe('Task details page', () => {
 
     expect(location()).toBe('Centar Sarajevo');
     expect(text()).not.toContain('Zmaja od Bosne');
+    expect(harness.routeNativeElement!.querySelector('app-map-view')).toBeNull();
+    expect(text()).not.toContain('Open in Google Maps');
   });
 
   function location(): string {

@@ -323,6 +323,8 @@ export const en = {
     removedText: 'because it broke the community rules.',
     progress: 'Progress',
     about: 'About the job',
+    location: 'Location',
+    openInMaps: 'Open in Google Maps',
     noDescription: 'The client did not add a description.',
     openBudgetHint: 'The client is waiting for price offers.',
     client: 'Client',

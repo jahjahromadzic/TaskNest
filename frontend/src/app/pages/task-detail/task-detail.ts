@@ -35,6 +35,7 @@ import { RemoveTaskDialog } from '../../components/remove-task-dialog/remove-tas
 import { ReportDialog } from '../../components/report-dialog/report-dialog';
 import { TaskTimeline } from '../../components/task-timeline/task-timeline';
 import { TaskPhotos } from '../../components/task-photos/task-photos';
+import { MapView } from '../../components/map-view/map-view';
 import { RealtimeService } from '../../services/realtime.service';
 import { TaskService } from '../../services/task.service';
 import { daysLeft, formatBudget, formatDate, timeAgo } from '../../shared/format/format';
@@ -67,6 +68,7 @@ const FAILED: DetailState = { loading: false, notFound: false, failed: true, tas
     TaskReviews,
     TaskTimeline,
     TaskPhotos,
+    MapView,
     TaskerPanel,
     RemoveTaskDialog,
     ReportDialog,
