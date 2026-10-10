@@ -123,7 +123,7 @@ class AuthorizationHttpStatusTest extends AbstractIntegrationTest {
                 "Seed task",
                 "Created through the service",
                 categoryRepository.findAll().getFirst().getId(),
-                municipalityRepository.findAll().getFirst().getId(), "Zmaja od Bosne 12",
+                municipalityRepository.findAll().getFirst().getId(), "Zmaja od Bosne 12", null, null,
                 new BigDecimal("50.00"));
 
         UUID taskId = taskService.createTask(clientId, request).id();

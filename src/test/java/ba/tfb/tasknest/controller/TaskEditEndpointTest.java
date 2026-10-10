@@ -117,6 +117,26 @@ class TaskEditEndpointTest extends AbstractIntegrationTest {
     }
 
     @Test
+    @DisplayName("Sending back the pin the task already has is not a change either")
+    void edit_withTheSamePin_sendsNoNotification() throws Exception {
+        // Arrange
+        UUID taskId = publishedTask();
+        AuthResponse waiting = tasker("edit.samepin@test.ba");
+        offerService.submitOffer(taskId, waiting.userId(), new CreateOfferRequest(new BigDecimal("60"), "Mogu"));
+
+        // Act
+        edit(taskId, client, """
+                {"title": "Popravka česme", "description": "Curi česma u kuhinji",
+                 "categoryId": "%s", "municipalityId": "%s", "address": "Zmaja od Bosne 12",
+                 "latitude": 43.8564300, "longitude": 18.4130290, "budget": 50.00}
+                """.formatted(category.getId(), municipality.getId()))
+                .andExpect(status().isOk());
+
+        // Assert
+        assertThat(updates(waiting)).isEmpty();
+    }
+
+    @Test
     @DisplayName("A draft can be edited and stays a draft")
     void edit_keepsADraftADraft() throws Exception {
         // Arrange
@@ -191,7 +211,7 @@ class TaskEditEndpointTest extends AbstractIntegrationTest {
 
     private UUID draft() {
         return taskService.createTask(client.userId(), new CreateTaskRequest("Popravka česme", "Curi česma u kuhinji",
-                category.getId(), municipality.getId(), "Zmaja od Bosne 12", new BigDecimal("50"))).id();
+                category.getId(), municipality.getId(), "Zmaja od Bosne 12", null, null, new BigDecimal("50"))).id();
     }
 
     private UUID publishedTask() {

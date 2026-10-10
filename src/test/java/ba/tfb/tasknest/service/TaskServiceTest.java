@@ -815,7 +815,7 @@ class TaskServiceTest {
                 "Popravka slavine",
                 "Curi ispod sudopera",
                 CATEGORY_ID,
-                MUNICIPALITY_ID, "Zmaja od Bosne 12",
+                MUNICIPALITY_ID, "Zmaja od Bosne 12", null, null,
                 new BigDecimal("50.00"));
     }
 

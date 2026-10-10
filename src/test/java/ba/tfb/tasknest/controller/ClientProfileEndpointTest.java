@@ -189,7 +189,7 @@ class ClientProfileEndpointTest extends AbstractIntegrationTest {
 
     private CreateTaskRequest taskRequest(String title) {
         return new CreateTaskRequest(title, "Opis posla za test",
-                category.getId(), municipality.getId(), "Zmaja od Bosne 12", new BigDecimal("80.00"));
+                category.getId(), municipality.getId(), "Zmaja od Bosne 12", null, null, new BigDecimal("80.00"));
     }
 
     private AuthResponse register(String email, String firstName, String lastName) {

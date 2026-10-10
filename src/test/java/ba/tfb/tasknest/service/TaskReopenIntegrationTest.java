@@ -86,7 +86,7 @@ class TaskReopenIntegrationTest extends AbstractIntegrationTest {
 
         taskId = taskService.createTask(clientId, new CreateTaskRequest(
                 "Popravka slavine", "Curi ispod sudopera",
-                category.getId(), municipality.getId(), "Zmaja od Bosne 12", new BigDecimal("80.00"))).id();
+                category.getId(), municipality.getId(), "Zmaja od Bosne 12", null, null, new BigDecimal("80.00"))).id();
         taskService.publishTask(taskId, clientId);
 
         emirOfferId = submitOffer(emirId);

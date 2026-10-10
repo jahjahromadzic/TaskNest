@@ -51,7 +51,7 @@ class TaskAddressPrivacyTest extends AbstractIntegrationTest {
 
         Category category = categoryRepository.findAll().stream().filter(Category::isActive).findFirst().orElseThrow();
         taskId = taskService.createTask(client.userId(), new CreateTaskRequest("Popravka slavine", "Curi",
-                category.getId(), municipalityRepository.findAll().getFirst().getId(), "Zmaja od Bosne 12",
+                category.getId(), municipalityRepository.findAll().getFirst().getId(), "Zmaja od Bosne 12", null, null,
                 new BigDecimal("50"))).id();
         taskService.publishTask(taskId, client.userId());
 

@@ -56,7 +56,8 @@ class TaskAddressEndpointTest extends AbstractIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        client = authService.register(new RegisterRequest("address.client@test.ba", "password123", "Amra", "Hodžić", null));
+        client = authService.register(
+                new RegisterRequest("address.client@test.ba", "password123", "Amra", "Hodžić", null));
         category = categoryRepository.findAll().stream().filter(Category::isActive).findFirst().orElseThrow();
         centar = named("Centar Sarajevo");
         ilidza = named("Ilidža");
@@ -140,6 +141,69 @@ class TaskAddressEndpointTest extends AbstractIntegrationTest {
         assertThat(task.getTitle()).isEqualTo("Popravka slavine");
         assertThat(task.getAddressLine()).isEqualTo("Zmaja od Bosne 12");
         assertThat(task.getLatitude()).isEqualByComparingTo(SARAJEVO.latitude());
+    }
+
+    @Test
+    @DisplayName("A pin confirmed on the map is kept as it is and the geocoder is not asked")
+    void create_withAPin_keepsItWithoutTheGeocoder() throws Exception {
+        UUID taskId = idOf(create(withPin("Popravka slavine", centar, "Zaseok bez imena", "43.8590004", "18.4120006"))
+                .andExpect(status().isCreated()));
+
+        Task task = taskRepository.findById(taskId).orElseThrow();
+        assertThat(task.getAddressLine()).isEqualTo("Zaseok bez imena");
+        assertThat(task.getLatitude()).isEqualByComparingTo("43.859000");
+        assertThat(task.getLongitude()).isEqualByComparingTo("18.412001");
+        verify(geocoder, never()).geocode(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("A pin far away from the chosen municipality is refused")
+    void create_refusesAPinFarFromTheMunicipality() throws Exception {
+        create(withPin("Popravka slavine", centar, "Zmaja od Bosne 12", "44.538000", "18.667000"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("The pin is too far from the chosen municipality"));
+
+        assertThat(taskRepository.count()).isZero();
+    }
+
+    @Test
+    @DisplayName("A pin needs both its latitude and its longitude")
+    void create_refusesHalfAPin() throws Exception {
+        create("""
+                {"title": "Popravka", "categoryId": "%s", "municipalityId": "%s", "address": "Zmaja od Bosne 12",
+                 "latitude": 43.85}
+                """.formatted(category.getId(), centar.getId()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail")
+                        .value("Send both the latitude and the longitude of the pin, or neither"));
+
+        assertThat(taskRepository.count()).isZero();
+    }
+
+    @Test
+    @DisplayName("Moving only the pin updates the coordinates without asking the geocoder")
+    void edit_movingThePin_updatesTheCoordinates() throws Exception {
+        UUID taskId = createdTask();
+
+        edit(taskId, withPin("Popravka slavine", centar, "Zmaja od Bosne 12", "43.855100", "18.394200"))
+                .andExpect(status().isOk());
+
+        Task task = taskRepository.findById(taskId).orElseThrow();
+        assertThat(task.getLatitude()).isEqualByComparingTo("43.855100");
+        assertThat(task.getLongitude()).isEqualByComparingTo("18.394200");
+        verify(geocoder, times(1)).geocode(anyString(), anyString());
+    }
+
+    private String withPin(String title, Municipality municipality, String address, String latitude, String longitude) {
+        return """
+                {"title": "%s", "categoryId": "%s", "municipalityId": "%s", "address": "%s",
+                 "latitude": %s, "longitude": %s}
+                """.formatted(title, category.getId(), municipality.getId(), address, latitude, longitude);
+    }
+
+    private static UUID idOf(ResultActions result) throws Exception {
+        String json = result.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        return UUID.fromString(JsonPath.read(json, "$.id"));
     }
 
     private UUID createdTask() throws Exception {

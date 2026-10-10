@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.EnumMap;
@@ -53,6 +54,8 @@ public class TaskService {
             Set.of("publishedAt", "createdAt", "updatedAt", "expiresAt", "budget", "title", "status");
 
     private static final Set<TaskStatus> EDITABLE_STATUSES = EnumSet.of(TaskStatus.DRAFT, TaskStatus.PUBLISHED);
+
+    private static final double MAX_PIN_DISTANCE_KM = 40;
 
     private static final String ACCENTED_LETTERS = "čćšđž";
     private static final String PLAIN_LETTERS = "ccsdz";
@@ -83,7 +86,7 @@ public class TaskService {
         Municipality municipality = municipalityRepository.findById(request.municipalityId())
                 .orElseThrow(() -> new ResourceNotFoundException("Municipality", request.municipalityId()));
 
-        GeoPoint point = locate(request.address(), municipality);
+        GeoPoint point = locate(request.address(), municipality, pinOf(request.latitude(), request.longitude()));
 
         Task task = new Task();
         task.setClient(client);
@@ -101,7 +104,7 @@ public class TaskService {
     }
 
     @Transactional
-    public TaskResponse updateTask(UUID taskId, UUID clientId,  UpdateTaskRequest request) {
+    public TaskResponse updateTask(UUID taskId, UUID clientId, UpdateTaskRequest request) {
         Task task = taskRepository.findWithWriteLockById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
 
@@ -124,8 +127,10 @@ public class TaskService {
                 .orElseThrow(() -> new ResourceNotFoundException("Municipality", request.municipalityId()));
 
         String address = request.address().strip();
+        GeoPoint pin = pinOf(request.latitude(), request.longitude());
         boolean moved = !address.equals(task.getAddressLine())
-                || !municipality.equals(task.getMunicipality());
+                || !municipality.equals(task.getMunicipality())
+                || (pin != null && !isAt(task, pin));
 
         boolean changed = !request.title().equals(task.getTitle())
                 || !Objects.equals(request.description(), task.getDescription())
@@ -138,7 +143,7 @@ public class TaskService {
         }
 
         if (moved) {
-            GeoPoint point = locate(address, municipality);
+            GeoPoint point = locate(address, municipality, pin);
             task.setAddressLine(address);
             task.setLatitude(point.latitude());
             task.setLongitude(point.longitude());
@@ -162,9 +167,30 @@ public class TaskService {
         return first == null || second == null ? first == second : first.compareTo(second) == 0;
     }
 
-    private GeoPoint locate(String address, Municipality municipality) {
+    private GeoPoint locate(String address, Municipality municipality, GeoPoint pin) {
+        if (pin != null) {
+            GeoPoint seat = new GeoPoint(municipality.getLatitude(), municipality.getLongitude());
+            if (pin.kilometresTo(seat) > MAX_PIN_DISTANCE_KM) {
+                throw new BusinessRuleException("The pin is too far from the chosen municipality");
+            }
+            return pin;
+        }
         return geocoder.geocode(address.strip(), municipality.getName())
                 .orElseThrow(() -> new BusinessRuleException("The address could not be found"));
+    }
+
+    private static GeoPoint pinOf(BigDecimal latitude, BigDecimal longitude) {
+        if (latitude == null && longitude == null) {
+            return null;
+        }
+        if (latitude == null || longitude == null) {
+            throw new BusinessRuleException("Send both the latitude and the longitude of the pin, or neither");
+        }
+        return new GeoPoint(latitude.setScale(6, RoundingMode.HALF_UP), longitude.setScale(6, RoundingMode.HALF_UP));
+    }
+
+    private static boolean isAt(Task task, GeoPoint point) {
+        return sameAmount(point.latitude(), task.getLatitude()) && sameAmount(point.longitude(), task.getLongitude());
     }
 
     @Transactional

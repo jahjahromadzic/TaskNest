@@ -852,6 +852,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/geo/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["lookup"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/conversations": {
         parameters: {
             query?: never;
@@ -1008,6 +1024,8 @@ export interface components {
             /** Format: uuid */
             municipalityId: string;
             address: string;
+            latitude?: number;
+            longitude?: number;
             budget?: number;
         };
         TaskPhotoResponse: {
@@ -1155,6 +1173,8 @@ export interface components {
             /** Format: uuid */
             municipalityId: string;
             address: string;
+            latitude?: number;
+            longitude?: number;
             budget?: number;
         };
         CreateReviewRequest: {
@@ -1405,6 +1425,11 @@ export interface components {
             totalPages?: number;
             first?: boolean;
             last?: boolean;
+        };
+        LocationResponse: {
+            latitude?: number;
+            longitude?: number;
+            found?: boolean;
         };
         ConversationResponse: {
             /** Format: uuid */
@@ -2951,6 +2976,29 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["MunicipalityResponse"][];
+                };
+            };
+        };
+    };
+    lookup: {
+        parameters: {
+            query: {
+                address?: string;
+                municipalityId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LocationResponse"];
                 };
             };
         };

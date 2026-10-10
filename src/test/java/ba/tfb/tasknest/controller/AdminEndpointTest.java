@@ -164,7 +164,8 @@ class AdminEndpointTest extends AbstractIntegrationTest {
             UUID removed = publishedTask();
             taskService.removeTask(removed, "Spam");
             taskService.createTask(client.userId(), new CreateTaskRequest(
-                    "Draft only", "Opis", category.getId(), municipality.getId(), "Zmaja od Bosne 12", null));
+                    "Draft only", "Opis", category.getId(), municipality.getId(),
+                    "Zmaja od Bosne 12", null, null, null));
 
             mockMvc.perform(get("/api/admin/tasks").header("Authorization", bearer(admin)))
                     .andExpect(jsonPath("$.totalElements").value(2))
@@ -373,7 +374,7 @@ class AdminEndpointTest extends AbstractIntegrationTest {
 
     private UUID publishedTask() {
         UUID taskId = taskService.createTask(client.userId(), new CreateTaskRequest(
-                "Popravka slavine", "Opis", category.getId(), municipality.getId(), "Zmaja od Bosne 12",
+                "Popravka slavine", "Opis", category.getId(), municipality.getId(), "Zmaja od Bosne 12", null, null,
                 new BigDecimal("80.00"))).id();
         taskService.publishTask(taskId, client.userId());
         return taskId;

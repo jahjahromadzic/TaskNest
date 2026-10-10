@@ -54,7 +54,7 @@ class TaskSearchEndpointTest extends AbstractIntegrationTest {
         publish("Popravka veš mašine", "Perilica ne izbacuje vodu, 50% bubnja je puno", repairs);
         publish("Košenje trave", null, repairs);
         taskService.createTask(client.userId(), new CreateTaskRequest("Čišćenje podruma", null,
-                cleaning.getId(), municipality.getId(), "Zmaja od Bosne 12", null));
+                cleaning.getId(), municipality.getId(), "Zmaja od Bosne 12", null, null, null));
     }
 
     @Test
@@ -101,7 +101,7 @@ class TaskSearchEndpointTest extends AbstractIntegrationTest {
         Municipality tuzla = named("Tuzla");
         UUID taskId = taskService.createTask(client.userId(),
                 new CreateTaskRequest("Selidba u Tuzli", null, repairs.getId(), tuzla.getId(),
-                "Zmaja od Bosne 12", null)).id();
+                "Zmaja od Bosne 12", null, null, null)).id();
         taskService.publishTask(taskId, client.userId());
 
         mockMvc.perform(get("/api/tasks").param("region", "Tuzla Canton"))
@@ -135,7 +135,7 @@ class TaskSearchEndpointTest extends AbstractIntegrationTest {
     private void publish(String title, String description, Category category) {
         UUID taskId = taskService.createTask(client.userId(),
                 new CreateTaskRequest(title, description, category.getId(), municipality.getId(),
-                "Zmaja od Bosne 12", null)).id();
+                "Zmaja od Bosne 12", null, null, null)).id();
         taskService.publishTask(taskId, client.userId());
     }
 }

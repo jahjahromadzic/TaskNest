@@ -213,7 +213,7 @@ class AuthorizationIntegrationTest extends AbstractIntegrationTest {
                 "Seed task",
                 "Created through the service, not the endpoint under test",
                 categoryRepository.findAll().getFirst().getId(),
-                municipalityRepository.findAll().getFirst().getId(), "Zmaja od Bosne 12",
+                municipalityRepository.findAll().getFirst().getId(), "Zmaja od Bosne 12", null, null,
                 new java.math.BigDecimal("50.00"));
     }
 
