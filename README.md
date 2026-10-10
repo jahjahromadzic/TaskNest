@@ -492,6 +492,12 @@ acceptance the offer is no longer pending, so its price is locked.
 | GET | `/categories` | Public | Active service categories |
 | GET | `/municipalities` | Public | All municipalities of Bosnia and Herzegovina with their region and the coordinates of their seat, ordered by name |
 
+### Locations — `/api/geo`
+
+| Method | Path | Access | Description |
+|---|---|---|---|
+| GET | `/lookup?address=…&municipalityId=…` | Authenticated | Where to put a task's pin while the address is typed: the found address with `found: true`, otherwise the seat of the municipality with `found: false`. The seat is also returned when OpenRouteService is unreachable, so a task can still be posted |
+
 ### Task photos — `/api`
 
 | Method | Path | Access | Description |
@@ -872,13 +878,13 @@ remaining tasks are still handled. The periods are configurable.
 ./mvnw verify
 ```
 
-The suite contains **428 tests** and requires no manual setup — Testcontainers
+The suite contains **435 tests** and requires no manual setup — Testcontainers
 starts PostgreSQL and RabbitMQ automatically.
 
 | Type | Count | Scope |
 |---|---|---|
 | Unit | 153 | Service business rules, the task state machine, the login attempt limiter and the geocoder against a simulated OpenRouteService |
-| Integration | 275 | Authentication, password reset, login throttling, account settings, task editing and search, task addresses and who may see them, reports, offer price changes, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
+| Integration | 282 | Authentication, password reset, login throttling, account settings, task editing and search, task addresses and who may see them, reports, offer price changes, task photos, dead-letter queues, authorisation, the task lifecycle, concurrency, JPQL queries, reviews, client profiles, messaging, administration, CORS, the notification pipeline, real-time pushes over WebSocket, demo data |
 
 Every integration test starts from an empty database: one `TRUNCATE ... CASCADE` after each test
 clears all application tables at once. Clearing them table by table left a window in which the
